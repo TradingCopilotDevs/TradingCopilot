@@ -9,14 +9,14 @@
 - 业务字段放在 `attributes` 下，并使用 camelCase。
 - 关联关系放在 `relationships` 下。
 - 错误使用 `errors: [{ code, message, detail?, field? }]`。
-- 列表使用 `page[limit]` 和 `page[cursor]`，并返回 `links.next`、`meta.pageSize`、`meta.nextCursor` 和 `meta.hasMore`。游标是不透明的 API 值；客户端必须原样透传，不得解析、递增或自行构造。
+- 列表使用 `page[limit]` 和 `page[cursor]`，并返回 `links.next`、`meta.pageSize`、`meta.nextCursor` 和 `meta.hasMore`。游标是不透明的 API 值（Cursors are opaque）；客户端必须原样透传，不得解析、递增或自行构造。
 - 消息摄取 API 使用与提供方无关的资源类型：`message-subscriptions`、`message-subscription-filters`、`message-subscription-app-configs`、`platform-adapters` 和 `ingested-messages`。Telegram 和 RSS/Atom 仍然是属性或 provider 值，不是这些路由的 JSON:API 资源类型。
 - 消息订阅支持 `telegram_channel` 和 `rss_feed` 提供方。所有提供方的 `sourceMessageId` 都是字符串；Telegram 数字消息 ID 序列化为十进制字符串，RSS/Atom 条目 ID 使用 GUID、链接或哈希身份。订阅暴露 `pollIntervalSeconds`、`lastCollectedAt`、`nextCollectAt` 和 `lastCollectError`，用于表示与提供方无关的采集状态。
 - 消息订阅过滤器是由消息订阅域拥有的可复用配置。每个订阅只绑定一个过滤器；多个订阅可以共享一个过滤器，默认过滤器只用于新建订阅时的预选。启动种子数据只会在没有任何过滤器记录时创建内置默认过滤器。
 - 摄取消息通过 `filterStatus` 暴露 `unfiltered`、`filtering`、`filtered` 或 `failed` 状态。采集和重新过滤 API 会把工作加入队列，并在任务被接受后返回；AI 过滤和会议创建通过消息任务队列异步执行。
 - 研究团队 API 使用 `research-teams` 和 `research-team-roles`。会议、自选列表、唤醒计划、摄取消息过滤器和消息订阅使用显式的 `researchTeamId` 或 `teamIds` 字段，而不是隐式全局团队。
-- 行情运行时设置暴露一个历史数据提供方、一个实时数据提供方、`MARKET_REALTIME_COMPAT_PROVIDER` 和实时缓存 TTL。`MARKET_REALTIME_COMPAT_PROVIDER` 是一个范围很窄的实时兼容来源，用于 ETF/LOF 或主数据源缺失报价（`tencent`、`sina` 或 `disabled`），不是通用兜底提供方列表。实时兜底数据源列表不是当前契约的一部分。
-- `MEETING_DAILY_TOKEN_BUDGET` 使用 `-1` 表示会议 token 使用量不受限制；正整数表示每日上限，`0` 或小于 `-1` 的值无效。
+- 行情运行时设置暴露一个历史数据提供方、一个实时数据提供方、`MARKET_REALTIME_COMPAT_PROVIDER` 和实时缓存 TTL。`MARKET_REALTIME_COMPAT_PROVIDER` 是一个范围很窄的实时兼容来源，用于 ETF/LOF 或主数据源缺失报价（`tencent`、`sina` 或 `disabled`），不是通用兜底提供方列表（not a generic fallback provider list）。实时兜底数据源列表不是当前契约的一部分。
+- `MEETING_DAILY_TOKEN_BUDGET` 使用 `-1` 表示会议 token 使用量不受限制（`-1` for unlimited）；正整数表示每日上限，`0` 或小于 `-1` 的值无效（`0` or values below `-1` are invalid）。
 - 日志是基于文件的 JSON:API 资源。日志条目暴露 UTC 时间戳，以及必需的通用字段 `event`、`group`、`method`、`status` 和可空的 `durationMs`；不适用的字符串字段使用 `not_applicable`。日志配置通过运行时环境设置编辑，并在重启后生效。`GET /logs` 默认隐藏噪声较大的静态资源、前端和日志查看器请求；传入 `includeNoise=true` 可返回这些记录。
 
 服务器发送事件（SSE）和静态前端资源保持各自的原生协议。
@@ -135,5 +135,5 @@
 
 模拟交易风险配置资源暴露 `accountIds` 和 `accountCount`。创建或更新时接受 `accountIds`，用于替换通过 `paper_accounts.risk_config_id` 绑定的一组模拟交易账户；空列表是有效值，表示该配置不作用于任何账户。删除风险配置会解绑受影响账户，并在删除资源中返回 `unboundAccountIds` / `unboundAccountCount`。
 
-研究团队资源暴露 `paperAccountId`；API 会拒绝将同一个模拟交易账户绑定到多个团队。消息订阅资源暴露 `teamIds`；启用状态的订阅必须有非空列表，禁用状态的订阅可以保持为空。RSS/Atom 订阅需要公开的 `http` 或 `https` feed URL，拒绝 URL 内嵌凭据，并且 v1 不支持 feed 认证。手动创建会议需要 `researchTeamId`。
+研究团队资源暴露 `paperAccountId`；API 会拒绝将同一个模拟交易账户绑定到多个团队。消息订阅资源暴露 `teamIds`；启用状态的订阅必须有非空列表，禁用状态的订阅可以保持为空。RSS/Atom 订阅需要公开的 `http` 或 `https` feed URL（RSS/Atom subscriptions require public），拒绝 URL 内嵌凭据（reject URL-embedded credentials），并且 v1 不支持 feed 认证（do not support feed authentication in v1）。手动创建会议需要 `researchTeamId`。
 `POST /research-teams/{teamId}/roles/apply-defaults` 是针对该团队的破坏性重置：服务端会删除当前所有团队角色，并重新创建内置默认研究角色。

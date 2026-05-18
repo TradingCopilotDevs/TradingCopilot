@@ -36,7 +36,7 @@
 
 ## 日志语义
 
-- 预期的空操作、保护分支或重复抑制路径必须使用 `level=info` 和 `status=skipped`；`level=error` 只用于需要兜底、重试、操作员处理或调用方可见错误处理的失败。
+- 预期的空操作、保护分支或重复抑制路径（Expected no-op, guard, or duplicate-suppression paths）必须使用 `level=info` 和 `status=skipped`；`level=error` 只用于需要兜底、重试、操作员处理或调用方可见错误处理的失败（reserved for failures）。
 
 ## 外部集成检查
 
