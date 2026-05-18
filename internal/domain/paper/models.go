@@ -3,8 +3,8 @@ package paper
 import (
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	"github.com/shopspring/decimal"
 )
 

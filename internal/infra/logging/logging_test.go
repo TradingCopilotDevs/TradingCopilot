@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	applogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/logging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
+	applogging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/logging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 )
 
 func TestReaderFiltersAndRedactsJSONL(t *testing.T) {

@@ -2,14 +2,14 @@ package meeting
 
 import (
 	"context"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )

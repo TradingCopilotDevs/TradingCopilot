@@ -2,15 +2,15 @@ package paper
 
 import (
 	"context"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/connect"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/connect"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"github.com/glebarez/sqlite"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"

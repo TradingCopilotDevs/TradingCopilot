@@ -2,11 +2,11 @@ package meeting
 
 import (
 	"errors"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainauth "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/auth"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainauth "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/auth"
 
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 

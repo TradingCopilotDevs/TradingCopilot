@@ -15,15 +15,15 @@ import (
 	"strings"
 	"time"
 
-	appmessaging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/messaging"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmsg "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/messaging"
-	domaintelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/telegram"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	proxyruntime "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/proxy/runtime"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
-	infratelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/telegram"
+	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
+	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	proxyruntime "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/proxy/runtime"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
+	infratelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/telegram"
 	"github.com/mmcdole/gofeed"
 )
 
@@ -153,7 +153,7 @@ func (s Service) FetchSubscriptionMessages(ctx context.Context, credentials appm
 }
 
 func (s Service) SendAdapterTest(ctx context.Context, token string, chatID string, proxy appmessaging.ProxyConfig) (map[string]any, error) {
-	return infratelegram.SendBotMessageWithClient(infratelegram.BotAPIBase, token, chatID, "TreadingCopilot platform adapter test message.", s.httpClient(proxy, proxyruntime.ModuleTelegram, 15*time.Second))
+	return infratelegram.SendBotMessageWithClient(infratelegram.BotAPIBase, token, chatID, "TradingCopilot platform adapter test message.", s.httpClient(proxy, proxyruntime.ModuleTelegram, 15*time.Second))
 }
 
 func (s Service) JSON(value any) domainkernel.JSON { return jsonValue(value) }

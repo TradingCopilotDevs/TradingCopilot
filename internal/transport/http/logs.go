@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	applogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/logging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	applogging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/logging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
 func (s *Server) listLogFiles(w http.ResponseWriter, r *http.Request) {

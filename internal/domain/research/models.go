@@ -3,7 +3,7 @@ package research
 import (
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 )
 
 type Team struct {

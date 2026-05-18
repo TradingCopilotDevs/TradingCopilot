@@ -3,9 +3,9 @@ package uow
 import (
 	"context"
 
-	apptelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/telegram"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	apptelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/app/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/gorm"
 )
 

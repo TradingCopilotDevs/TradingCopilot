@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	"strconv"
 	"strings"
 	"time"
 
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 )
 
 type Repository interface {

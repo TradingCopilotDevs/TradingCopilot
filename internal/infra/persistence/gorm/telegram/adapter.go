@@ -2,16 +2,16 @@ package telegram
 
 import (
 	"context"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domaintelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/telegram"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
 	"net/http"
 	"time"
 
-	apptelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/telegram"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/proxy/runtime"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	apptelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/app/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/proxy/runtime"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 
@@ -57,7 +57,7 @@ func (s Service) CollectChannel(ctx context.Context, channel *domaintelegram.Cha
 }
 
 func (s Service) SendBotTest(ctx context.Context, token string, chatID string) (map[string]any, error) {
-	return SendBotMessageWithClient(BotAPIBase, token, chatID, "TreadingCopilot Telegram Bot test message.", runtimeproxy.NewHTTPClient(s.db.WithContext(ctx), s.settings, runtimeproxy.ModuleTelegram, 15*time.Second))
+	return SendBotMessageWithClient(BotAPIBase, token, chatID, "TradingCopilot Telegram Bot test message.", runtimeproxy.NewHTTPClient(s.db.WithContext(ctx), s.settings, runtimeproxy.ModuleTelegram, 15*time.Second))
 }
 
 func (s Service) JSON(value any) domainkernel.JSON { return JSON(value) }

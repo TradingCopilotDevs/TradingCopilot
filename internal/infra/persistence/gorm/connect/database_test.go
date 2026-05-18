@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
 	"time"
 
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"github.com/glebarez/sqlite"
 	"github.com/shopspring/decimal"
 	"gorm.io/datatypes"
@@ -47,8 +47,8 @@ func TestDescribeConnectionReportsSQLiteAndPostgreSQLTargets(t *testing.T) {
 		t.Fatalf("sqlite connection info mismatch: %+v", info)
 	}
 
-	info = DescribeConnection("postgresql+asyncpg://user:secret@localhost:5432/treadingcopilot?sslmode=disable", nil)
-	if info.Backend != "PostgreSQL" || info.Target != "localhost:5432/treadingcopilot" {
+	info = DescribeConnection("postgresql+asyncpg://user:secret@localhost:5432/tradingcopilot?sslmode=disable", nil)
+	if info.Backend != "PostgreSQL" || info.Target != "localhost:5432/tradingcopilot" {
 		t.Fatalf("postgres connection info mismatch: %+v", info)
 	}
 }

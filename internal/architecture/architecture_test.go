@@ -1022,7 +1022,7 @@ func TestInternalModuleDirectoriesAreNotEmpty(t *testing.T) {
 
 func TestCmdDoesNotOwnInteractiveRuntimeWorkflows(t *testing.T) {
 	root := repoRoot(t)
-	raw, err := os.ReadFile(filepath.Join(root, "cmd", "treadingcopilot", "main.go"))
+	raw, err := os.ReadFile(filepath.Join(root, "cmd", "tradingcopilot", "main.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1036,7 +1036,7 @@ func TestCmdDoesNotOwnInteractiveRuntimeWorkflows(t *testing.T) {
 		"GetLatestTelegramMTProtoMessage(",
 	} {
 		if strings.Contains(text, forbidden) {
-			t.Fatalf("cmd/treadingcopilot/main.go still owns runtime workflow detail %q", forbidden)
+			t.Fatalf("cmd/tradingcopilot/main.go still owns runtime workflow detail %q", forbidden)
 		}
 	}
 }
@@ -1044,7 +1044,7 @@ func TestCmdDoesNotOwnInteractiveRuntimeWorkflows(t *testing.T) {
 func TestCmdOnlyParsesAndDelegates(t *testing.T) {
 	packages := listPackages(t)
 	for _, pkg := range packages {
-		if !strings.Contains(pkg.ImportPath, "/cmd/treadingcopilot") {
+		if !strings.Contains(pkg.ImportPath, "/cmd/tradingcopilot") {
 			continue
 		}
 		rejectImports(t, pkg,

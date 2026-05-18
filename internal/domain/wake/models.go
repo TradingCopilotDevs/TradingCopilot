@@ -3,8 +3,8 @@ package wake
 import (
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 )
 
 type Plan struct {

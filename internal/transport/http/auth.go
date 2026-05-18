@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	appauth "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/auth"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	appauth "github.com/TradingCopilotDevs/TradingCopilot/internal/app/auth"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
 type authPayload struct {

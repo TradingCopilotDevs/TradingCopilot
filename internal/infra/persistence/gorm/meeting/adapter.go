@@ -2,14 +2,14 @@ package meeting
 
 import (
 	"context"
-	appmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/meeting"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infratelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/telegram"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infratelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 

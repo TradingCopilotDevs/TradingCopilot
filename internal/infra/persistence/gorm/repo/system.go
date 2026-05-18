@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 
 	"gorm.io/gorm"
 )

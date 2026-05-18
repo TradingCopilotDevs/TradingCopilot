@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	appruntime "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/runtime"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/composition"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infralogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/logging"
+	appruntime "github.com/TradingCopilotDevs/TradingCopilot/internal/app/runtime"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/composition"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
 	"go.uber.org/zap"
 )
 

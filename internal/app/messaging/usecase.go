@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainmsg "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/messaging"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 )
 
 const (

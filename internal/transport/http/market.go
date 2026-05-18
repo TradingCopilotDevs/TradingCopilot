@@ -3,13 +3,13 @@ package httptransport
 import (
 	"encoding/json"
 	"fmt"
-	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
 	"net/http"
 	"strconv"
 	"strings"
 
-	appmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/market"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	appmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/app/market"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
 

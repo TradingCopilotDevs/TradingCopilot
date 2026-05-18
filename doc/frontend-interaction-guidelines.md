@@ -1,6 +1,6 @@
 # 前端交互指南
 
-TreadingCopilot 前端页面使用 Vue 3 和 Element Plus。工作流页面应保持信息密度、可预期性和面向操作的体验。
+TradingCopilot 前端页面使用 Vue 3 和 Element Plus。工作流页面应保持信息密度、可预期性和面向操作的体验。
 
 ## 列表
 

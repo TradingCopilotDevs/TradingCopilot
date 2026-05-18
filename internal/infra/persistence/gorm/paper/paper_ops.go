@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata/ashare"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata/ashare"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )

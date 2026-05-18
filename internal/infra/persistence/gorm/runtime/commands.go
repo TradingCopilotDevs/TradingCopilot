@@ -3,10 +3,10 @@ package runtime
 import (
 	"context"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/connect"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/queue"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/connect"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/queue"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 

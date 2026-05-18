@@ -9,7 +9,7 @@ import (
 )
 
 func DefaultEnvFile() string {
-	return env("AIWB_ENV_FILE", ".env")
+	return env("TC_ENV_FILE", ".env")
 }
 
 func WriteEnvOverrides(updates map[string]any, envFile string) error {

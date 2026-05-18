@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	applogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/logging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infralogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/logging"
-	runtimeproxy "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/proxy/runtime"
+	applogging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/logging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
+	runtimeproxy "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/proxy/runtime"
 	"github.com/shopspring/decimal"
 )
 

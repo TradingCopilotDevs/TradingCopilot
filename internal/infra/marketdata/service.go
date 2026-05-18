@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infralogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/logging"
-	runtimeproxy "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/proxy/runtime"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
+	runtimeproxy "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/proxy/runtime"
 	adata "github.com/onepiecelover/adata-go"
 	"go.uber.org/zap"
 )

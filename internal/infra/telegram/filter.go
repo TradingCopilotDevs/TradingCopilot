@@ -4,17 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domaintelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/telegram"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
 	"net/http"
 	"regexp"
 	"strings"
 
-	ai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/ai/client"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata/ashare"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	ai "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/ai/client"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata/ashare"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 )
 
 var (

@@ -2,13 +2,13 @@ package meeting
 
 import (
 	"bytes"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 	"log"
 	"strings"
 	"testing"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/connect"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/connect"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

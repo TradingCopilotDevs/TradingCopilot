@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	"net/http"
 	"strconv"
 	"strings"
 
-	appai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/ai"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	appai "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ai"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
 

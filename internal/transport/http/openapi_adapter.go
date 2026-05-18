@@ -3,7 +3,7 @@ package httptransport
 import (
 	"net/http"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/openapi"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/openapi"
 )
 
 var _ openapi.ServerInterface = (*Server)(nil)

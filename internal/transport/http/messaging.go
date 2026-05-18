@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	appmessaging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/messaging"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainmsg "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/messaging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
 func (s *Server) messageSubscriptionAppConfig(w http.ResponseWriter, r *http.Request) {

@@ -1,14 +1,14 @@
 package httptransport
 
 import (
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"net/http"
 	"strconv"
 	"strings"
 
-	apppaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/paper"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 	"github.com/shopspring/decimal"
 )
 

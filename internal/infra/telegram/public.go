@@ -3,7 +3,7 @@ package telegram
 import (
 	"encoding/json"
 	"fmt"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	"html"
 	"io"
 	"net/http"
@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	runtimeproxy "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/proxy/runtime"
+	runtimeproxy "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/proxy/runtime"
 )
 
 var PublicBaseURL = "https://t.me/s"
@@ -88,7 +88,7 @@ func FetchPublicMessagesWithClient(channelRef string, limit int, minMessageID *i
 	if err != nil {
 		return PublicResult{}, err
 	}
-	req.Header.Set("User-Agent", "TreadingCopilot/1.0")
+	req.Header.Set("User-Agent", "TradingCopilot/1.0")
 	if client == nil {
 		client = runtimeproxy.HTTPClientForConfig(runtimeproxy.Config{}, runtimeproxy.ModuleTelegram, 20*time.Second)
 	}

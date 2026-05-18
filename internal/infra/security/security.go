@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 	"github.com/alexedwards/argon2id"
 	"github.com/fernet/fernet-go"
 	"github.com/golang-jwt/jwt/v5"

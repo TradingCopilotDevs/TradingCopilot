@@ -51,7 +51,7 @@ router.afterEach(() => {
 })
 
 window.addEventListener('storage', (event) => {
-  if (event.key === 'aiwb_token') {
+  if (event.key === 'tradingcopilot_token') {
     scheduleAuthExpiryRedirect()
   }
 })

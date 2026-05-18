@@ -2,7 +2,7 @@ package meeting
 
 import (
 	"encoding/json"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 )
 
 type CapabilityDefinition struct {

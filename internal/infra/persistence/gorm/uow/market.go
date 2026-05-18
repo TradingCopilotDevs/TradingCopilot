@@ -3,9 +3,9 @@ package uow
 import (
 	"context"
 
-	appmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/market"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	appmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/app/market"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/gorm"
 )
 

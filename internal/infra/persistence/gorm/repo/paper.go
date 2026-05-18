@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	apppaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/paper"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
+	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"time"
 
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"gorm.io/gorm"
 )
 

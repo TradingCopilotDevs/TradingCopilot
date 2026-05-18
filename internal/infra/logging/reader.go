@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	applogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/logging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
+	applogging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/logging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 )
 
 type Reader struct {

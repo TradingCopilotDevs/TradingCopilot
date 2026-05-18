@@ -3,7 +3,7 @@ package migrate
 import (
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"gorm.io/gorm"
 )
 

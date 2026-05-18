@@ -3,7 +3,7 @@ package telegram
 import (
 	"context"
 
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 )
 
 func (u Usecase) DeleteMessage(ctx context.Context, id uint) (bool, error) {

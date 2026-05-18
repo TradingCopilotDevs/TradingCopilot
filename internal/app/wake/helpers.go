@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	domaintelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/telegram"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"github.com/shopspring/decimal"
 )
 

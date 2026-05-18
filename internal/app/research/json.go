@@ -3,7 +3,7 @@ package research
 import (
 	"encoding/json"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 )
 
 func jsonList(values []string) kernel.JSON {

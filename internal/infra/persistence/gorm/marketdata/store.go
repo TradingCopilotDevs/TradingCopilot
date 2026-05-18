@@ -3,11 +3,11 @@ package marketdata
 import (
 	"context"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	inframarketdata "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata"
-	gormruntimeproxy "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/proxy/runtime"
-	runtimeproxy "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/proxy/runtime"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	inframarketdata "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata"
+	gormruntimeproxy "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/proxy/runtime"
+	runtimeproxy "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/proxy/runtime"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 

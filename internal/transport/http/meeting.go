@@ -3,14 +3,14 @@ package httptransport
 import (
 	"encoding/json"
 	"fmt"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
-	appmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/meeting"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
 

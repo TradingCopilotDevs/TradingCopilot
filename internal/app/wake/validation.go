@@ -2,8 +2,8 @@ package wake
 
 import (
 	"fmt"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"strings"
 
 	"github.com/shopspring/decimal"

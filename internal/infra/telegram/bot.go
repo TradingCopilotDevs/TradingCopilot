@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	runtimeproxy "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/proxy/runtime"
+	runtimeproxy "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/proxy/runtime"
 )
 
 var BotAPIBase = "https://api.telegram.org"

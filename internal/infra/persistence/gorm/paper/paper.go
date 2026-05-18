@@ -2,12 +2,12 @@ package paper
 
 import (
 	"context"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata/ashare"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata/ashare"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )

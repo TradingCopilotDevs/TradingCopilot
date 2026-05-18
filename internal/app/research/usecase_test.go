@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	appai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/ai"
-	domainresearch "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/research"
+	appai "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ai"
+	domainresearch "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/research"
 )
 
 func TestEnsureDefaultTeamCreatesTeamAndRolesOnlyWhenEmpty(t *testing.T) {

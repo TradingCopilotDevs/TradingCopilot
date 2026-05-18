@@ -2,16 +2,16 @@ package ai
 
 import (
 	"encoding/json"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 )
 
 func TestExtractChatContent(t *testing.T) {

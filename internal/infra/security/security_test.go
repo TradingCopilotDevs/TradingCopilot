@@ -3,7 +3,7 @@ package security
 import (
 	"testing"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 )
 
 func TestSecretRoundTrip(t *testing.T) {

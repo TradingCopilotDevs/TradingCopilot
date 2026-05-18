@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
-	domaintelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/telegram"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
+	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
 )
 
 func (u Usecase) applyMessageFilterInput(row *domaintelegram.Message, input MessageInput) {

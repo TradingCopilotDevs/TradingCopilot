@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
-	domainauth "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/auth"
+	domainauth "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/auth"
 
 	"github.com/golang-jwt/jwt/v5"
 )

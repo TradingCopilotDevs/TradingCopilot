@@ -2,12 +2,12 @@ package ai
 
 import (
 	"context"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	"net/http"
 
-	aiclient "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/ai/client"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	aiclient "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/ai/client"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 )
 
 type ModelSyncer struct {

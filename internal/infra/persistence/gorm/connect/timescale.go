@@ -1,7 +1,7 @@
 package database
 
 import (
-	gormmigrate "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/migrate"
+	gormmigrate "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/migrate"
 	"gorm.io/gorm"
 )
 

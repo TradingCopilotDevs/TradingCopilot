@@ -1,8 +1,8 @@
-# TreadingCopilot
+# TradingCopilot
 
-![TreadingCopilot logo](docs/assets/treadingcopilot-logo.png)
+![TradingCopilot logo](docs/assets/tradingcopilot-logo.png)
 
-TreadingCopilot 是一个自托管的 AI 投研会议与 A 股模拟交易系统。它把消息订阅、市场数据、AI 多角色讨论、唤醒计划和模拟盘执行整合到一个可部署的 Web 控制台中，适合个人或小团队搭建自己的投研自动化工作台。
+TradingCopilot 是一个自托管的 AI 投研会议与 A 股模拟交易系统。它把消息订阅、市场数据、AI 多角色讨论、唤醒计划和模拟盘执行整合到一个可部署的 Web 控制台中，适合个人或小团队搭建自己的投研自动化工作台。
 
 后端由单个 Go 二进制提供 API、任务队列、调度器和运行时进程，前端使用 Vue 3 与 Element Plus，接口契约由 `api/openapi.yaml` 维护。
 
@@ -16,7 +16,7 @@ TreadingCopilot 是一个自托管的 AI 投研会议与 A 股模拟交易系统
 - **模拟交易系统**：支持账户、风控配置、订单、成交、持仓、权益快照和交易时段处理。
 - **唤醒计划**：按价格、涨跌幅、行情条件或消息事件触发后续投研。
 - **运行时配置**：在界面中管理模型提供商、密钥、代理、角色能力和系统设置。
-- **一体化部署**：Docker Compose 启动 PostgreSQL/TimescaleDB、Redis 和一个 TreadingCopilot 应用容器。
+- **一体化部署**：Docker Compose 启动 PostgreSQL/TimescaleDB、Redis 和一个 TradingCopilot 应用容器。
 
 ## 快速开始
 
@@ -61,7 +61,7 @@ Compose 默认启动 3 个服务：
 
 - `postgres`：TimescaleDB/PostgreSQL
 - `redis`：后台任务队列
-- `app`：TreadingCopilot 应用容器
+- `app`：TradingCopilot 应用容器
 
 `app` 容器默认执行 `all` 命令：先运行数据库迁移，然后在同一个容器内启动 `serve`、`worker`、`scheduler` 和 `message-subscription-listener` 多个进程。任一子进程退出时，容器会停止其余进程并退出，交给 Docker 重启策略处理。
 
@@ -69,10 +69,10 @@ Compose 默认启动 3 个服务：
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `TC_IMAGE_REPOSITORY` | `ghcr.io/treadingcopilotdevs/treadingcopilot` | 应用镜像仓库 |
+| `TC_IMAGE_REPOSITORY` | `ghcr.io/tradingcopilotdevs/tradingcopilot` | 应用镜像仓库 |
 | `TC_IMAGE_TAG` | `latest` | 应用镜像标签 |
 | `PUBLIC_BASE_URL` | `http://localhost:8000` | 对外访问地址 |
-| `DATABASE_URL` | `postgresql://aiwb:aiwb@postgres:5432/aiwb` | 应用数据库连接 |
+| `DATABASE_URL` | `postgresql://tradingcopilot:tradingcopilot@postgres:5432/tradingcopilot` | 应用数据库连接 |
 | `REDIS_URL` | `redis://redis:6379/0` | Redis 连接 |
 | `MEETING_DISPATCH_MODE` | `redis` | 会议任务分发模式 |
 | `MESSAGE_TASK_QUEUE_MODE` | `redis` | 消息过滤任务队列模式 |
@@ -98,7 +98,7 @@ docker compose up -d app
 
 ```powershell
 Copy-Item .env.local.example .env
-go run ./cmd/treadingcopilot serve
+go run ./cmd/tradingcopilot serve
 ```
 
 后端常用命令：
@@ -131,20 +131,20 @@ npm run build
 Go 二进制提供以下运行模式：
 
 ```bash
-go run ./cmd/treadingcopilot serve
-go run ./cmd/treadingcopilot worker
-go run ./cmd/treadingcopilot scheduler
-go run ./cmd/treadingcopilot message-subscription-listener
-go run ./cmd/treadingcopilot migrate
+go run ./cmd/tradingcopilot serve
+go run ./cmd/tradingcopilot worker
+go run ./cmd/tradingcopilot scheduler
+go run ./cmd/tradingcopilot message-subscription-listener
+go run ./cmd/tradingcopilot migrate
 ```
 
 Telegram MTProto 配置与诊断命令：
 
 ```bash
-go run ./cmd/treadingcopilot message-subscription-login
-go run ./cmd/treadingcopilot message-subscription-login-start
-go run ./cmd/treadingcopilot message-subscription-login-verify
-go run ./cmd/treadingcopilot message-subscription-mtproto-test
+go run ./cmd/tradingcopilot message-subscription-login
+go run ./cmd/tradingcopilot message-subscription-login-start
+go run ./cmd/tradingcopilot message-subscription-login-verify
+go run ./cmd/tradingcopilot message-subscription-mtproto-test
 ```
 
 ## 配置与密钥
@@ -170,7 +170,7 @@ Docker 部署时，首次启动自动生成的 `./env/app.env` 会被复用。�
 
 ```text
 api/                 OpenAPI 契约
-cmd/treadingcopilot/ Go CLI 入口
+cmd/tradingcopilot/ Go CLI 入口
 docker/              容器入口脚本
 doc/                 架构、契约、测试和集成说明
 frontend/            Vue 3 前端

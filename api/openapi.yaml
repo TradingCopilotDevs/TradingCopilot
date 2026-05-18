@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: TreadingCopilot API
+  title: TradingCopilot API
   version: 0.1.0
   description: JSON:API contract target for the Go modular monolith migration.
 servers:

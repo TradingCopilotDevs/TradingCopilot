@@ -3,9 +3,9 @@ package uow
 import (
 	"context"
 
-	appwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/wake"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/gorm"
 )
 

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infralogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/logging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )

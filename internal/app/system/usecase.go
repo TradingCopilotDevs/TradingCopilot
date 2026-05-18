@@ -3,8 +3,8 @@ package system
 import (
 	"context"
 	"encoding/json"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 	"os"
 	"time"
 )

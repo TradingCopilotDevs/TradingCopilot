@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 )
 
 func TestRuntimeEntrypointsDelegateThroughMeetingUsecase(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	appmessaging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/messaging"
-	domainmsg "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/messaging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
+	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
+	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 )
 
 func TestFetchRSSFeedMessages(t *testing.T) {

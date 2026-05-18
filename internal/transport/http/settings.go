@@ -2,13 +2,13 @@ package httptransport
 
 import (
 	"fmt"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	"net/http"
 	"strconv"
 	"time"
 
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
 

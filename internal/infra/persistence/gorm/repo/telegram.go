@@ -3,15 +3,15 @@ package repo
 import (
 	"context"
 	"errors"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
-	domaintelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/telegram"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
+	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
 	"strings"
 	"time"
 
-	apptelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/telegram"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	apptelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/app/telegram"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )

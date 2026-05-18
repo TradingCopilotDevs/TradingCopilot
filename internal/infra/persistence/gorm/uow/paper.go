@@ -3,9 +3,9 @@ package uow
 import (
 	"context"
 
-	apppaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/paper"
-	infrapaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/paper"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
+	infrapaper "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/paper"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/gorm"
 )
 

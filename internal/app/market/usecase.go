@@ -3,8 +3,8 @@ package market
 import (
 	"context"
 	"fmt"
-	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"strings"
 	"time"
 )

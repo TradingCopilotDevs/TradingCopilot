@@ -5,7 +5,7 @@
       <div class="mobile-header__brand">
         <span class="brand-mark">投</span>
         <div>
-          <strong>TreadingCopilot</strong>
+          <strong>TradingCopilot</strong>
           <small>{{ currentMenuLabel }}</small>
         </div>
       </div>
@@ -19,7 +19,7 @@
         <div class="brand">
           <span class="brand-mark">投</span>
           <div>
-            <strong>TreadingCopilot</strong>
+            <strong>TradingCopilot</strong>
             <small>智能决策工作台</small>
           </div>
         </div>
@@ -39,7 +39,7 @@
       <div class="brand">
         <span class="brand-mark">投</span>
         <div>
-          <strong>TreadingCopilot</strong>
+          <strong>TradingCopilot</strong>
           <small>智能决策工作台</small>
         </div>
       </div>
@@ -99,7 +99,7 @@ const menuActivePath = computed(() => {
 })
 
 const currentMenuLabel = computed(() => {
-  return menuItems.find((item) => item.path === menuActivePath.value)?.label || 'TreadingCopilot'
+  return menuItems.find((item) => item.path === menuActivePath.value)?.label || 'TradingCopilot'
 })
 
 watch(

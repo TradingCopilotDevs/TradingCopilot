@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

@@ -3,15 +3,15 @@ package runtimeproxy
 import (
 	"encoding/json"
 	"fmt"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	proxyruntime "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/proxy/runtime"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	proxyruntime "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/proxy/runtime"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 

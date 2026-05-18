@@ -93,5 +93,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/treadingcopilotdevs/treadingcopilot:${{ github.event.release.tag_name }}
-            ghcr.io/treadingcopilotdevs/treadingcopilot:latest
+            ghcr.io/tradingcopilotdevs/tradingcopilot:${{ github.event.release.tag_name }}
+            ghcr.io/tradingcopilotdevs/tradingcopilot:latest

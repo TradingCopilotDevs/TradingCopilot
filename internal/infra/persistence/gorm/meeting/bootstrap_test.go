@@ -1,7 +1,7 @@
 package meeting
 
 import (
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	"strings"
 	"testing"
 )

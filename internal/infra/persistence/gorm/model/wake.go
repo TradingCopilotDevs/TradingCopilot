@@ -1,7 +1,7 @@
 package model
 
 import (
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	"time"
 
 	"gorm.io/datatypes"

@@ -2,9 +2,9 @@ package wake
 
 import (
 	"context"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"strings"
 	"testing"
 )

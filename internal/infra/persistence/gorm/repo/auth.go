@@ -2,9 +2,9 @@ package repo
 
 import (
 	"context"
-	domainauth "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/auth"
+	domainauth "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/auth"
 
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"gorm.io/gorm"
 )
 

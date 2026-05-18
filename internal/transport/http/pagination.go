@@ -3,7 +3,7 @@ package httptransport
 import (
 	"net/http"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
 func writeResourceCollection(w http.ResponseWriter, r *http.Request, resources []jsonapi.Resource, defaultLimit int, maxLimit int) {

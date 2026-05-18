@@ -3,19 +3,19 @@ package meeting
 import (
 	"encoding/json"
 	"fmt"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"regexp"
 	"strings"
 	"time"
 
-	appwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/wake"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata/ashare"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
-	infrapaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/paper"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata/ashare"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
+	infrapaper "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/paper"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/gorm"
 )
 

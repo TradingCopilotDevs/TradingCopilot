@@ -3,8 +3,8 @@ package uow
 import (
 	"context"
 
-	appsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/settings"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	appsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/app/settings"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/gorm"
 )
 

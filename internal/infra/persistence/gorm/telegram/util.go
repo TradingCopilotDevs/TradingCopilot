@@ -3,16 +3,16 @@ package telegram
 import (
 	"context"
 	"encoding/json"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	"time"
 
-	appsystem "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/system"
-	apptelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/telegram"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
-	gormuow "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/uow"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	appsystem "github.com/TradingCopilotDevs/TradingCopilot/internal/app/system"
+	apptelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/app/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
+	gormuow "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/uow"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 

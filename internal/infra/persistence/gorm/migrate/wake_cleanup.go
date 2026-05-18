@@ -1,10 +1,10 @@
 package migrate
 
 import (
-	appwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/wake"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"gorm.io/gorm"
 )
 

@@ -2,16 +2,16 @@ package meeting
 
 import (
 	"context"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"time"
 
-	appwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/wake"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	inframarketdata "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata"
-	gormmarketdata "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/marketdata"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	inframarketdata "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata"
+	gormmarketdata "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/marketdata"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"gorm.io/gorm"
 )
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainresearch "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/research"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainresearch "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/research"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )

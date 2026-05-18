@@ -1,9 +1,9 @@
 package paper
 
 import (
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
-	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
+	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	"gorm.io/gorm"
 )
 

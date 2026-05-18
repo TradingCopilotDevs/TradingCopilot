@@ -1,6 +1,6 @@
 # 集成测试工具
 
-TreadingCopilot 在 `internal/integration` 下包含可选集成测试。正常执行 `go test ./...` 时这些测试会被跳过，只有设置匹配的 `TC_INTEGRATION_*` 环境变量时才会运行。
+TradingCopilot 在 `internal/integration` 下包含可选集成测试。正常执行 `go test ./...` 时这些测试会被跳过，只有设置匹配的 `TC_INTEGRATION_*` 环境变量时才会运行。
 
 不要提交真实 API key、token、Telegram hash、session 载荷、数据库 dump 或本地 `.env` 文件。凭据应通过 shell 环境、本地已忽略的 env 文件，或部署环境的密钥存储提供。
 
@@ -17,21 +17,21 @@ docker compose -f docker-compose.integration.yml ps
 
 - TimescaleDB: `127.0.0.1:15432 -> 5432`
 - Redis: `127.0.0.1:16379 -> 6379`
-- PostgreSQL database: `treadingcopilot_test`
+- PostgreSQL database: `tradingcopilot_test`
 - PostgreSQL user/password: `tc_test` / `tc_test_password_change_me`
 - Redis password: `tc_redis_password_change_me`
 
 运行数据库或 Redis 集成检查前，先设置连接 URL：
 
 ```bash
-export TC_DATABASE_URL="postgresql://tc_test:tc_test_password_change_me@127.0.0.1:15432/treadingcopilot_test"
+export TC_DATABASE_URL="postgresql://tc_test:tc_test_password_change_me@127.0.0.1:15432/tradingcopilot_test"
 export TC_REDIS_URL="redis://:tc_redis_password_change_me@127.0.0.1:16379/0"
 ```
 
 PowerShell:
 
 ```powershell
-$env:TC_DATABASE_URL="postgresql://tc_test:tc_test_password_change_me@127.0.0.1:15432/treadingcopilot_test"
+$env:TC_DATABASE_URL="postgresql://tc_test:tc_test_password_change_me@127.0.0.1:15432/tradingcopilot_test"
 $env:TC_REDIS_URL="redis://:tc_redis_password_change_me@127.0.0.1:16379/0"
 ```
 
@@ -92,8 +92,8 @@ go test ./internal/integration -run TestAIProviderIntegrationHarness -v -count=1
 使用 CLI 两步登录流程，将 Telegram app 凭据和 MTProto session 存入已配置的应用数据库：
 
 ```bash
-go run ./cmd/treadingcopilot message-subscription-login-start -app-id "<app_id>" -app-hash "<app_hash>" -phone "<phone>"
-go run ./cmd/treadingcopilot message-subscription-login-verify -code "<telegram_code>"
+go run ./cmd/tradingcopilot message-subscription-login-start -app-id "<app_id>" -app-hash "<app_hash>" -phone "<phone>"
+go run ./cmd/tradingcopilot message-subscription-login-verify -code "<telegram_code>"
 ```
 
 如果 Telegram 账户启用了两步验证，在 verify 命令中增加 `-password "<2fa_password>"`。
@@ -101,7 +101,7 @@ go run ./cmd/treadingcopilot message-subscription-login-verify -code "<telegram_
 登录后测试一个频道引用：
 
 ```bash
-go run ./cmd/treadingcopilot message-subscription-mtproto-test -channel "@public_channel"
+go run ./cmd/tradingcopilot message-subscription-mtproto-test -channel "@public_channel"
 ```
 
 针对已存储在配置数据库中的 session 运行集成检查：

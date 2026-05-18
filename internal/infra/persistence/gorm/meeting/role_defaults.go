@@ -1,6 +1,6 @@
 package meeting
 
-import appai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/ai"
+import appai "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ai"
 
 type RoleSeed = appai.RoleSeed
 

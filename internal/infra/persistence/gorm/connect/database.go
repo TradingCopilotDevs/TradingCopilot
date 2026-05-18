@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infralogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/logging"
-	gormmigrate "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/migrate"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
+	gormmigrate "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/migrate"
 	"github.com/glebarez/sqlite"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"

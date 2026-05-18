@@ -3,7 +3,7 @@ package httptransport
 import (
 	"net/http"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
 func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {

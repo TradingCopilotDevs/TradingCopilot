@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
-	domaintelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/telegram"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
+	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -19,10 +19,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/connect"
-	infrapaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/paper"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/connect"
+	infrapaper "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/paper"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"github.com/glebarez/sqlite"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -1155,7 +1155,7 @@ func assertGoldenFragments(t *testing.T, label string, text string, fragments []
 func TestNotifyMeetingFinishedSendsTelegramBotMessage(t *testing.T) {
 	db := newMeetingTestDB(t)
 	settings := testTelegramBotSettings()
-	settings.AppName = "TreadingCopilot"
+	settings.AppName = "TradingCopilot"
 	settings.PublicBaseURL = "https://public.example"
 	sec := seedTelegramBotSecrets(t, db, "token", "chat-1")
 	mustMeeting(t, db.Create(&domainsettings.AppSetting{Key: "PUBLIC_BASE_URL", Value: JSON(map[string]any{"value": "https://runtime.example/"})}).Error)
@@ -1177,7 +1177,7 @@ func TestNotifyMeetingFinishedSendsTelegramBotMessage(t *testing.T) {
 	}
 
 	NotifyMeetingFinished(db, meeting, settings, sec)
-	if !strings.Contains(sentText, "TreadingCopilot meeting finished") || !strings.Contains(sentText, "https://runtime.example/meetings/") {
+	if !strings.Contains(sentText, "TradingCopilot meeting finished") || !strings.Contains(sentText, "https://runtime.example/meetings/") {
 		t.Fatalf("unexpected notification text: %s", sentText)
 	}
 	if len(sentText) >= 2800 || strings.Contains(sentText, strings.Repeat("x", 2501)) {
@@ -1246,7 +1246,7 @@ func seedMeetingAIProvider(t *testing.T, db *gorm.DB, baseURL string) uint {
 
 func fastMeetingAITestSettings(t *testing.T) {
 	t.Helper()
-	t.Setenv("AIWB_ENV_FILE", "__missing_meeting_test_env__")
+	t.Setenv("TC_ENV_FILE", "__missing_meeting_test_env__")
 	t.Setenv("APP_SECRET_KEY", "meeting-test-secret")
 	t.Setenv("AI_CHAT_MAX_ATTEMPTS", "1")
 	t.Setenv("AI_JSON_MAX_ATTEMPTS", "2")

@@ -7,10 +7,10 @@ import (
 	"regexp"
 	"strings"
 
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata/ashare"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata/ashare"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )

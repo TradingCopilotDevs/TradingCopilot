@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	appmessaging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/messaging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infralogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/logging"
+	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )

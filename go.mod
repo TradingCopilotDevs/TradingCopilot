@@ -1,4 +1,4 @@
-module github.com/TreadingCopilotDevs/TreadingCopilot
+module github.com/TradingCopilotDevs/TradingCopilot
 
 go 1.26.3
 

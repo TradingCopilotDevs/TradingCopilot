@@ -6,16 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	"io"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	infralogging "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/logging"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"go.uber.org/zap"
 )
 

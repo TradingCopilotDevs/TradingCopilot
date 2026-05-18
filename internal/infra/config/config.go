@@ -52,9 +52,9 @@ type Settings struct {
 }
 
 func Load() Settings {
-	loadDotEnv(env("AIWB_ENV_FILE", ".env"))
+	loadDotEnv(env("TC_ENV_FILE", ".env"))
 	return Settings{
-		AppName:                             env("APP_NAME", "TreadingCopilot"),
+		AppName:                             env("APP_NAME", "TradingCopilot"),
 		AppEnv:                              env("APP_ENV", "dev"),
 		PublicBaseURL:                       env("PUBLIC_BASE_URL", "http://localhost:5173"),
 		APIBaseURL:                          env("API_BASE_URL", "http://localhost:8000"),
@@ -91,8 +91,8 @@ func Load() Settings {
 		LogRotationSizeMB:                   envInt("LOG_ROTATION_SIZE_MB", 5),
 		LogRotationTotalSizeMB:              envInt("LOG_ROTATION_TOTAL_SIZE_MB", 100),
 		LogRotationMaxAgeDays:               envInt("LOG_ROTATION_MAX_AGE_DAYS", 7),
-		FrontendDist:                        env("AIWB_FRONTEND_DIST", "frontend/dist"),
-		RuntimeEnvFile:                      env("AIWB_ENV_FILE", ".env"),
+		FrontendDist:                        env("TC_FRONTEND_DIST", "frontend/dist"),
+		RuntimeEnvFile:                      env("TC_ENV_FILE", ".env"),
 		HTTPAddr:                            env("HTTP_ADDR", ":8000"),
 	}
 }

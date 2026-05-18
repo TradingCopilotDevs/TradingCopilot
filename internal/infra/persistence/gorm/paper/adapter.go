@@ -2,7 +2,7 @@ package paper
 
 import (
 	"context"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"time"
 
 	"github.com/shopspring/decimal"

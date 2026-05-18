@@ -1,6 +1,6 @@
 # 数据库契约
 
-TreadingCopilot 根据 GORM 持久化模型初始化当前逻辑 schema。不支持既有旧版数据库结构；启动此版本前请重建数据库。
+TradingCopilot 根据 GORM 持久化模型初始化当前逻辑 schema。不支持既有旧版数据库结构；启动此版本前请重建数据库。
 
 ## 数据表
 

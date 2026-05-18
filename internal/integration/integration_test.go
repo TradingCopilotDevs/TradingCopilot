@@ -4,24 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	domainai "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/ai"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainpaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/paper"
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/ai/client"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/connect"
-	marketdata "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/marketdata"
-	infrapaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/paper"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/queue"
-	infratelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/telegram"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/ai/client"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/connect"
+	marketdata "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/marketdata"
+	infrapaper "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/paper"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/queue"
+	infratelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	"github.com/glebarez/sqlite"
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
@@ -242,7 +242,7 @@ func TestAIProviderIntegrationHarness(t *testing.T) {
 	defer cancel()
 	result, err := client.ChatWithUsageWithContext(ctx, []map[string]string{
 		{"role": "system", "content": "Return only compact JSON. Do not use markdown."},
-		{"role": "user", "content": `Return exactly this JSON object with no extra text: {"ok":true,"provider":"treadingcopilot"}`},
+		{"role": "user", "content": `Return exactly this JSON object with no extra text: {"ok":true,"provider":"tradingcopilot"}`},
 	}, model)
 	if err != nil {
 		t.Fatalf("AI provider chat failed: %v", err)
@@ -251,7 +251,7 @@ func TestAIProviderIntegrationHarness(t *testing.T) {
 	if err := json.Unmarshal([]byte(extractJSONObject(result.Content)), &payload); err != nil {
 		t.Fatalf("AI provider did not return parseable JSON: %v; response preview=%q", err, truncateForTest(result.Content, 240))
 	}
-	if payload["ok"] != true || fmt.Sprint(payload["provider"]) != "treadingcopilot" {
+	if payload["ok"] != true || fmt.Sprint(payload["provider"]) != "tradingcopilot" {
 		t.Fatalf("AI provider JSON payload mismatch: %+v", payload)
 	}
 	if result.Usage != nil {

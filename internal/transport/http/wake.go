@@ -2,13 +2,13 @@ package httptransport
 
 import (
 	"encoding/json"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"net/http"
 	"strconv"
 
-	appwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/wake"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
 func (s *Server) listWakePlans(w http.ResponseWriter, r *http.Request) {

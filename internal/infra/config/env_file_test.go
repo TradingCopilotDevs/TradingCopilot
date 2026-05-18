@@ -36,16 +36,16 @@ func TestWriteEnvOverridesUpdatesExistingKeysAndAppendsNewOnes(t *testing.T) {
 	}
 }
 
-func TestDefaultEnvFileUsesAIWBEnvFileOverride(t *testing.T) {
+func TestDefaultEnvFileUsesTCEnvFileOverride(t *testing.T) {
 	customEnv := filepath.Join(t.TempDir(), "runtime", "app.env")
-	t.Setenv("AIWB_ENV_FILE", customEnv)
+	t.Setenv("TC_ENV_FILE", customEnv)
 	if got := DefaultEnvFile(); got != customEnv {
 		t.Fatalf("expected %s, got %s", customEnv, got)
 	}
 }
 
 func TestLoadMessageSubscriptionListenersInServeOverride(t *testing.T) {
-	t.Setenv("AIWB_ENV_FILE", filepath.Join(t.TempDir(), "missing.env"))
+	t.Setenv("TC_ENV_FILE", filepath.Join(t.TempDir(), "missing.env"))
 	t.Setenv("MESSAGE_SUBSCRIPTION_LISTENERS_IN_SERVE", "false")
 	if Load().MessageSubscriptionListenersInServe {
 		t.Fatal("expected MESSAGE_SUBSCRIPTION_LISTENERS_IN_SERVE=false to disable embedded listeners")
@@ -53,7 +53,7 @@ func TestLoadMessageSubscriptionListenersInServeOverride(t *testing.T) {
 }
 
 func TestLoadMeetingDailyTokenBudgetAllowsOnlyUnlimitedOrPositive(t *testing.T) {
-	t.Setenv("AIWB_ENV_FILE", filepath.Join(t.TempDir(), "missing.env"))
+	t.Setenv("TC_ENV_FILE", filepath.Join(t.TempDir(), "missing.env"))
 
 	t.Setenv("MEETING_DAILY_TOKEN_BUDGET", "-1")
 	if got := Load().MeetingDailyTokenBudget; got != -1 {
@@ -77,7 +77,7 @@ func TestLoadMeetingDailyTokenBudgetAllowsOnlyUnlimitedOrPositive(t *testing.T) 
 }
 
 func TestLoadMarketRealtimeCompatProviderDefault(t *testing.T) {
-	t.Setenv("AIWB_ENV_FILE", filepath.Join(t.TempDir(), "missing.env"))
+	t.Setenv("TC_ENV_FILE", filepath.Join(t.TempDir(), "missing.env"))
 	if got := Load().MarketRealtimeCompatProvider; got != "tencent" {
 		t.Fatalf("expected default realtime compatibility provider tencent, got %s", got)
 	}

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	appresearch "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/research"
-	domainresearch "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/research"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/transport/http/jsonapi"
+	appresearch "github.com/TradingCopilotDevs/TradingCopilot/internal/app/research"
+	domainresearch "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/research"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
 func (s *Server) listResearchTeams(w http.ResponseWriter, r *http.Request) {

@@ -3,18 +3,18 @@ package meeting
 import (
 	"encoding/json"
 	"fmt"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
-	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
-	domainmsg "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/messaging"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
+	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
 	"strings"
 	"time"
 
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/config"
-	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/proxy/runtime"
-	infratelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/telegram"
-	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/security"
-	puretelegram "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
+	persistmodel "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/proxy/runtime"
+	infratelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/telegram"
+	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
+	puretelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/telegram"
 	"gorm.io/gorm"
 )
 
@@ -33,7 +33,7 @@ func NotifyMeetingFinished(db *gorm.DB, meeting *domainmeeting.Meeting, settings
 	}
 	text := fmt.Sprintf(
 		"%s meeting finished\nID: %d\nTopic: %s\nStatus: %s\nURL: %s\n\n%s",
-		firstNonEmptyString(settings.AppName, "TreadingCopilot"),
+		firstNonEmptyString(settings.AppName, "TradingCopilot"),
 		meeting.ID,
 		meeting.Topic,
 		meeting.Status,

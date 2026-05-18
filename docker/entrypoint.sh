@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-ENV_FILE="${AIWB_ENV_FILE:-/app/runtime/env/app.env}"
+ENV_FILE="${TC_ENV_FILE:-/app/runtime/env/app.env}"
 mkdir -p "$(dirname "$ENV_FILE")" /app/data
 
 random_secret() {
@@ -13,7 +13,7 @@ if [ ! -f "$ENV_FILE" ]; then
   JWT_SECRET_KEY="${JWT_SECRET_KEY:-$(random_secret)}"
   cat > "$ENV_FILE" <<EOF
 APP_ENV=${APP_ENV:-prod}
-APP_NAME=${APP_NAME:-TreadingCopilot}
+APP_NAME=${APP_NAME:-TradingCopilot}
 APP_SECRET_KEY=${APP_SECRET_KEY}
 JWT_SECRET_KEY=${JWT_SECRET_KEY}
 JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
@@ -21,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
 PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:8000}
 API_BASE_URL=${API_BASE_URL:-http://localhost:8000/api}
 CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:8000"]}
-DATABASE_URL=${DATABASE_URL:-postgresql://aiwb:aiwb@postgres:5432/aiwb}
+DATABASE_URL=${DATABASE_URL:-postgresql://tradingcopilot:tradingcopilot@postgres:5432/tradingcopilot}
 REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
 AUTO_CREATE_TABLES=${AUTO_CREATE_TABLES:-true}
 DEFAULT_MARKET_PROVIDER=${DEFAULT_MARKET_PROVIDER:-adata}
@@ -58,7 +58,7 @@ fi
 if [ "${1:-serve}" = "all" ]; then
   if [ "${TC_RUN_MIGRATIONS:-true}" != "false" ]; then
     echo "[entrypoint] running database migrations"
-    /app/treadingcopilot migrate
+    /app/tradingcopilot migrate
   fi
 
   pids=""
@@ -77,8 +77,8 @@ if [ "${1:-serve}" = "all" ]; then
   start_process() {
     name="$1"
     shift
-    echo "[entrypoint] starting $name: /app/treadingcopilot $*"
-    /app/treadingcopilot "$@" &
+    echo "[entrypoint] starting $name: /app/tradingcopilot $*"
+    /app/tradingcopilot "$@" &
     pids="$pids $!"
   }
 
@@ -99,4 +99,4 @@ if [ "${1:-serve}" = "all" ]; then
   exit "$status"
 fi
 
-exec /app/treadingcopilot "$@"
+exec /app/tradingcopilot "$@"

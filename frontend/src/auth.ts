@@ -1,4 +1,4 @@
-const TOKEN_STORAGE_KEY = 'aiwb_token'
+const TOKEN_STORAGE_KEY = 'tradingcopilot_token'
 
 export function getAuthToken(): string | null {
   return localStorage.getItem(TOKEN_STORAGE_KEY)

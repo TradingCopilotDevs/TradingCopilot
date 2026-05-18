@@ -1,6 +1,6 @@
 package marketdata
 
-import "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata/ashare"
+import "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata/ashare"
 
 func EnsureAShareCode(value string) (string, error) {
 	return ashare.EnsureCode(value)

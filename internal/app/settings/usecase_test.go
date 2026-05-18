@@ -2,11 +2,11 @@ package settings
 
 import (
 	"context"
-	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	"testing"
 	"time"
 
-	domainsettings "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/settings"
+	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 )
 
 func TestRuntimeEnvUsesStoredOverridesAndFallbacks(t *testing.T) {
