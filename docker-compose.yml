@@ -1,0 +1,67 @@
+x-tc-image: &tc-image ${TC_IMAGE_REPOSITORY:-ghcr.io/treadingcopilotdevs/treadingcopilot}:${TC_IMAGE_TAG:-latest}
+x-tc-env: &tc-env
+  AIWB_ENV_FILE: /app/runtime/env/app.env
+  AIWB_FRONTEND_DIST: /app/frontend-dist
+  PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+  POSTGRES_DB: ${POSTGRES_DB:-aiwb}
+  POSTGRES_USER: ${POSTGRES_USER:-aiwb}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aiwb}
+  DATABASE_URL: ${DATABASE_URL:-postgresql://aiwb:aiwb@postgres:5432/aiwb}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  MEETING_DISPATCH_MODE: ${MEETING_DISPATCH_MODE:-redis}
+  MESSAGE_TASK_QUEUE_MODE: ${MESSAGE_TASK_QUEUE_MODE:-redis}
+  MESSAGE_SUBSCRIPTION_LISTENERS_IN_SERVE: ${MESSAGE_SUBSCRIPTION_LISTENERS_IN_SERVE:-false}
+  TC_RUN_MIGRATIONS: ${TC_RUN_MIGRATIONS:-true}
+  TC_RUN_MESSAGE_SUBSCRIPTION_LISTENER: ${TC_RUN_MESSAGE_SUBSCRIPTION_LISTENER:-true}
+  LOG_DIR: ${LOG_DIR:-/app/logs}
+x-tc-volumes: &tc-volumes
+  - ./env:/app/runtime/env
+  - ./data:/app/data
+  - ./logs:/app/logs
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aiwb}
+      POSTGRES_USER: ${POSTGRES_USER:-aiwb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aiwb}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aiwb} -d ${POSTGRES_DB:-aiwb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: *tc-image
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: ["all"]
+    environment: *tc-env
+    volumes: *tc-volumes
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5

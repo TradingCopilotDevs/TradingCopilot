@@ -1,0 +1,4082 @@
+openapi: 3.0.3
+info:
+  title: TreadingCopilot API
+  version: 0.1.0
+  description: JSON:API contract target for the Go modular monolith migration.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      security: []
+      responses:
+        "200": { $ref: "#/components/responses/HealthDocument" }
+  /auth/bootstrap-required:
+    get:
+      operationId: getAuthBootstrapRequired
+      security: []
+      responses:
+        "200": { $ref: "#/components/responses/AuthBootstrapStateDocument" }
+  /auth/bootstrap:
+    post:
+      operationId: postAuthBootstrap
+      security: []
+      requestBody: { $ref: "#/components/requestBodies/AuthCredentialsRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AuthTokenDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "409": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /auth/login:
+    post:
+      operationId: postAuthLogin
+      security: []
+      requestBody: { $ref: "#/components/requestBodies/AuthCredentialsRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AuthTokenDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "401": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /dashboard:
+    get:
+      operationId: getDashboard
+      responses:
+        "200": { $ref: "#/components/responses/DashboardDocument" }
+  /logs:
+    get:
+      operationId: getLogs
+      parameters:
+        - $ref: "#/components/parameters/LogFrom"
+        - $ref: "#/components/parameters/LogTo"
+        - $ref: "#/components/parameters/LogLevel"
+        - $ref: "#/components/parameters/LogRole"
+        - $ref: "#/components/parameters/LogSource"
+        - $ref: "#/components/parameters/LogEvent"
+        - $ref: "#/components/parameters/LogGroup"
+        - $ref: "#/components/parameters/LogMethod"
+        - $ref: "#/components/parameters/LogPath"
+        - $ref: "#/components/parameters/LogStatus"
+        - $ref: "#/components/parameters/LogSlowOnly"
+        - $ref: "#/components/parameters/LogIncludeNoise"
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/LogFile"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/LogEntryCollectionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /logs/files:
+    get:
+      operationId: getLogFiles
+      responses:
+        "200": { $ref: "#/components/responses/LogFileCollectionDocument" }
+  /settings/runtime-env:
+    get:
+      operationId: getSettingsRuntimeEnv
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/RuntimeEnvCollectionDocument" }
+  /settings/secret-definitions:
+    get:
+      operationId: getSettingsSecretDefinitions
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/SecretDefinitionCollectionDocument" }
+  /settings/secrets:
+    get:
+      operationId: getSettingsSecrets
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/SecretCollectionDocument" }
+    post:
+      operationId: postSettingsSecrets
+      requestBody: { $ref: "#/components/requestBodies/SecretUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/SecretDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /settings/app-settings:
+    get:
+      operationId: getSettingsAppSettings
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AppSettingCollectionDocument" }
+  /settings/app-settings/{key}:
+    put:
+      operationId: putSettingsAppSetting
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      requestBody: { $ref: "#/components/requestBodies/AppSettingUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AppSettingDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "500": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /settings/proxy:
+    get:
+      operationId: getSettingsProxy
+      responses:
+        "200": { $ref: "#/components/responses/ProxySettingDocument" }
+    put:
+      operationId: putSettingsProxy
+      requestBody: { $ref: "#/components/requestBodies/ProxySettingRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/ProxySettingDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /settings/proxy/test:
+    post:
+      operationId: postSettingsProxyTest
+      responses:
+        "200": { $ref: "#/components/responses/ProxyTestDocument" }
+  /ai/providers:
+    get:
+      operationId: getAiProviders
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AiProviderCollectionDocument" }
+    post:
+      operationId: postAiProviders
+      requestBody: { $ref: "#/components/requestBodies/AiProviderUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AiProviderDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /ai/providers/{providerId}:
+    put:
+      operationId: putAiProvider
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      requestBody: { $ref: "#/components/requestBodies/AiProviderUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AiProviderDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /ai/providers/{providerId}/models:
+    get:
+      operationId: getAiProviderModels
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AiProviderModelCollectionDocument" }
+  /ai/providers/{providerId}/models/sync:
+    post:
+      operationId: postAiProviderModelsSync
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      responses:
+        "200": { $ref: "#/components/responses/AiProviderModelCollectionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /ai/tool-definitions:
+    get:
+      operationId: getAiToolDefinitions
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AiToolDefinitionCollectionDocument" }
+  /ai/skill-definitions:
+    get:
+      operationId: getAiSkillDefinitions
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AiSkillDefinitionCollectionDocument" }
+  /ai/roles:
+    get:
+      operationId: getAiRoles
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AiRoleCollectionDocument" }
+  /ai/roles/apply-default-capabilities:
+    post:
+      operationId: postAiRolesApplyDefaultCapabilities
+      responses:
+        "200": { $ref: "#/components/responses/AiRoleCapabilityUpdateDocument" }
+  /ai/roles/{roleKey}:
+    put:
+      operationId: putAiRole
+      parameters:
+        - $ref: "#/components/parameters/RoleKey"
+      requestBody: { $ref: "#/components/requestBodies/AiRoleUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AiRoleDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /research-teams:
+    get:
+      operationId: getResearchTeams
+      responses:
+        "200": { $ref: "#/components/responses/ResearchTeamCollectionDocument" }
+    post:
+      operationId: postResearchTeams
+      requestBody: { $ref: "#/components/requestBodies/ResearchTeamUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/ResearchTeamDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /research-teams/{teamId}:
+    put:
+      operationId: putResearchTeam
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+      requestBody: { $ref: "#/components/requestBodies/ResearchTeamUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/ResearchTeamDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+    delete:
+      operationId: deleteResearchTeam
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+        "409": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /research-teams/{teamId}/roles:
+    get:
+      operationId: getResearchTeamRoles
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200": { $ref: "#/components/responses/ResearchTeamRoleCollectionDocument" }
+  /research-teams/{teamId}/roles/apply-defaults:
+    post:
+      operationId: postResearchTeamRolesApplyDefaults
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "200": { $ref: "#/components/responses/ResearchTeamRoleCollectionDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /research-teams/{teamId}/roles/{roleKey}:
+    put:
+      operationId: putResearchTeamRole
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/RoleKey"
+      requestBody: { $ref: "#/components/requestBodies/ResearchTeamRoleUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/ResearchTeamRoleDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+    delete:
+      operationId: deleteResearchTeamRole
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/RoleKey"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /market/symbols:
+    get:
+      operationId: getMarketSymbols
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MarketSymbolCollectionDocument" }
+    post:
+      operationId: postMarketSymbols
+      requestBody: { $ref: "#/components/requestBodies/MarketSymbolUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MarketSymbolDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "409": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /market/symbols/sync:
+    post:
+      operationId: postMarketSymbolsSync
+      responses:
+        "200": { $ref: "#/components/responses/MarketSymbolSyncDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /market/symbols/{code}:
+    put:
+      operationId: putMarketSymbol
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      requestBody: { $ref: "#/components/requestBodies/MarketSymbolUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MarketSymbolDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+    delete:
+      operationId: deleteMarketSymbol
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /market/quotes/{code}:
+    get:
+      operationId: getMarketQuote
+      parameters:
+        - $ref: "#/components/parameters/Code"
+        - $ref: "#/components/parameters/Refresh"
+      responses:
+        "200": { $ref: "#/components/responses/MarketQuoteDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /market/series/{code}:
+    get:
+      operationId: getMarketSeries
+      parameters:
+        - $ref: "#/components/parameters/Code"
+        - $ref: "#/components/parameters/Range"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MarketSeriesPointCollectionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /market/daily/{code}:
+    get:
+      operationId: getMarketDaily
+      parameters:
+        - $ref: "#/components/parameters/Code"
+        - $ref: "#/components/parameters/Refresh"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MarketDailyBarCollectionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /market/watchlist:
+    get:
+      operationId: getMarketWatchlist
+      parameters:
+        - $ref: "#/components/parameters/ResearchTeamId"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MarketWatchlistCollectionDocument" }
+    post:
+      operationId: postMarketWatchlist
+      requestBody: { $ref: "#/components/requestBodies/MarketWatchlistUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MarketWatchlistDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /market/watchlist/{itemId}:
+    put:
+      operationId: putMarketWatchlistItem
+      parameters:
+        - $ref: "#/components/parameters/ItemId"
+      requestBody: { $ref: "#/components/requestBodies/MarketWatchlistUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MarketWatchlistDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+    delete:
+      operationId: deleteMarketWatchlistItem
+      parameters:
+        - $ref: "#/components/parameters/ItemId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /market/tools/query:
+    post:
+      operationId: postMarketToolsQuery
+      requestBody: { $ref: "#/components/requestBodies/MarketToolQueryRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MarketToolResultCollectionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /message-subscriptions/app-config:
+    get:
+      operationId: getMessageSubscriptionAppConfig
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionAppConfigDocument" }
+    post:
+      operationId: postMessageSubscriptionAppConfig
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionAppConfigRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionAppConfigDocument" }
+  /message-subscriptions:
+    get:
+      operationId: getMessageSubscriptions
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionCollectionDocument" }
+    post:
+      operationId: postMessageSubscriptions
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionDocument" }
+  /message-subscription-filters:
+    get:
+      operationId: getMessageSubscriptionFilters
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionFilterCollectionDocument" }
+    post:
+      operationId: postMessageSubscriptionFilters
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionFilterUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionFilterDocument" }
+  /message-subscription-filters/{filterId}:
+    put:
+      operationId: putMessageSubscriptionFilter
+      parameters:
+        - $ref: "#/components/parameters/FilterId"
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionFilterUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionFilterDocument" }
+  /message-subscriptions/test:
+    post:
+      operationId: postMessageSubscriptionsTest
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionTestRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionTestDocument" }
+  /message-subscriptions/collect:
+    post:
+      operationId: postMessageSubscriptionsCollect
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionCollectDocument" }
+  /message-subscriptions/{subscriptionId}:
+    put:
+      operationId: putMessageSubscription
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionId"
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionDocument" }
+    delete:
+      operationId: deleteMessageSubscription
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /message-subscriptions/{subscriptionId}/test:
+    post:
+      operationId: postMessageSubscriptionTest
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionId"
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionTestDocument" }
+  /message-subscriptions/telegram/login/start:
+    post:
+      operationId: postMessageSubscriptionTelegramLoginStart
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionLoginStartRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionLoginSessionDocument" }
+  /message-subscriptions/telegram/login/verify:
+    post:
+      operationId: postMessageSubscriptionTelegramLoginVerify
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionLoginVerifyRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionLoginSessionDocument" }
+  /platform-adapters:
+    get:
+      operationId: getPlatformAdapters
+      responses:
+        "200": { $ref: "#/components/responses/PlatformAdapterCollectionDocument" }
+    post:
+      operationId: postPlatformAdapters
+      requestBody: { $ref: "#/components/requestBodies/PlatformAdapterUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PlatformAdapterDocument" }
+  /platform-adapters/{adapterId}:
+    put:
+      operationId: putPlatformAdapter
+      parameters:
+        - $ref: "#/components/parameters/AdapterId"
+      requestBody: { $ref: "#/components/requestBodies/PlatformAdapterUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PlatformAdapterDocument" }
+    delete:
+      operationId: deletePlatformAdapter
+      parameters:
+        - $ref: "#/components/parameters/AdapterId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /platform-adapters/{adapterId}/test:
+    post:
+      operationId: postPlatformAdapterTest
+      parameters:
+        - $ref: "#/components/parameters/AdapterId"
+      responses:
+        "200": { $ref: "#/components/responses/PlatformAdapterTestDocument" }
+  /ingested-messages:
+    get:
+      operationId: getIngestedMessages
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ResearchTeamId"
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/OnlyUnfiltered"
+        - $ref: "#/components/parameters/FilterDecision"
+        - $ref: "#/components/parameters/FilterStatus"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/IngestedMessageCollectionDocument" }
+    post:
+      operationId: postIngestedMessages
+      requestBody: { $ref: "#/components/requestBodies/IngestedMessageUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/IngestedMessageDocument" }
+  /ingested-messages/refilter:
+    post:
+      operationId: postIngestedMessagesRefilter
+      requestBody: { $ref: "#/components/requestBodies/IngestedMessageRefilterRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/IngestedMessageCollectionDocument" }
+  /ingested-messages/{messageId}:
+    put:
+      operationId: putIngestedMessage
+      parameters:
+        - $ref: "#/components/parameters/MessageId"
+      requestBody: { $ref: "#/components/requestBodies/IngestedMessageUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/IngestedMessageDocument" }
+    delete:
+      operationId: deleteIngestedMessage
+      parameters:
+        - $ref: "#/components/parameters/MessageId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /ingested-messages/{messageId}/filter:
+    post:
+      operationId: postIngestedMessageFilter
+      parameters:
+        - $ref: "#/components/parameters/MessageId"
+      responses:
+        "200": { $ref: "#/components/responses/IngestedMessageDocument" }
+  /meetings:
+    get:
+      operationId: getMeetings
+      parameters:
+        - $ref: "#/components/parameters/ResearchTeamId"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/TriggerSource"
+        - $ref: "#/components/parameters/Tag"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MeetingCollectionDocument" }
+    post:
+      operationId: postMeetings
+      requestBody: { $ref: "#/components/requestBodies/MeetingStartRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MeetingDocument" }
+  /meetings/{meetingId}:
+    get:
+      operationId: getMeeting
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      responses:
+        "200": { $ref: "#/components/responses/MeetingDocument" }
+    put:
+      operationId: putMeeting
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      requestBody: { $ref: "#/components/requestBodies/MeetingUpdateRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MeetingDocument" }
+    delete:
+      operationId: deleteMeeting
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /meetings/{meetingId}/recap:
+    post:
+      operationId: postMeetingRecap
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      responses:
+        "200": { $ref: "#/components/responses/MeetingDocument" }
+  /meetings/{meetingId}/cancel:
+    post:
+      operationId: postMeetingCancel
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      responses:
+        "200": { $ref: "#/components/responses/MeetingDocument" }
+  /meetings/{meetingId}/restart:
+    post:
+      operationId: postMeetingRestart
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      responses:
+        "200": { $ref: "#/components/responses/MeetingDocument" }
+  /meetings/{meetingId}/events:
+    get:
+      operationId: getMeetingEvents
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MeetingEventCollectionDocument" }
+  /meetings/{meetingId}/references:
+    get:
+      operationId: getMeetingReferences
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MeetingReferenceCollectionDocument" }
+    post:
+      operationId: postMeetingReferences
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      requestBody: { $ref: "#/components/requestBodies/MeetingReferenceCreateRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MeetingReferenceDocument" }
+  /meetings/{meetingId}/references/{referenceId}:
+    delete:
+      operationId: deleteMeetingReference
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+        - $ref: "#/components/parameters/ReferenceId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /meetings/{meetingId}/stream:
+    get:
+      operationId: getMeetingStream
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      responses:
+        "200":
+          description: Server-sent event stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+  /wake-plans:
+    get:
+      operationId: getWakePlans
+      parameters:
+        - $ref: "#/components/parameters/ResearchTeamId"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/MeetingIdQuery"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/WakePlanCollectionDocument" }
+    post:
+      operationId: postWakePlans
+      requestBody: { $ref: "#/components/requestBodies/WakePlanUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/WakePlanDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /wake-plans/{planId}/fire:
+    post:
+      operationId: postWakePlanFire
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      responses:
+        "200": { $ref: "#/components/responses/WakePlanDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /wake-plans/{planId}/pause:
+    post:
+      operationId: postWakePlanPause
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      responses:
+        "200": { $ref: "#/components/responses/WakePlanDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /wake-plans/{planId}/resume:
+    post:
+      operationId: postWakePlanResume
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      responses:
+        "200": { $ref: "#/components/responses/WakePlanDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /wake-plans/{planId}/cancel:
+    post:
+      operationId: postWakePlanCancel
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      responses:
+        "200": { $ref: "#/components/responses/WakePlanDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /wake-plans/{planId}:
+    delete:
+      operationId: deleteWakePlan
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /paper/overview:
+    get:
+      operationId: getPaperOverview
+      responses:
+        "200": { $ref: "#/components/responses/PaperOverviewDocument" }
+  /paper/risk-configs:
+    get:
+      operationId: getPaperRiskConfigs
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/PaperRiskConfigCollectionDocument" }
+    post:
+      operationId: postPaperRiskConfigs
+      requestBody: { $ref: "#/components/requestBodies/PaperRiskConfigUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperRiskConfigDocument" }
+  /paper/risk-configs/{configId}:
+    put:
+      operationId: putPaperRiskConfig
+      parameters:
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody: { $ref: "#/components/requestBodies/PaperRiskConfigUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperRiskConfigDocument" }
+    delete:
+      operationId: deletePaperRiskConfig
+      parameters:
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /paper/accounts:
+    get:
+      operationId: getPaperAccounts
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/PaperAccountCollectionDocument" }
+    post:
+      operationId: postPaperAccounts
+      requestBody: { $ref: "#/components/requestBodies/PaperAccountUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperAccountDocument" }
+  /paper/accounts/{accountId}:
+    put:
+      operationId: putPaperAccount
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      requestBody: { $ref: "#/components/requestBodies/PaperAccountUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperAccountDocument" }
+    delete:
+      operationId: deletePaperAccount
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+  /paper/accounts/{accountId}/activate:
+    post:
+      operationId: postPaperAccountActivate
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200": { $ref: "#/components/responses/PaperAccountDocument" }
+  /paper/accounts/{accountId}/deactivate:
+    post:
+      operationId: postPaperAccountDeactivate
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200": { $ref: "#/components/responses/PaperAccountDocument" }
+  /paper/accounts/{accountId}/positions:
+    get:
+      operationId: getPaperAccountPositions
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/PaperPositionCollectionDocument" }
+  /paper/accounts/{accountId}/orders:
+    get:
+      operationId: getPaperAccountOrders
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/PaperOrderCollectionDocument" }
+  /paper/accounts/{accountId}/fills:
+    get:
+      operationId: getPaperAccountFills
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/PaperFillCollectionDocument" }
+  /paper/accounts/{accountId}/performance:
+    get:
+      operationId: getPaperAccountPerformance
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200": { $ref: "#/components/responses/PaperPerformanceDocument" }
+  /paper/orders:
+    get:
+      operationId: getPaperOrders
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/PaperOrderCollectionDocument" }
+    post:
+      operationId: postPaperOrders
+      requestBody: { $ref: "#/components/requestBodies/PaperOrderCreateRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperOrderDocument" }
+  /paper/orders/{orderId}/cancel:
+    post:
+      operationId: postPaperOrderCancel
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200": { $ref: "#/components/responses/PaperOrderDocument" }
+  /paper/orders/{orderId}/fill:
+    post:
+      operationId: postPaperOrderFill
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody: { $ref: "#/components/requestBodies/PaperOrderFillRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperOrderDocument" }
+  /paper/orders/{orderId}:
+    delete:
+      operationId: deletePaperOrder
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200": { $ref: "#/components/responses/DeletionDocument" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  requestBodies:
+    AuthCredentialsRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AuthCredentialsDocument"
+    SecretUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/SecretUpsertDocument"
+    AppSettingUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AppSettingUpsertDocument"
+    ProxySettingRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ProxySettingDocument"
+    AiProviderUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiProviderUpsertDocument"
+    AiRoleUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiRoleUpsertDocument"
+    ResearchTeamUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ResearchTeamUpsertDocument"
+    ResearchTeamRoleUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ResearchTeamRoleUpsertDocument"
+    MarketSymbolUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketSymbolUpsertDocument"
+    MarketWatchlistUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketWatchlistUpsertDocument"
+    MarketToolQueryRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketToolQueryDocument"
+    WakePlanUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/WakePlanUpsertDocument"
+    MessageSubscriptionAppConfigRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionAppConfigRequestDocument"
+    MessageSubscriptionUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionUpsertDocument"
+    MessageSubscriptionFilterUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionFilterUpsertDocument"
+    MessageSubscriptionTestRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionTestRequestDocument"
+    MessageSubscriptionLoginStartRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionLoginStartDocument"
+    MessageSubscriptionLoginVerifyRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionLoginVerifyDocument"
+    PlatformAdapterUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PlatformAdapterUpsertDocument"
+    IngestedMessageUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/IngestedMessageUpsertDocument"
+    IngestedMessageRefilterRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/IngestedMessageRefilterDocument"
+    MeetingStartRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingStartDocument"
+    MeetingUpdateRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingUpdateDocument"
+    MeetingReferenceCreateRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingReferenceCreateDocument"
+    PaperRiskConfigUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperRiskConfigUpsertDocument"
+    PaperAccountUpsertRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperAccountUpsertDocument"
+    PaperOrderCreateRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperOrderCreateDocument"
+    PaperOrderFillRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperOrderFillDocument"
+  responses:
+    AuthBootstrapStateDocument:
+      description: Bootstrap state JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AuthBootstrapStateDocument"
+    AuthTokenDocument:
+      description: Auth token JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AuthTokenDocument"
+    DashboardDocument:
+      description: Dashboard JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/DashboardDocument"
+    LogEntryCollectionDocument:
+      description: Log entry JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/LogEntryCollectionDocument"
+    LogFileCollectionDocument:
+      description: Log file JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/LogFileCollectionDocument"
+    HealthDocument:
+      description: Health check JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/HealthDocument"
+    JsonApiErrorDocument:
+      description: JSON:API error document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/JsonApiErrorDocument"
+    RuntimeEnvCollectionDocument:
+      description: Runtime environment JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/RuntimeEnvCollectionDocument"
+    SecretDefinitionCollectionDocument:
+      description: Secret definition JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/SecretDefinitionCollectionDocument"
+    SecretCollectionDocument:
+      description: Secret JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/SecretCollectionDocument"
+    SecretDocument:
+      description: Secret JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/SecretDocument"
+    AppSettingCollectionDocument:
+      description: App setting JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AppSettingCollectionDocument"
+    AppSettingDocument:
+      description: App setting JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AppSettingDocument"
+    ProxySettingDocument:
+      description: Proxy settings JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ProxySettingDocument"
+    ProxyTestDocument:
+      description: Proxy test JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ProxyTestDocument"
+    AiProviderCollectionDocument:
+      description: AI provider JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiProviderCollectionDocument"
+    AiProviderDocument:
+      description: AI provider JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiProviderDocument"
+    AiProviderModelCollectionDocument:
+      description: AI provider model JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiProviderModelCollectionDocument"
+    AiToolDefinitionCollectionDocument:
+      description: AI tool definition JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiToolDefinitionCollectionDocument"
+    AiSkillDefinitionCollectionDocument:
+      description: AI skill definition JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiSkillDefinitionCollectionDocument"
+    AiRoleCollectionDocument:
+      description: AI role JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiRoleCollectionDocument"
+    AiRoleDocument:
+      description: AI role JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiRoleDocument"
+    AiRoleCapabilityUpdateDocument:
+      description: AI role capability update JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AiRoleCapabilityUpdateDocument"
+    ResearchTeamCollectionDocument:
+      description: Research team JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ResearchTeamCollectionDocument"
+    ResearchTeamDocument:
+      description: Research team JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ResearchTeamDocument"
+    ResearchTeamRoleCollectionDocument:
+      description: Research team role JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ResearchTeamRoleCollectionDocument"
+    ResearchTeamRoleDocument:
+      description: Research team role JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/ResearchTeamRoleDocument"
+    MarketSymbolCollectionDocument:
+      description: Market symbol JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketSymbolCollectionDocument"
+    MarketSymbolDocument:
+      description: Market symbol JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketSymbolDocument"
+    MarketSymbolSyncDocument:
+      description: Market symbol sync JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketSymbolSyncDocument"
+    MarketQuoteDocument:
+      description: Market quote JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketQuoteDocument"
+    MarketSeriesPointCollectionDocument:
+      description: Market series JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketSeriesPointCollectionDocument"
+    MarketDailyBarCollectionDocument:
+      description: Market daily bar JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketDailyBarCollectionDocument"
+    MarketWatchlistCollectionDocument:
+      description: Market watchlist JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketWatchlistCollectionDocument"
+    MarketWatchlistDocument:
+      description: Market watchlist JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketWatchlistDocument"
+    MarketToolResultCollectionDocument:
+      description: Market tool result JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketToolResultCollectionDocument"
+    DeletionDocument:
+      description: Deletion JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/DeletionDocument"
+    WakePlanCollectionDocument:
+      description: Wake plan JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/WakePlanCollectionDocument"
+    WakePlanDocument:
+      description: Wake plan JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/WakePlanDocument"
+    MeetingCollectionDocument:
+      description: Meeting JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingCollectionDocument"
+    MeetingDocument:
+      description: Meeting JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingDocument"
+    MeetingEventCollectionDocument:
+      description: Meeting event JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingEventCollectionDocument"
+    MeetingReferenceCollectionDocument:
+      description: Meeting reference JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingReferenceCollectionDocument"
+    MeetingReferenceDocument:
+      description: Meeting reference JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingReferenceDocument"
+    MessageSubscriptionAppConfigDocument:
+      description: Message subscription app config JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionAppConfigDocument"
+    PlatformAdapterDocument:
+      description: Platform adapter JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PlatformAdapterDocument"
+    PlatformAdapterCollectionDocument:
+      description: Platform adapter JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PlatformAdapterCollectionDocument"
+    MessageSubscriptionCollectionDocument:
+      description: Message subscription JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionCollectionDocument"
+    MessageSubscriptionDocument:
+      description: Message subscription JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionDocument"
+    MessageSubscriptionFilterCollectionDocument:
+      description: Message subscription filter JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionFilterCollectionDocument"
+    MessageSubscriptionFilterDocument:
+      description: Message subscription filter JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionFilterDocument"
+    MessageSubscriptionTestDocument:
+      description: Message subscription test JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionTestDocument"
+    MessageSubscriptionCollectDocument:
+      description: Message subscription collect JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionCollectDocument"
+    MessageSubscriptionLoginSessionDocument:
+      description: Message subscription login session JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionLoginSessionDocument"
+    PlatformAdapterTestDocument:
+      description: Platform adapter test JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PlatformAdapterTestDocument"
+    IngestedMessageCollectionDocument:
+      description: Ingested message JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/IngestedMessageCollectionDocument"
+    IngestedMessageDocument:
+      description: Ingested message JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/IngestedMessageDocument"
+    PaperOverviewDocument:
+      description: Paper overview JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperOverviewDocument"
+    PaperRiskConfigCollectionDocument:
+      description: Paper risk config JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperRiskConfigCollectionDocument"
+    PaperRiskConfigDocument:
+      description: Paper risk config JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperRiskConfigDocument"
+    PaperAccountCollectionDocument:
+      description: Paper account JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperAccountCollectionDocument"
+    PaperAccountDocument:
+      description: Paper account JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperAccountDocument"
+    PaperPositionCollectionDocument:
+      description: Paper position JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperPositionCollectionDocument"
+    PaperOrderCollectionDocument:
+      description: Paper order JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperOrderCollectionDocument"
+    PaperOrderDocument:
+      description: Paper order JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperOrderDocument"
+    PaperFillCollectionDocument:
+      description: Paper fill JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperFillCollectionDocument"
+    PaperPerformanceDocument:
+      description: Paper performance JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperPerformanceDocument"
+    JsonApiDocument:
+      description: JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/JsonApiDocument"
+  parameters:
+    SearchQuery:
+      name: q
+      in: query
+      schema: { type: string }
+    Refresh:
+      name: refresh
+      in: query
+      schema: { type: boolean }
+    Range:
+      name: range
+      in: query
+      schema: { type: string }
+    Status:
+      name: status
+      in: query
+      schema: { type: string }
+    TriggerSource:
+      name: triggerSource
+      in: query
+      schema: { type: string }
+    Tag:
+      name: tag
+      in: query
+      schema: { type: string }
+    MeetingIdQuery:
+      name: meetingId
+      in: query
+      schema: { type: string }
+    ResearchTeamId:
+      name: researchTeamId
+      in: query
+      schema: { type: string }
+    ChannelIdQuery:
+      name: channelId
+      in: query
+      schema: { type: string }
+    SubscriptionIdQuery:
+      name: subscriptionId
+      in: query
+      schema: { type: string }
+    OnlyUnfiltered:
+      name: onlyUnfiltered
+      in: query
+      schema: { type: boolean }
+    FilterDecision:
+      name: filterDecision
+      in: query
+      schema: { type: string }
+    FilterStatus:
+      name: filterStatus
+      in: query
+      schema: { type: string }
+    LogFrom:
+      name: from
+      in: query
+      schema: { type: string, format: date-time }
+    LogTo:
+      name: to
+      in: query
+      schema: { type: string, format: date-time }
+    LogLevel:
+      name: level
+      in: query
+      schema:
+        type: string
+        enum: [debug, info, warn, error]
+    LogRole:
+      name: role
+      in: query
+      schema: { type: string }
+    LogSource:
+      name: source
+      in: query
+      schema: { type: string }
+    LogEvent:
+      name: event
+      in: query
+      schema:
+        type: string
+    LogGroup:
+      name: group
+      in: query
+      schema: { type: string }
+    LogMethod:
+      name: method
+      in: query
+      schema: { type: string }
+    LogPath:
+      name: path
+      in: query
+      schema: { type: string }
+    LogStatus:
+      name: status
+      in: query
+      schema: { type: string }
+    LogSlowOnly:
+      name: slowOnly
+      in: query
+      schema: { type: boolean }
+    LogIncludeNoise:
+      name: includeNoise
+      in: query
+      schema: { type: boolean, default: false }
+    LogFile:
+      name: file
+      in: query
+      schema: { type: string }
+    PageLimit:
+      name: page[limit]
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    PageCursor:
+      name: page[cursor]
+      in: query
+      schema:
+        type: string
+    AccountId: { name: accountId, in: path, required: true, schema: { type: string } }
+    AdapterId: { name: adapterId, in: path, required: true, schema: { type: string } }
+    ChannelId: { name: channelId, in: path, required: true, schema: { type: string } }
+    Code: { name: code, in: path, required: true, schema: { type: string } }
+    ConfigId: { name: configId, in: path, required: true, schema: { type: string } }
+    ItemId: { name: itemId, in: path, required: true, schema: { type: string } }
+    Key: { name: key, in: path, required: true, schema: { type: string } }
+    MeetingId: { name: meetingId, in: path, required: true, schema: { type: string } }
+    MessageId: { name: messageId, in: path, required: true, schema: { type: string } }
+    FilterId: { name: filterId, in: path, required: true, schema: { type: string } }
+    OrderId: { name: orderId, in: path, required: true, schema: { type: string } }
+    PlanId: { name: planId, in: path, required: true, schema: { type: string } }
+    ProviderId: { name: providerId, in: path, required: true, schema: { type: string } }
+    ReferenceId: { name: referenceId, in: path, required: true, schema: { type: string } }
+    RoleKey: { name: roleKey, in: path, required: true, schema: { type: string } }
+    SubscriptionId: { name: subscriptionId, in: path, required: true, schema: { type: string } }
+    TeamId: { name: teamId, in: path, required: true, schema: { type: string } }
+  schemas:
+    JsonApiDocument:
+      type: object
+      properties:
+        data:
+          nullable: true
+          oneOf:
+            - $ref: "#/components/schemas/Resource"
+            - type: array
+              items:
+                $ref: "#/components/schemas/Resource"
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorObject"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+        included:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resource"
+    JsonApiErrorDocument:
+      type: object
+      required: [errors]
+      properties:
+        errors:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ErrorObject"
+    AuthCredentialsDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthCredentialsResource"
+    AuthCredentialsResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [auth-login-requests, auth-bootstrap-requests]
+        attributes:
+          $ref: "#/components/schemas/AuthCredentialsAttributes"
+    AuthCredentialsAttributes:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+    AuthBootstrapStateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthBootstrapStateResource"
+    AuthBootstrapStateResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [auth-bootstrap-states]
+        id:
+          type: string
+          enum: [default]
+        attributes:
+          $ref: "#/components/schemas/AuthBootstrapStateAttributes"
+    AuthBootstrapStateAttributes:
+      type: object
+      required: [bootstrapRequired]
+      properties:
+        bootstrapRequired:
+          type: boolean
+    AuthTokenDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthTokenResource"
+    AuthTokenResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [auth-tokens]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          $ref: "#/components/schemas/AuthTokenAttributes"
+    AuthTokenAttributes:
+      type: object
+      required: [accessToken, tokenType]
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [bearer]
+    DashboardDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/DashboardResource"
+    DashboardResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [dashboards]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          $ref: "#/components/schemas/DashboardAttributes"
+    DashboardAttributes:
+      type: object
+      required: [summary, systemStatus, businessMetrics, recentActivity, alerts]
+      properties:
+        summary:
+          type: object
+          additionalProperties: true
+        systemStatus:
+          type: object
+          additionalProperties: true
+        businessMetrics:
+          type: object
+          additionalProperties: true
+        recentActivity:
+          type: object
+          additionalProperties: true
+        dependencyDiagnostics:
+          type: object
+          additionalProperties: true
+        alerts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    LogEntryCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogEntryResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    LogEntryResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [log-entries]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/LogEntryAttributes"
+    LogEntryAttributes:
+      type: object
+      required: [level, role, source, event, message, caller, file, group, method, path, status, durationMs, noise, fields, raw]
+      properties:
+        time:
+          type: string
+          format: date-time
+          nullable: true
+        level:
+          type: string
+        role:
+          type: string
+        source:
+          type: string
+        event:
+          type: string
+        message:
+          type: string
+        caller:
+          type: string
+        file:
+          type: string
+        group:
+          type: string
+        method:
+          type: string
+        path:
+          type: string
+        status:
+          type: string
+        durationMs:
+          type: integer
+          nullable: true
+        noise:
+          type: boolean
+        fields:
+          type: object
+          additionalProperties: true
+        raw:
+          type: object
+          additionalProperties: true
+        stacktrace:
+          type: string
+    LogFileCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogFileResource"
+        meta:
+          type: object
+          properties:
+            config:
+              $ref: "#/components/schemas/LogConfigSummary"
+          additionalProperties: true
+    LogFileResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [log-files]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/LogFileAttributes"
+    LogFileAttributes:
+      type: object
+      required: [name, sizeBytes, modified, active, role]
+      properties:
+        name:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+        modified:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        role:
+          type: string
+    LogConfigSummary:
+      type: object
+      properties:
+        dir: { type: string }
+        level: { type: string }
+        rotationMode: { type: string }
+        rotationSizeMB: { type: integer }
+        rotationTotalSizeMB: { type: integer }
+        rotationMaxAgeDays: { type: integer }
+    RuntimeEnvCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RuntimeEnvResource"
+        meta:
+          type: object
+          additionalProperties: true
+    RuntimeEnvResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [runtime-env-vars]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/RuntimeEnvAttributes"
+    RuntimeEnvAttributes:
+      type: object
+      required: [key, value, description, sensitive, editableInUi, restartRequired]
+      properties:
+        key:
+          type: string
+        value: {}
+        description:
+          type: string
+        sensitive:
+          type: boolean
+        editableInUi:
+          type: boolean
+        restartRequired:
+          type: boolean
+    SecretDefinitionCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SecretDefinitionResource"
+        meta:
+          type: object
+          additionalProperties: true
+    SecretDefinitionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [secret-definitions]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/SecretDefinitionAttributes"
+    SecretDefinitionAttributes:
+      type: object
+      required: [kind, name, title, purpose, requiredFor, placeholder]
+      properties:
+        kind:
+          type: string
+        name:
+          type: string
+        title:
+          type: string
+        purpose:
+          type: string
+        requiredFor:
+          type: string
+        placeholder:
+          type: string
+    SecretCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SecretResource"
+        meta:
+          type: object
+          additionalProperties: true
+    SecretDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/SecretResource"
+    SecretResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [secrets]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/SecretAttributes"
+    SecretAttributes:
+      type: object
+      required: [kind, name, createdAt, updatedAt]
+      properties:
+        kind:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SecretUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/SecretUpsertResource"
+    SecretUpsertResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [secrets]
+        attributes:
+          $ref: "#/components/schemas/SecretUpsertAttributes"
+    SecretUpsertAttributes:
+      type: object
+      required: [kind, name, value]
+      properties:
+        kind:
+          type: string
+        name:
+          type: string
+        value:
+          type: string
+    AppSettingCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppSettingResource"
+        meta:
+          type: object
+          additionalProperties: true
+    AppSettingDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AppSettingResource"
+    AppSettingResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [app-settings]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AppSettingAttributes"
+    AppSettingAttributes:
+      type: object
+      required: [key, value, updatedAt]
+      properties:
+        key:
+          type: string
+        value: {}
+        description:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+    AppSettingUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AppSettingUpsertResource"
+    AppSettingUpsertResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [app-settings]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AppSettingUpsertAttributes"
+    AppSettingUpsertAttributes:
+      type: object
+      required: [value]
+      properties:
+        key:
+          type: string
+        value: {}
+        description:
+          type: string
+          nullable: true
+    ProxySettingDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/ProxySettingResource"
+    ProxySettingResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [proxy-settings]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          $ref: "#/components/schemas/ProxySettingAttributes"
+    ProxySettingAttributes:
+      type: object
+      required: [proxyUrl, enabledAi, enabledTelegram, enabledMarket, enabledWeb, noProxy]
+      properties:
+        proxyUrl:
+          type: string
+        enabledAi:
+          type: boolean
+        enabledTelegram:
+          type: boolean
+        enabledMarket:
+          type: boolean
+        enabledWeb:
+          type: boolean
+        noProxy:
+          type: array
+          items:
+            type: string
+        revision:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    ProxyTestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/ProxyTestResource"
+    ProxyTestResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [proxy-tests]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          $ref: "#/components/schemas/ProxyTestAttributes"
+    ProxyTestAttributes:
+      type: object
+      required: [results, checkedAt]
+      properties:
+        results:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: true
+        checkedAt:
+          type: string
+          format: date-time
+    AiProviderCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiProviderResource"
+    AiProviderDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AiProviderResource"
+    AiProviderResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-providers]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AiProviderAttributes"
+    AiProviderAttributes:
+      type: object
+      required: [name, baseUrl, defaultModel, hasApiKey, enabled]
+      properties:
+        name:
+          type: string
+        baseUrl:
+          type: string
+        defaultModel:
+          type: string
+        hasApiKey:
+          type: boolean
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    AiProviderUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AiProviderUpsertResource"
+    AiProviderUpsertResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-providers]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AiProviderUpsertAttributes"
+    AiProviderUpsertAttributes:
+      type: object
+      required: [name, baseUrl, defaultModel, enabled]
+      properties:
+        name:
+          type: string
+        baseUrl:
+          type: string
+        defaultModel:
+          type: string
+        apiKey:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+    AiProviderModelCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiProviderModelResource"
+    AiProviderModelResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-provider-models]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AiProviderModelAttributes"
+        relationships:
+          type: object
+          properties:
+            provider:
+              $ref: "#/components/schemas/Relationship"
+    AiProviderModelAttributes:
+      type: object
+      required: [providerId, modelId, displayName, enabled, updatedAt]
+      properties:
+        providerId:
+          type: integer
+        modelId:
+          type: string
+        displayName:
+          type: string
+        ownedBy:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        raw: {}
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AiCapabilityDefinitionAttributes:
+      type: object
+      required: [key, title, description, category]
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+    AiToolDefinitionCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiToolDefinitionResource"
+    AiToolDefinitionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-tool-definitions]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AiCapabilityDefinitionAttributes"
+    AiSkillDefinitionCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSkillDefinitionResource"
+    AiSkillDefinitionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-skill-definitions]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AiCapabilityDefinitionAttributes"
+    AiRoleCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiRoleResource"
+    AiRoleDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AiRoleResource"
+    AiRoleResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-roles]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AiRoleAttributes"
+        relationships:
+          type: object
+          properties:
+            provider:
+              $ref: "#/components/schemas/Relationship"
+    AiRoleAttributes:
+      type: object
+      required: [key, name, responsibility, promptTemplate, providerId, model, toolNames, skillNames, enabled, sortOrder]
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        responsibility:
+          type: string
+        promptTemplate:
+          type: string
+        providerId:
+          type: integer
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        toolNames:
+          type: array
+          items:
+            type: string
+        skillNames:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        sortOrder:
+          type: integer
+    AiRoleUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AiRoleUpsertResource"
+    AiRoleUpsertResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-roles]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AiRoleAttributes"
+    AiRoleCapabilityUpdateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AiRoleCapabilityUpdateResource"
+    AiRoleCapabilityUpdateResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ai-role-capability-updates]
+        id:
+          type: string
+          enum: [default]
+        attributes:
+          $ref: "#/components/schemas/AiRoleCapabilityUpdateAttributes"
+    AiRoleCapabilityUpdateAttributes:
+      type: object
+      required: [updated]
+      properties:
+        updated:
+          type: integer
+    ResearchTeamCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResearchTeamResource"
+    ResearchTeamDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/ResearchTeamResource"
+    ResearchTeamResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [research-teams] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/ResearchTeamAttributes"
+        relationships:
+          type: object
+          properties:
+            paperAccount:
+              $ref: "#/components/schemas/Relationship"
+    ResearchTeamAttributes:
+      type: object
+      required: [name, paperAccountId, active]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        paperAccountId: { type: integer }
+        active: { type: boolean }
+        copyRolesFromTeamId:
+          type: integer
+          nullable: true
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ResearchTeamUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [research-teams] }
+            id: { type: string }
+            attributes:
+              $ref: "#/components/schemas/ResearchTeamAttributes"
+    ResearchTeamRoleCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResearchTeamRoleResource"
+    ResearchTeamRoleDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/ResearchTeamRoleResource"
+    ResearchTeamRoleResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [research-team-roles] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/ResearchTeamRoleAttributes"
+        relationships:
+          type: object
+          properties:
+            researchTeam:
+              $ref: "#/components/schemas/Relationship"
+            provider:
+              $ref: "#/components/schemas/Relationship"
+    ResearchTeamRoleAttributes:
+      type: object
+      required: [researchTeamId, key, name, responsibility, promptTemplate, providerId, model, toolNames, skillNames, enabled, sortOrder]
+      properties:
+        researchTeamId: { type: integer }
+        key: { type: string }
+        name: { type: string }
+        responsibility: { type: string }
+        promptTemplate: { type: string }
+        providerId:
+          type: integer
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        toolNames:
+          type: array
+          items: { type: string }
+        skillNames:
+          type: array
+          items: { type: string }
+        enabled: { type: boolean }
+        sortOrder: { type: integer }
+    ResearchTeamRoleUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [research-team-roles] }
+            id: { type: string }
+            attributes:
+              $ref: "#/components/schemas/ResearchTeamRoleAttributes"
+    MarketSymbolCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketSymbolResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MarketSymbolDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketSymbolResource"
+    MarketSymbolResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-symbols]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/MarketSymbolAttributes"
+    MarketSymbolAttributes:
+      type: object
+      required: [code, name, exchange, active]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        exchange: { type: string }
+        industry:
+          type: string
+          nullable: true
+        listedDate:
+          type: string
+          format: date-time
+          nullable: true
+        active: { type: boolean }
+        updatedAt:
+          type: string
+          format: date-time
+    MarketSymbolUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketSymbolUpsertResource"
+    MarketSymbolUpsertResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-symbols]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/MarketSymbolUpsertAttributes"
+    MarketSymbolUpsertAttributes:
+      type: object
+      required: [code, name, exchange, active]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        exchange: { type: string }
+        industry:
+          type: string
+          nullable: true
+        active: { type: boolean }
+    MarketSymbolSyncDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketSymbolSyncResource"
+    MarketSymbolSyncResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-symbol-syncs]
+        id:
+          type: string
+          enum: [latest]
+        attributes:
+          type: object
+          required: [provider, synced]
+          properties:
+            provider: { type: string }
+            synced: { type: integer }
+    MarketQuoteDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketQuoteResource"
+    MarketQuoteResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-quotes]
+        id:
+          type: string
+        attributes:
+          type: object
+          required: [code, quoteTime, price, changePct, volume, amount, provider]
+          properties:
+            code: { type: string }
+            quoteTime:
+              type: string
+              format: date-time
+            price: {}
+            changePct: {}
+            volume: {}
+            amount: {}
+            raw: {}
+            provider: { type: string }
+    MarketSeriesPointCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketSeriesPointResource"
+    MarketSeriesPointResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-series-points]
+        id:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+    MarketDailyBarCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketDailyBarResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MarketDailyBarResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-daily-bars]
+        id:
+          type: string
+        attributes:
+          type: object
+          required: [code, tradeDate, open, high, low, close, volume, amount, provider]
+          properties:
+            code: { type: string }
+            tradeDate:
+              type: string
+              format: date-time
+            open: {}
+            high: {}
+            low: {}
+            close: {}
+            volume: {}
+            amount: {}
+            provider: { type: string }
+    MarketWatchlistCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketWatchlistResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MarketWatchlistDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketWatchlistResource"
+    MarketWatchlistResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-watchlist-items]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/MarketWatchlistAttributes"
+    MarketWatchlistAttributes:
+      type: object
+      required: [researchTeamId, code, active, createdAt]
+      properties:
+        researchTeamId: { type: integer }
+        code: { type: string }
+        symbolName:
+          type: string
+          nullable: true
+        exchange:
+          type: string
+          nullable: true
+        price: {}
+        changePct: {}
+        quoteTime:
+          type: string
+          format: date-time
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        active: { type: boolean }
+        createdAt:
+          type: string
+          format: date-time
+    MarketWatchlistUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketWatchlistUpsertResource"
+    MarketWatchlistUpsertResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-watchlist-items]
+        id:
+          type: string
+        attributes:
+          type: object
+          required: [researchTeamId, code, active]
+          properties:
+            researchTeamId: { type: integer }
+            code: { type: string }
+            note:
+              type: string
+              nullable: true
+            active: { type: boolean }
+    MarketToolQueryDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type:
+              type: string
+              enum: [market-tool-queries]
+            attributes:
+              type: object
+              required: [tool]
+              properties:
+                tool: { type: string }
+                arguments:
+                  type: object
+                  additionalProperties: true
+    MarketToolResultCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketToolResultResource"
+    MarketToolResultResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-tool-results]
+        id:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+    DeletionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/DeletionResource"
+    DeletionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [deletions]
+        id:
+          type: string
+        attributes:
+          type: object
+          required: [status]
+          properties:
+            status:
+              type: string
+              enum: [deleted]
+            unboundAccountIds:
+              type: array
+              items:
+                type: integer
+            unboundAccountCount:
+              type: integer
+    WakePlanCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/WakePlanResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    WakePlanDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/WakePlanResource"
+    WakePlanResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [wake-plans]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/WakePlanAttributes"
+        relationships:
+          type: object
+          properties:
+            meeting:
+              $ref: "#/components/schemas/Relationship"
+            sourceMeetingEvent:
+              $ref: "#/components/schemas/Relationship"
+    WakePlanAttributes:
+      type: object
+      required: [researchTeamId, triggerType, triggerConfig, reason, status, createdAt]
+      properties:
+        researchTeamId: { type: integer }
+        meetingId:
+          type: integer
+          nullable: true
+        triggerType:
+          type: string
+        triggerConfig:
+          type: object
+          additionalProperties: true
+        reason:
+          type: string
+        sourceMeetingEventId:
+          type: integer
+          nullable: true
+        sourceRoleKey:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, paused, fired, cancelled]
+        nextCheckAt:
+          type: string
+          format: date-time
+          nullable: true
+        firedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastRunAt:
+          type: string
+          format: date-time
+          nullable: true
+        resultSummary:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    WakePlanUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type:
+              type: string
+              enum: [wake-plans]
+            id:
+              type: string
+            attributes:
+              $ref: "#/components/schemas/WakePlanAttributes"
+    MeetingCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MeetingDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MeetingResource"
+    MeetingResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [meetings] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MeetingAttributes"
+    MeetingAttributes:
+      type: object
+      properties:
+        researchTeamId: { type: integer }
+        topic: { type: string }
+        status: { type: string }
+        triggerSource: { type: string }
+        summary:
+          type: string
+          nullable: true
+        conclusion:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        recapStatus:
+          type: string
+          nullable: true
+        recapUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        tokenBudget: { type: integer }
+        runId:
+          type: string
+          nullable: true
+        runAttempt: { type: integer }
+        heartbeatAt:
+          type: string
+          format: date-time
+          nullable: true
+        autoRequeueCount: { type: integer }
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt: { type: string, format: date-time }
+    MeetingEventCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingEventResource"
+    MeetingEventResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [meeting-events] }
+        id: { type: string }
+        attributes:
+          type: object
+          properties:
+            meetingId: { type: integer }
+            sequence: { type: integer }
+            type: { type: string }
+            roleKey:
+              type: string
+              nullable: true
+            content: { type: string }
+            payload:
+              type: object
+              additionalProperties: true
+            createdAt: { type: string, format: date-time }
+        relationships:
+          type: object
+          properties:
+            meeting:
+              $ref: "#/components/schemas/Relationship"
+    MeetingReferenceCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingReferenceResource"
+    MeetingReferenceDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MeetingReferenceResource"
+    MeetingReferenceResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [meeting-references] }
+        id: { type: string }
+        attributes:
+          type: object
+          properties:
+            sourceMeetingId: { type: integer }
+            targetMeetingId:
+              type: integer
+              nullable: true
+            referenceType: { type: string }
+            note:
+              type: string
+              nullable: true
+            targetTopicSnapshot: { type: string }
+            targetSummarySnapshot:
+              type: string
+              nullable: true
+            targetDeleted: { type: boolean }
+            externalRef:
+              type: string
+              nullable: true
+            createdAt: { type: string, format: date-time }
+        relationships:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Relationship"
+    MeetingStartDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [meetings] }
+            attributes:
+              type: object
+              required: [researchTeamId, topic]
+              properties:
+                researchTeamId: { type: integer }
+                topic: { type: string }
+                triggerSource: { type: string }
+                context:
+                  type: object
+                  additionalProperties: true
+    MeetingUpdateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [meetings] }
+            id: { type: string }
+            attributes:
+              type: object
+              properties:
+                topic: { type: string }
+                triggerSource: { type: string }
+                tags:
+                  type: array
+                  items: { type: string }
+    MeetingReferenceCreateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [meeting-references] }
+            attributes:
+              type: object
+              required: [targetMeetingId]
+              properties:
+                targetMeetingId: { type: integer }
+                note:
+                  type: string
+                  nullable: true
+    MessageSubscriptionAppConfigDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-app-configs] }
+            id: { type: string, enum: [current] }
+            attributes:
+              type: object
+              properties:
+                provider: { type: string }
+                hasAppId: { type: boolean }
+                hasAppHash: { type: boolean }
+                hasSession: { type: boolean }
+    MessageSubscriptionAppConfigRequestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-app-configs] }
+            id: { type: string, enum: [current] }
+            attributes:
+              type: object
+              required: [appId, appHash]
+              properties:
+                appId: { type: string }
+                appHash: { type: string }
+    PlatformAdapterCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformAdapterResource"
+    PlatformAdapterDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PlatformAdapterResource"
+    PlatformAdapterResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [platform-adapters] }
+        id: { type: string }
+        attributes:
+          type: object
+          properties:
+            provider: { type: string }
+            displayName: { type: string }
+            enabled: { type: boolean }
+            config:
+              type: object
+              additionalProperties: true
+            hasBotToken: { type: boolean }
+            hasChatId: { type: boolean }
+            chatId: { type: string }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    PlatformAdapterUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [platform-adapters] }
+            id: { type: string }
+            attributes:
+              type: object
+              required: [botToken, chatId]
+              properties:
+                provider: { type: string }
+                displayName: { type: string }
+                enabled: { type: boolean }
+                config:
+                  type: object
+                  additionalProperties: true
+                botToken: { type: string }
+                chatId: { type: string }
+    MessageSubscriptionCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSubscriptionResource"
+    MessageSubscriptionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MessageSubscriptionResource"
+    MessageSubscriptionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-subscriptions] }
+        id: { type: string }
+        attributes:
+          type: object
+          properties:
+            provider:
+              type: string
+              enum: [telegram_channel, rss_feed]
+            title: { type: string }
+            sourceRef:
+              type: string
+              description: RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+            enabled: { type: boolean }
+            filterId: { type: integer }
+            filterName: { type: string }
+            teamIds:
+              type: array
+              items: { type: integer }
+            backfillLimit: { type: integer }
+            pollIntervalSeconds: { type: integer }
+            collectFrom: { type: string, format: date-time }
+            lastCollectedAt:
+              type: string
+              format: date-time
+              nullable: true
+            nextCollectAt:
+              type: string
+              format: date-time
+              nullable: true
+            lastCollectError:
+              type: string
+              nullable: true
+            config:
+              type: object
+              additionalProperties: true
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    MessageSubscriptionUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [message-subscriptions] }
+            id: { type: string }
+            attributes:
+              type: object
+              required: [title, sourceRef]
+              properties:
+                provider:
+                  type: string
+                  enum: [telegram_channel, rss_feed]
+                title: { type: string }
+                sourceRef:
+                  type: string
+                  description: RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+                enabled: { type: boolean }
+                filterId: { type: integer }
+                teamIds:
+                  type: array
+                  items: { type: integer }
+                backfillLimit: { type: integer }
+                pollIntervalSeconds: { type: integer }
+                config:
+                  type: object
+                  additionalProperties: true
+    MessageSubscriptionFilterCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSubscriptionFilterResource"
+    MessageSubscriptionFilterDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MessageSubscriptionFilterResource"
+    MessageSubscriptionFilterResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-subscription-filters] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MessageSubscriptionFilterAttributes"
+        relationships:
+          type: object
+          properties:
+            provider:
+              $ref: "#/components/schemas/Relationship"
+    MessageSubscriptionFilterAttributes:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        promptTemplate: { type: string }
+        providerId:
+          type: integer
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        enabled: { type: boolean }
+        isDefault: { type: boolean }
+        toolNames:
+          type: array
+          items: { type: string }
+        skillNames:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    MessageSubscriptionFilterUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-filters] }
+            id: { type: string }
+            attributes:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                promptTemplate: { type: string }
+                providerId:
+                  type: integer
+                  nullable: true
+                model:
+                  type: string
+                  nullable: true
+                enabled: { type: boolean }
+                isDefault: { type: boolean }
+    MessageSubscriptionTestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-tests] }
+            id: { type: string, enum: [current] }
+            attributes:
+              type: object
+              additionalProperties: true
+    MessageSubscriptionTestRequestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-tests] }
+            attributes:
+              type: object
+              required: [sourceRef]
+              properties:
+                provider:
+                  type: string
+                  enum: [telegram_channel, rss_feed]
+                sourceRef:
+                  type: string
+                  description: RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+    MessageSubscriptionCollectDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-collect-results] }
+            id: { type: string, enum: [current] }
+            attributes:
+              type: object
+              properties:
+                subscriptions: { type: integer }
+                queued: { type: integer }
+                status: { type: string }
+                collected: { type: integer }
+                filtered: { type: integer }
+    MessageSubscriptionLoginSessionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-login-sessions] }
+            id: { type: string, enum: [telegram] }
+            attributes:
+              type: object
+              additionalProperties: true
+    MessageSubscriptionLoginStartDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-login-sessions] }
+            attributes:
+              type: object
+              required: [phone]
+              properties:
+                phone: { type: string }
+    MessageSubscriptionLoginVerifyDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-login-sessions] }
+            attributes:
+              type: object
+              required: [phone, code, phoneCodeHash]
+              properties:
+                phone: { type: string }
+                code: { type: string }
+                phoneCodeHash: { type: string }
+                password:
+                  type: string
+                  nullable: true
+    PlatformAdapterTestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [platform-adapter-test-results] }
+            id: { type: string, enum: [current] }
+            attributes:
+              type: object
+              properties:
+                status: { type: string }
+                chatId: { type: string }
+                messageId: {}
+    IngestedMessageCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngestedMessageResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    IngestedMessageDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/IngestedMessageResource"
+    IngestedMessageResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [ingested-messages] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/IngestedMessageAttributes"
+        relationships:
+          type: object
+          properties:
+            subscription:
+              $ref: "#/components/schemas/Relationship"
+    IngestedMessageAttributes:
+      type: object
+      properties:
+        subscriptionId: { type: integer }
+        subscriptionTitle: { type: string }
+        sourceRef: { type: string }
+        provider: { type: string }
+        sourceMessageId: { type: string }
+        messageTime: { type: string, format: date-time }
+        text: { type: string }
+        filterDecision:
+          type: string
+          nullable: true
+        filterReason:
+          type: string
+          nullable: true
+        filterStatus:
+          type: string
+          enum: [unfiltered, filtering, filtered, failed]
+        relatedSymbols:
+          type: array
+          items:
+            type: string
+        filteredAt:
+          type: string
+          format: date-time
+          nullable: true
+        filterId:
+          type: integer
+          nullable: true
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    IngestedMessageUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [ingested-messages] }
+            id: { type: string }
+            attributes:
+              type: object
+              required: [subscriptionId, text]
+              properties:
+                subscriptionId: { type: integer }
+                sourceMessageId: { type: string }
+                messageTime: { type: string, format: date-time }
+                text: { type: string }
+                filterDecision:
+                  type: string
+                  nullable: true
+                filterReason:
+                  type: string
+                  nullable: true
+                relatedSymbols:
+                  type: array
+                  items: { type: string }
+    IngestedMessageRefilterDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [ingested-message-refilters] }
+            attributes:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: integer }
+                limit: { type: integer }
+                onlyUnfiltered: { type: boolean }
+    PaperOverviewDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [paper-overviews] }
+            id: { type: string, enum: [current] }
+            attributes:
+              $ref: "#/components/schemas/PaperOverviewAttributes"
+    PaperOverviewAttributes:
+      type: object
+      properties:
+        accountCount: { type: integer }
+        activeAccountCount: { type: integer }
+        totalCash: {}
+        totalMarketValue: {}
+        totalEquity: {}
+        totalUnrealizedPnl: {}
+        totalRealizedPnl: {}
+        totalReturnPct: {}
+        positionCount: { type: integer }
+        fillCount: { type: integer }
+        suggestedOrderCount: { type: integer }
+        pendingOrderCount: { type: integer }
+        filledOrderCount: { type: integer }
+        rejectedOrderCount: { type: integer }
+        cancelledOrderCount: { type: integer }
+    PaperRiskConfigCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperRiskConfigResource"
+    PaperRiskConfigDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PaperRiskConfigResource"
+    PaperRiskConfigResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [paper-risk-configs] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PaperRiskConfigAttributes"
+    PaperRiskConfigAttributes:
+      type: object
+      properties:
+        name: { type: string }
+        initialCash: {}
+        maxPositionPct: {}
+        maxOrderPct: {}
+        allowShort: { type: boolean }
+        allowMargin: { type: boolean }
+        allowShMain: { type: boolean }
+        allowSzMain: { type: boolean }
+        allowBj: { type: boolean }
+        allowStar: { type: boolean }
+        allowChinext: { type: boolean }
+        allowEtfLof: { type: boolean }
+        commissionRate: {}
+        minCommission: {}
+        stampDutyRate: {}
+        transferFeeRate: {}
+        enabled: { type: boolean }
+        accountIds:
+          type: array
+          items:
+            type: integer
+        accountCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    PaperRiskConfigUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-risk-configs] }
+            id: { type: string }
+            attributes:
+              $ref: "#/components/schemas/PaperRiskConfigAttributes"
+    PaperAccountCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperAccountResource"
+    PaperAccountDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PaperAccountResource"
+    PaperAccountResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [paper-accounts] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PaperAccountAttributes"
+        relationships:
+          type: object
+          properties:
+            riskConfig:
+              $ref: "#/components/schemas/Relationship"
+    PaperAccountAttributes:
+      type: object
+      properties:
+        name: { type: string }
+        initialCash: {}
+        cash: {}
+        riskConfigId:
+          type: integer
+          nullable: true
+        researchTeamId:
+          type: integer
+          nullable: true
+        researchTeamName:
+          type: string
+          nullable: true
+        active: { type: boolean }
+        marketValue: {}
+        totalEquity: {}
+        unrealizedPnl: {}
+        realizedPnl: {}
+        totalReturnPct: {}
+        positionCount: { type: integer }
+        pendingOrderCount: { type: integer }
+    PaperAccountUpsertDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-accounts] }
+            id: { type: string }
+            attributes:
+              type: object
+              required: [name, initialCash]
+              properties:
+                name: { type: string }
+                initialCash: {}
+                riskConfigId:
+                  type: integer
+                  nullable: true
+                active: { type: boolean }
+    PaperPositionCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperPositionResource"
+    PaperPositionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [paper-positions] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PaperPositionAttributes"
+        relationships:
+          type: object
+          properties:
+            account:
+              $ref: "#/components/schemas/Relationship"
+    PaperPositionAttributes:
+      type: object
+      properties:
+        accountId: { type: integer }
+        code: { type: string }
+        symbolName:
+          type: string
+          nullable: true
+        quantity: { type: integer }
+        avgCost: {}
+        costAmount: {}
+        lastPrice: {}
+        marketValue: {}
+        unrealizedPnl: {}
+        realizedPnl: {}
+        updatedAt: { type: string, format: date-time }
+    PaperOrderCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperOrderResource"
+    PaperOrderDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PaperOrderResource"
+    PaperOrderResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [paper-orders] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PaperOrderAttributes"
+        relationships:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Relationship"
+    PaperOrderAttributes:
+      type: object
+      properties:
+        accountId: { type: integer }
+        meetingId:
+          type: integer
+          nullable: true
+        code: { type: string }
+        symbolName:
+          type: string
+          nullable: true
+        side: { type: string, enum: [buy, sell] }
+        quantity: { type: integer }
+        status: { type: string }
+        suggestedPrice: {}
+        filledPrice: {}
+        reason:
+          type: string
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        executeAfter:
+          type: string
+          format: date-time
+          nullable: true
+        expireAt:
+          type: string
+          format: date-time
+          nullable: true
+        sourceMeetingEventId:
+          type: integer
+          nullable: true
+        executionNote:
+          type: string
+          nullable: true
+        commission: {}
+        stampDuty: {}
+        transferFee: {}
+        netAmount: {}
+        createdAt: { type: string, format: date-time }
+        filledAt:
+          type: string
+          format: date-time
+          nullable: true
+    PaperOrderCreateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-orders] }
+            attributes:
+              type: object
+              required: [accountId, meetingId, sourceMeetingEventId, code, side, quantity]
+              properties:
+                accountId: { type: integer }
+                meetingId: { type: integer }
+                sourceMeetingEventId: { type: integer }
+                code: { type: string }
+                side: { type: string, enum: [buy, sell] }
+                quantity: { type: integer }
+                suggestedPrice: {}
+                reason:
+                  type: string
+                  nullable: true
+                executeAfter:
+                  type: string
+                  format: date-time
+                  nullable: true
+                expireAt:
+                  type: string
+                  format: date-time
+                  nullable: true
+    PaperOrderFillDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-order-fills] }
+            attributes:
+              type: object
+              required: [price]
+              properties:
+                price: {}
+    PaperFillCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperFillResource"
+    PaperFillResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [paper-fills] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PaperFillAttributes"
+        relationships:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Relationship"
+    PaperFillAttributes:
+      type: object
+      properties:
+        orderId: { type: integer }
+        accountId: { type: integer }
+        code: { type: string }
+        symbolName:
+          type: string
+          nullable: true
+        side: { type: string, enum: [buy, sell] }
+        quantity: { type: integer }
+        price: {}
+        grossAmount: {}
+        commission: {}
+        stampDuty: {}
+        transferFee: {}
+        netAmount: {}
+        realizedPnl: {}
+        filledAt: { type: string, format: date-time }
+    PaperPerformanceDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [paper-performances] }
+            id: { type: string }
+            attributes:
+              $ref: "#/components/schemas/PaperPerformanceAttributes"
+    PaperPerformanceAttributes:
+      type: object
+      properties:
+        accountId: { type: integer }
+        initialCash: {}
+        latestEquity: {}
+        latestCash: {}
+        latestMarketValue: {}
+        unrealizedPnl: {}
+        realizedPnl: {}
+        totalReturnPct: {}
+        maxDrawdownPct: {}
+        winRatePct: {}
+        fillsCount: { type: integer }
+        series:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    HealthDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthResource"
+    HealthResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [health-checks]
+        id:
+          type: string
+          enum: [api]
+        attributes:
+          $ref: "#/components/schemas/HealthAttributes"
+    HealthAttributes:
+      type: object
+      required: [status, app, env]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        app:
+          type: string
+        env:
+          type: string
+    Resource:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*s$"
+        id:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+        relationships:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Relationship"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    Relationship:
+      type: object
+      properties:
+        data:
+          nullable: true
+          oneOf:
+            - $ref: "#/components/schemas/ResourceIdentifier"
+            - type: array
+              items:
+                $ref: "#/components/schemas/ResourceIdentifier"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    ResourceIdentifier:
+      type: object
+      required: [type, id]
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+        meta:
+          type: object
+          additionalProperties: true
+    ErrorObject:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        detail:
+          type: string
+        field:
+          type: string
+    Links:
+      type: object
+      properties:
+        self:
+          type: string
+        next:
+          type: string
+        prev:
+          type: string

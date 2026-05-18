@@ -1,0 +1,416 @@
+package meeting
+
+import (
+	"encoding/json"
+	"fmt"
+	domainkernel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/kernel"
+	domainmarket "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/market"
+	domainmeeting "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/meeting"
+	domainwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/domain/wake"
+	"regexp"
+	"strings"
+	"time"
+
+	appwake "github.com/TreadingCopilotDevs/TreadingCopilot/internal/app/wake"
+	"github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/marketdata/ashare"
+	persistmodel "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/model"
+	infrapaper "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/paper"
+	gormrepo "github.com/TreadingCopilotDevs/TreadingCopilot/internal/infra/persistence/gorm/repo"
+	"gorm.io/gorm"
+)
+
+var jsonFence = regexp.MustCompile("(?s)```(?:json)?\\s*(\\{.*?\\})\\s*```")
+
+func TryApplyModeratorRecapFromEvents(db *gorm.DB, meeting *domainmeeting.Meeting) (map[string]any, bool, error) {
+	var eventRow persistmodel.MeetingEvent
+	if err := db.Where("meeting_id = ? AND type = ? AND role_key = ?", meeting.ID, domainkernel.EventRoleMessage, "moderator").Order("sequence desc").First(&eventRow).Error; err != nil {
+		return nil, false, nil
+	}
+	event := meetingEventFromModel(eventRow)
+	recap, err := extractMeetingRecapJSON(event.Content)
+	if err != nil {
+		return nil, false, nil
+	}
+	if !recapHasActions(recap) && strings.TrimSpace(stringFromAny(recap["summary"])) == "" && strings.TrimSpace(stringFromAny(recap["conclusion"])) == "" {
+		return recap, false, nil
+	}
+	if err := ApplyMeetingRecapActions(db, meeting, &event, "moderator", recap); err != nil {
+		return recap, false, err
+	}
+	return recap, true, nil
+}
+
+func ApplyMeetingRecapActions(db *gorm.DB, meeting *domainmeeting.Meeting, recapEvent *domainmeeting.Event, moderatorRoleKey string, recap map[string]any) error {
+	if moderatorRoleKey == "" {
+		moderatorRoleKey = "moderator"
+	}
+	watchlistActions := recapWatchlistActions(recap, recapEvent, meeting)
+	for _, raw := range watchlistActions {
+		if err := applyWatchlistAction(db, meeting, moderatorRoleKey, raw); err != nil {
+			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to update watchlist: "+err.Error(), map[string]any{"status": "watchlist_error"})
+		}
+	}
+	for _, raw := range objectList(recap["wake_plans"]) {
+		if err := applyWakePlanAction(db, meeting, recapEvent, moderatorRoleKey, raw); err != nil {
+			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to create wake plan: "+err.Error(), map[string]any{"status": "wake_plan_error"})
+		}
+	}
+	for _, raw := range objectList(recap["orders"]) {
+		if err := applyPaperOrderAction(db, meeting, recapEvent, moderatorRoleKey, recap, raw); err != nil {
+			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to create paper order: "+err.Error(), map[string]any{"status": "paper_order_error"})
+		}
+	}
+	return nil
+}
+
+func applyWatchlistAction(db *gorm.DB, meeting *domainmeeting.Meeting, roleKey string, raw map[string]any) error {
+	code, err := ashare.EnsureCode(stringFromAny(raw["code"]))
+	if err != nil {
+		return err
+	}
+	note := strings.TrimSpace(firstNonEmptyString(stringFromAny(raw["note"]), meeting.Topic))
+	active := boolFromAction(raw["active"], true)
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolCall, &roleKey, "Moderator is updating the watchlist.", map[string]any{"status": "tool_call", "tool": "market.upsert_watchlist", "arguments": raw})
+	name := strings.TrimSpace(stringFromAny(raw["name"]))
+	exchange := strings.TrimSpace(stringFromAny(raw["exchange"]))
+	if exchange == "" {
+		if listing := ashare.Detect(code); listing != nil {
+			exchange = listing.Exchange
+		}
+	}
+	marketRepo := gormrepo.NewMarketRepository(db)
+	if name != "" {
+		_ = marketRepo.UpsertSymbol(dbContext(db), domainmarket.Symbol{Code: code, Name: name, Exchange: exchange, Active: true})
+	}
+	item, err := marketRepo.UpsertWatchlist(dbContext(db), meeting.ResearchTeamID, code, &note, active)
+	if err != nil {
+		return err
+	}
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolResult, &roleKey, fmt.Sprintf("Watchlist item %s is active=%v.", item.Code, item.Active), map[string]any{"status": "watchlist_updated", "watchlist_item_id": item.ID, "code": item.Code})
+	return nil
+}
+
+func applyWakePlanAction(db *gorm.DB, meeting *domainmeeting.Meeting, recapEvent *domainmeeting.Event, roleKey string, raw map[string]any) error {
+	triggerType := domainkernel.WakeTriggerType(strings.ToLower(firstNonEmptyString(stringFromAny(raw["trigger_type"]), string(domainkernel.WakeTime))))
+	switch triggerType {
+	case domainkernel.WakeTime, domainkernel.WakeIndicator, domainkernel.WakeEvent:
+	default:
+		return fmt.Errorf("unsupported wake trigger type %s", triggerType)
+	}
+	var nextCheckAt *time.Time
+	if parsed, ok := parseActionTime(stringFromAny(raw["next_check_at"])); ok {
+		nextCheckAt = &parsed
+	}
+	reason := strings.TrimSpace(firstNonEmptyString(stringFromAny(raw["reason"]), meeting.Topic))
+	triggerConfig := raw["trigger_config"]
+	if triggerConfig == nil {
+		triggerConfig = map[string]any{}
+	}
+	var recapEventID *uint
+	if recapEvent != nil {
+		recapEventID = &recapEvent.ID
+	}
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolCall, &roleKey, "Moderator is creating a wake plan.", map[string]any{"status": "tool_call", "tool": "wake.create_plan", "arguments": raw})
+	plan := domainwake.Plan{ResearchTeamID: meeting.ResearchTeamID, MeetingID: &meeting.ID, TriggerType: triggerType, TriggerConfig: JSON(triggerConfig), Reason: reason, SourceMeetingEventID: recapEventID, SourceRoleKey: &roleKey, Status: domainkernel.WakeActive, NextCheckAt: nextCheckAt}
+	if err := appwake.ValidatePlan(&plan); err != nil {
+		return err
+	}
+	if err := gormrepo.NewWakeRepository(db).Create(dbContext(db), &plan); err != nil {
+		return err
+	}
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolResult, &roleKey, fmt.Sprintf("Wake plan #%d created.", plan.ID), map[string]any{"status": "wake_plan_created", "wake_plan_id": plan.ID})
+	return nil
+}
+
+func applyPaperOrderAction(db *gorm.DB, meeting *domainmeeting.Meeting, recapEvent *domainmeeting.Event, roleKey string, recap map[string]any, raw map[string]any) error {
+	if strings.TrimSpace(stringFromAny(raw["code"])) == "" || strings.TrimSpace(stringFromAny(raw["side"])) == "" {
+		return nil
+	}
+	if stringFromAny(raw["quantity"]) == "" && stringFromAny(raw["position_pct"]) == "" && stringFromAny(raw["allocation_pct"]) == "" {
+		return nil
+	}
+	spec := map[string]any{}
+	for key, value := range raw {
+		spec[key] = value
+	}
+	spec["meeting_id"] = meeting.ID
+	spec["account_id"] = teamPaperAccountID(db, meeting.ResearchTeamID)
+	if recapEvent != nil {
+		spec["source_meeting_event_id"] = recapEvent.ID
+	}
+	if _, ok := spec["meeting_summary"]; !ok {
+		spec["meeting_summary"] = recap["summary"]
+	}
+	if _, ok := spec["meeting_conclusion"]; !ok {
+		spec["meeting_conclusion"] = recap["conclusion"]
+	}
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolCall, &roleKey, "Moderator is creating a paper order.", map[string]any{"status": "tool_call", "tool": "paper.create_order", "arguments": raw})
+	order, err := infrapaper.CreateOrderFromSpec(db, spec)
+	if err != nil {
+		return err
+	}
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolResult, &roleKey, fmt.Sprintf("Paper order #%d created with status %s.", order.ID, order.Status), map[string]any{"status": "paper_order_created", "paper_order_id": order.ID, "order_status": order.Status})
+	return nil
+}
+
+func extractMeetingRecapJSON(text string) (map[string]any, error) {
+	cleaned := strings.TrimSpace(text)
+	candidates := []string{}
+	if match := jsonFence.FindStringSubmatch(cleaned); len(match) == 2 {
+		candidates = append(candidates, strings.TrimSpace(match[1]))
+	}
+	candidates = append(candidates, firstJSONObjectCandidates(cleaned)...)
+	if len(candidates) == 0 {
+		candidates = append(candidates, cleaned)
+	}
+	var lastErr error
+	for _, candidate := range candidates {
+		var data map[string]any
+		if err := json.Unmarshal([]byte(candidate), &data); err != nil {
+			lastErr = err
+			continue
+		}
+		return data, nil
+	}
+	return nil, lastErr
+}
+
+func firstJSONObjectCandidates(text string) []string {
+	out := []string{}
+	for start := 0; start < len(text); start++ {
+		if text[start] != '{' {
+			continue
+		}
+		depth := 0
+		inString := false
+		escaped := false
+		for i := start; i < len(text); i++ {
+			ch := text[i]
+			if inString {
+				if escaped {
+					escaped = false
+					continue
+				}
+				switch ch {
+				case '\\':
+					escaped = true
+				case '"':
+					inString = false
+				}
+				continue
+			}
+			switch ch {
+			case '"':
+				inString = true
+			case '{':
+				depth++
+			case '}':
+				depth--
+				if depth == 0 {
+					out = append(out, strings.TrimSpace(text[start:i+1]))
+					start = i
+					i = len(text)
+				}
+			}
+		}
+	}
+	return out
+}
+
+func recapHasActions(recap map[string]any) bool {
+	return len(objectList(recap["watchlist_actions"])) > 0 || len(objectList(recap["wake_plans"])) > 0 || len(objectList(recap["orders"])) > 0
+}
+
+func recapWatchlistActions(recap map[string]any, recapEvent *domainmeeting.Event, meeting *domainmeeting.Meeting) []map[string]any {
+	watchlistActions := objectList(recap["watchlist_actions"])
+	orders := objectList(recap["orders"])
+	if len(watchlistActions) == 0 && watchlistFallbackRequested(recap) {
+		for _, code := range fallbackWatchlistSymbols(recapEvent, orders) {
+			watchlistActions = append(watchlistActions, map[string]any{
+				"code":   code,
+				"note":   firstNonEmptyString(stringFromAny(recap["conclusion"]), stringFromAny(recap["summary"]), meeting.Topic),
+				"active": true,
+			})
+		}
+	}
+	existing := map[string]struct{}{}
+	for _, item := range watchlistActions {
+		code := strings.TrimSpace(stringFromAny(item["code"]))
+		if code != "" {
+			existing[code] = struct{}{}
+		}
+	}
+	for _, order := range orders {
+		code := strings.TrimSpace(stringFromAny(order["code"]))
+		if code == "" {
+			continue
+		}
+		if _, ok := existing[code]; ok {
+			continue
+		}
+		watchlistActions = append(watchlistActions, map[string]any{
+			"code":   code,
+			"note":   firstNonEmptyString(stringFromAny(order["reason"]), stringFromAny(recap["summary"]), meeting.Topic),
+			"active": true,
+		})
+		existing[code] = struct{}{}
+	}
+	return watchlistActions
+}
+
+func fallbackWatchlistSymbols(recapEvent *domainmeeting.Event, orders []map[string]any) []string {
+	seen := map[string]struct{}{}
+	out := []string{}
+	if recapEvent != nil {
+		var payload map[string]any
+		if err := json.Unmarshal(recapEvent.Payload, &payload); err == nil {
+			for _, raw := range anyList(payload["related_symbols"]) {
+				code := strings.TrimSpace(stringFromAny(raw))
+				if code == "" {
+					continue
+				}
+				if _, ok := seen[code]; ok {
+					continue
+				}
+				seen[code] = struct{}{}
+				out = append(out, code)
+			}
+		}
+	}
+	for _, order := range orders {
+		code := strings.TrimSpace(stringFromAny(order["code"]))
+		if code == "" {
+			continue
+		}
+		if _, ok := seen[code]; ok {
+			continue
+		}
+		seen[code] = struct{}{}
+		out = append(out, code)
+	}
+	return out
+}
+
+func watchlistFallbackRequested(recap map[string]any) bool {
+	text := strings.ToLower(strings.Join([]string{stringFromAny(recap["summary"]), stringFromAny(recap["conclusion"])}, " "))
+	if strings.TrimSpace(text) == "" {
+		return false
+	}
+	keywords := []string{"watchlist", "worth tracking", "track", "observe"}
+	for _, keyword := range keywords {
+		if strings.Contains(text, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func anyList(value any) []any {
+	switch typed := value.(type) {
+	case []any:
+		return typed
+	case []string:
+		out := make([]any, 0, len(typed))
+		for _, item := range typed {
+			out = append(out, item)
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func objectList(value any) []map[string]any {
+	switch raw := value.(type) {
+	case []map[string]any:
+		return raw
+	case []any:
+		out := make([]map[string]any, 0, len(raw))
+		for _, item := range raw {
+			if obj, ok := item.(map[string]any); ok {
+				out = append(out, obj)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func stringList(value any) []string {
+	raw := anyList(value)
+	out := make([]string, 0, len(raw))
+	for _, item := range raw {
+		text := strings.TrimSpace(fmt.Sprint(item))
+		if text != "" {
+			out = append(out, text)
+		}
+	}
+	return out
+}
+
+func stringFromAny(value any) string {
+	if value == nil {
+		return ""
+	}
+	return strings.TrimSpace(fmt.Sprint(value))
+}
+
+func boolFromAction(value any, fallback bool) bool {
+	if value == nil {
+		return fallback
+	}
+	switch typed := value.(type) {
+	case bool:
+		return typed
+	case string:
+		switch strings.ToLower(strings.TrimSpace(typed)) {
+		case "true", "1", "yes", "y":
+			return true
+		case "false", "0", "no", "n":
+			return false
+		}
+	}
+	return fallback
+}
+
+func parseActionTime(value string) (time.Time, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return time.Time{}, false
+	}
+	layouts := []string{time.RFC3339, "2006-01-02 15:04:05", "2006-01-02 15:04"}
+	for _, layout := range layouts {
+		if layout == time.RFC3339 {
+			parsed, err := time.Parse(layout, value)
+			if err == nil {
+				return parsed.In(appTZ), true
+			}
+			continue
+		}
+		if parsed, err := time.ParseInLocation(layout, value, appTZ); err == nil {
+			return parsed, true
+		}
+	}
+	return time.Time{}, false
+}
+
+func sanitizeStringList(values []any, limit int) []string {
+	out := []string{}
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		text := strings.TrimSpace(fmt.Sprint(value))
+		if text == "" {
+			continue
+		}
+		if _, ok := seen[text]; ok {
+			continue
+		}
+		seen[text] = struct{}{}
+		out = append(out, text)
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out
+}

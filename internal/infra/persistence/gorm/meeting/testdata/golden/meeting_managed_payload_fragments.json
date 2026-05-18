@@ -1,0 +1,54 @@
+{
+  "moderator_kickoff_system": [
+    "You are the moderator of an A-share multi-agent investment research meeting",
+    "This is kickoff",
+    "Return JSON only"
+  ],
+  "moderator_kickoff_user": [
+    "Available roles:",
+    "@analyst",
+    "Related symbols: 600519"
+  ],
+  "role_system": [
+    "Return JSON only",
+    "tool_request",
+    "Do not produce the final meeting recap"
+  ],
+  "role_user": [
+    "A-share stocks trade in 100-share lots",
+    "market.upsert_watchlist, paper.create_order, and wake.create_plan are proposal-only",
+    "Do not invent data"
+  ],
+  "json_repair_user": [
+    "Your previous response was not valid JSON",
+    "not json"
+  ],
+  "tool_followup_user": [
+    "Tool results already obtained",
+    "market.realtime_quote"
+  ],
+  "recap_system": [
+    "\"watchlist_actions\"",
+    "position_pct must be a decimal fraction",
+    "Do not output US stocks"
+  ],
+  "kickoff_crash_failure": [
+    "Meeting run crashed after start",
+    "invalid JSON"
+  ],
+  "role_provider_error": [
+    "status=401"
+  ],
+  "recap_failure": [
+    "Moderator recap failed"
+  ],
+  "superseded_recap_guard": [
+    "replacement-run"
+  ],
+  "no_roles_failure": [
+    "No enabled AI roles"
+  ],
+  "token_budget_failure": [
+    "daily token budget exceeded"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "treadingcopilot-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "vue-tsc -b",
+    "typegen:api": "openapi-typescript ../api/openapi.yaml -o src/generated/api-types.ts"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.7.2",
+    "dompurify": "^3.4.2",
+    "element-plus": "^2.7.6",
+    "lightweight-charts": "^5.2.0",
+    "markdown-it": "^14.1.1",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.29",
+    "vue-element-plus-x": "^2.0.0",
+    "vue-router": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@vitejs/plugin-vue": "^5.0.5",
+    "openapi-typescript": "^7.6.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1",
+    "vue-tsc": "^2.0.21"
+  }
+}

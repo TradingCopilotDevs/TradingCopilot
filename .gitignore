@@ -1,0 +1,90 @@
+# OS / filesystem noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor / IDE local state
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+*.prof
+*.pprof
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+env/
+
+# Runtime state and local data
+data/
+internal/integration/data/
+postgres-data/
+redis-data/
+tc-integration-timescaledb-data/
+tc-integration-redis-data/
+logs/
+*.log
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+
+# Secret material
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.agekey
+
+# Legacy/local source snapshots
+AIWarrenBuffett/
+
+# Frontend dependencies and build/cache outputs
+frontend/dist/
+node_modules/
+*.tsbuildinfo
+.vite/
+frontend/.vite/
+frontend/.vite*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Generic local scratch
+.cache/
+tmp/
+temp/

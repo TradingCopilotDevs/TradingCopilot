@@ -1,0 +1,37 @@
+package ai
+
+var ToolDefinitions = []CapabilityDefinition{
+	{Key: "telegram.recent_messages", Title: "Telegram Messages", Description: "Read Telegram channel messages already stored in the database, together with filter decisions and related-symbol context. This does not trigger live collection.", Category: "Messaging"},
+	{Key: "web.search", Title: "Web Search", Description: "Search public web pages, announcements, and news sources for verification and follow-up research.", Category: "Messaging"},
+	{Key: "meeting.references", Title: "Meeting References", Description: "Read referenced historical meetings and telegram-message references already linked to the current meeting.", Category: "Meeting"},
+	{Key: "meeting.transcript", Title: "Meeting Transcript", Description: "Read recent discussion turns from the current meeting so a role can quote, challenge, or follow up on others.", Category: "Meeting"},
+	{Key: "market.watchlist", Title: "Watchlist", Description: "Read the current watchlist and analyst notes.", Category: "Market"},
+	{Key: "market.upsert_watchlist", Title: "Watchlist Action", Description: "Propose adding or updating a watchlist item. This is a deferred action only and is executed only during the moderator recap.", Category: "Market"},
+	{Key: "market.daily_bars", Title: "Daily Bars", Description: "Query limited historical daily K-line data for a stock.", Category: "Market"},
+	{Key: "market.realtime_quote", Title: "Realtime Quote", Description: "Read the latest stored realtime quote for a target stock.", Category: "Market"},
+	{Key: "paper.positions", Title: "Paper Positions", Description: "Read paper account positions and current exposure.", Category: "Paper Trading"},
+	{Key: "paper.accounts", Title: "Paper Accounts", Description: "Read paper account cash, initial cash, activation status, and linked risk config.", Category: "Paper Trading"},
+	{Key: "paper.orders", Title: "Paper Orders", Description: "Read recent paper orders, execution timing, order status, and rejection reasons.", Category: "Paper Trading"},
+	{Key: "paper.risk_configs", Title: "Risk Configs", Description: "Read current paper-trading risk constraints, allowed boards, and ETF/LOF permissions.", Category: "Paper Trading"},
+	{Key: "paper.create_order", Title: "Create Paper Order", Description: "Create a paper-trading order spec. Prefer position_pct as a decimal fraction such as 0.05.", Category: "Paper Trading"},
+	{Key: "wake.create_plan", Title: "Create Wake Plan", Description: "Create a wake-plan spec for time-, indicator-, or event-based wake-up after the meeting.", Category: "Scheduling"},
+}
+
+var SkillDefinitions = []CapabilityDefinition{
+	{Key: "news-impact-filtering", Title: "News Impact Filtering", Description: "Used by the message filter role to classify messages into ignore, observe, or meeting.", Category: "Messaging"},
+	{Key: "news-source-verification", Title: "Source Verification", Description: "Verify original source, credibility, and propagation path of a message.", Category: "Messaging"},
+	{Key: "web-research", Title: "Web Research", Description: "Search and cross-check public pages, announcements, and research materials on the open web.", Category: "Messaging"},
+	{Key: "meeting-moderation", Title: "Meeting Moderation", Description: "Control turns, summarize disagreements, and push for missing evidence.", Category: "Meeting"},
+	{Key: "cross-examination", Title: "Cross Examination", Description: "Challenge weak assumptions and force explicit evidence.", Category: "Meeting"},
+	{Key: "evidence-synthesis", Title: "Evidence Synthesis", Description: "Combine context, market data, discussion, and references into an evidence chain.", Category: "Meeting"},
+	{Key: "macro-policy-analysis", Title: "Macro Policy Analysis", Description: "Evaluate market impact from policy, liquidity, and macro risk appetite.", Category: "Research"},
+	{Key: "sector-chain-analysis", Title: "Sector Chain Analysis", Description: "Identify theme propagation paths and beneficiary chains.", Category: "Research"},
+	{Key: "fundamental-review", Title: "Fundamental Review", Description: "Review earnings quality, valuation, balance sheet quality, and disclosure risks.", Category: "Research"},
+	{Key: "technical-analysis", Title: "Technical Analysis", Description: "Analyze trend, volume, key price levels, and trading structure.", Category: "Research"},
+	{Key: "risk-review", Title: "Risk Review", Description: "Challenge assumptions, define stop conditions, and enforce position constraints.", Category: "Risk"},
+	{Key: "portfolio-construction", Title: "Portfolio Construction", Description: "Convert conclusions into executable watch actions and paper-order proposals.", Category: "Portfolio"},
+	{Key: "watchlist-curation", Title: "Watchlist Curation", Description: "Translate conclusions into tracked A-share symbols.", Category: "Portfolio"},
+	{Key: "trade-execution-planning", Title: "Trade Execution Planning", Description: "Translate conclusions into entry timing and order structure; prefer position_pct rather than ambiguous quantity.", Category: "Portfolio"},
+	{Key: "instrument-substitution", Title: "Instrument Substitution", Description: "When a target stock is blocked by paper risk scope, plan an allowed ETF/LOF substitute.", Category: "Portfolio"},
+	{Key: "wake-plan-design", Title: "Wake Plan Design", Description: "Design the next wake condition without continuous looping.", Category: "Scheduling"},
+}
