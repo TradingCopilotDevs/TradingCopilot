@@ -33,6 +33,7 @@
           </template>
         </el-menu>
         <div class="sidebar-actions">
+          <ThemeModeControl />
           <el-button :icon="SwitchButton" plain @click="logout">退出</el-button>
         </div>
       </el-aside>
@@ -59,6 +60,7 @@
         </template>
       </el-menu>
       <div class="sidebar-actions">
+        <ThemeModeControl />
         <el-button :icon="SwitchButton" plain @click="logout">退出</el-button>
       </div>
     </el-drawer>
@@ -89,6 +91,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, apiErrorText } from './api'
 import { clearAuthToken } from './auth'
+import ThemeModeControl from './components/ThemeModeControl.vue'
 import { useResponsive } from './composables/useResponsive'
 
 const router = useRouter()

@@ -812,9 +812,9 @@ onMounted(load)
 }
 
 .ops-card {
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: #fbfdff;
+  background: var(--surface-subtle);
   padding: 14px;
   min-width: 0;
 }
@@ -855,7 +855,7 @@ onMounted(load)
 
 .ops-kv span,
 .ops-list-title {
-  color: #697789;
+  color: var(--text-muted);
 }
 
 .ops-kv strong {
@@ -863,9 +863,9 @@ onMounted(load)
 }
 
 .ops-json {
-  background: #0f172a;
+  background: var(--code-bg);
   border-radius: 8px;
-  color: #e2e8f0;
+  color: var(--code-text);
   font-size: 12px;
   line-height: 1.55;
   margin: 0;
@@ -893,9 +893,9 @@ onMounted(load)
 
 .ops-queue-kv {
   align-self: stretch;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: #fbfdff;
+  background: var(--surface-subtle);
   padding: 14px;
 }
 
@@ -912,9 +912,9 @@ onMounted(load)
 }
 
 .ops-dry-run {
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: #fbfdff;
+  background: var(--surface-subtle);
   margin-top: 14px;
   padding: 14px;
 }

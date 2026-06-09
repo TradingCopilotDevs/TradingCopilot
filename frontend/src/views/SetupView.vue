@@ -158,10 +158,11 @@ onMounted(loadReadiness)
 
 .setup-step-card {
   min-width: 0;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   padding: 16px;
-  background: #ffffff;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 
 .setup-step-card__head {

@@ -1000,7 +1000,7 @@
 <script setup lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AreaSeries, createChart, type IChartApi, type ISeriesApi, LineStyle, type UTCTimestamp } from 'lightweight-charts'
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   api,
@@ -1024,10 +1024,13 @@ import {
 import { useAutoRefresh } from '../composables/useAutoRefresh'
 import { nextCursorFromDocument, useCursorPagination } from '../composables/useCursorPagination'
 import { useResponsive } from '../composables/useResponsive'
+import { useTheme } from '../composables/useTheme'
 import { formatDateTimeUtc8, getUtc8DateParts } from '../utils/datetime'
+import { chartTheme } from '../utils/theme'
 
 const router = useRouter()
 const { isMobile, isTablet } = useResponsive()
+const { resolvedTheme } = useTheme()
 const overview = ref<PaperOverview | null>(null)
 const accounts = ref<PaperAccount[]>([])
 const riskConfigs = ref<RiskConfig[]>([])
@@ -1847,34 +1850,35 @@ function formatBacktestReason(value: string | null | undefined) {
 function renderChart() {
   if (!chartContainer.value || !performance.value) return
   disposeChart()
+  const colors = chartTheme()
   chart = createChart(chartContainer.value, {
     autoSize: true,
     layout: {
-      background: { color: '#ffffff' },
-      textColor: '#334155',
+      background: { color: colors.background },
+      textColor: colors.text,
       attributionLogo: false
     },
     grid: {
-      vertLines: { color: '#eef2f7', style: LineStyle.Solid },
-      horzLines: { color: '#eef2f7', style: LineStyle.Solid }
+      vertLines: { color: colors.grid, style: LineStyle.Solid },
+      horzLines: { color: colors.grid, style: LineStyle.Solid }
     },
     rightPriceScale: {
-      borderColor: '#dbe3ee'
+      borderColor: colors.border
     },
     localization: {
       timeFormatter: chartLabelUtc8
     },
     timeScale: {
-      borderColor: '#dbe3ee',
+      borderColor: colors.border,
       timeVisible: true,
       secondsVisible: false,
       tickMarkFormatter: chartLabelUtc8
     }
   })
   equitySeries = chart.addSeries(AreaSeries, {
-    lineColor: '#2563eb',
-    topColor: 'rgba(37, 99, 235, 0.25)',
-    bottomColor: 'rgba(37, 99, 235, 0.03)'
+    lineColor: colors.line,
+    topColor: colors.lineTop,
+    bottomColor: colors.lineBottom
   })
   equitySeries?.setData(
     performance.value.series.map((item) => ({
@@ -1888,34 +1892,35 @@ function renderChart() {
 function renderBacktestChart() {
   if (!backtestChartContainer.value || !backtest.value) return
   disposeBacktestChart()
+  const colors = chartTheme()
   backtestChart = createChart(backtestChartContainer.value, {
     autoSize: true,
     layout: {
-      background: { color: '#ffffff' },
-      textColor: '#334155',
+      background: { color: colors.background },
+      textColor: colors.text,
       attributionLogo: false
     },
     grid: {
-      vertLines: { color: '#eef2f7', style: LineStyle.Solid },
-      horzLines: { color: '#eef2f7', style: LineStyle.Solid }
+      vertLines: { color: colors.grid, style: LineStyle.Solid },
+      horzLines: { color: colors.grid, style: LineStyle.Solid }
     },
     rightPriceScale: {
-      borderColor: '#dbe3ee'
+      borderColor: colors.border
     },
     localization: {
       timeFormatter: chartLabelUtc8
     },
     timeScale: {
-      borderColor: '#dbe3ee',
+      borderColor: colors.border,
       timeVisible: true,
       secondsVisible: false,
       tickMarkFormatter: chartLabelUtc8
     }
   })
   backtestEquitySeries = backtestChart.addSeries(AreaSeries, {
-    lineColor: '#0f766e',
-    topColor: 'rgba(15, 118, 110, 0.22)',
-    bottomColor: 'rgba(15, 118, 110, 0.03)'
+    lineColor: colors.altLine,
+    topColor: colors.altLineTop,
+    bottomColor: colors.altLineBottom
   })
   backtestEquitySeries?.setData(
     backtest.value.series.map((item) => ({
@@ -1943,6 +1948,12 @@ function disposeBacktestChart() {
 }
 
 onMounted(loadAll)
+
+watch(resolvedTheme, () => {
+  if (chart && performance.value) renderChart()
+  if (backtestChart && backtest.value) renderBacktestChart()
+})
+
 useAutoRefresh({
   intervalMs: 10000,
   refresh: refreshPaperState
@@ -1968,14 +1979,14 @@ onBeforeUnmount(() => {
 }
 
 .metric-card span {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .metric-card strong {
   font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 .metric-card__compact {
@@ -1985,9 +1996,9 @@ onBeforeUnmount(() => {
 
 .metric-card.slim {
   padding: 10px 12px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: #fbfdff;
+  background: var(--surface-subtle);
 }
 
 .metric-card.slim strong {
@@ -2011,15 +2022,15 @@ onBeforeUnmount(() => {
 }
 
 .text-up {
-  color: #dc2626;
+  color: var(--quote-up);
 }
 
 .text-down {
-  color: #16a34a;
+  color: var(--quote-down);
 }
 
 .text-warning {
-  color: #d97706;
+  color: var(--attention);
 }
 
 .paper-alert {
@@ -2030,14 +2041,14 @@ onBeforeUnmount(() => {
   min-height: 32px;
   display: flex;
   align-items: center;
-  color: #0f172a;
+  color: var(--text-main);
   font-weight: 600;
 }
 
 .form-hint {
   width: 100%;
   margin-top: 6px;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -2111,7 +2122,7 @@ onBeforeUnmount(() => {
 }
 
 .paper-timeline__item {
-  border-left: 3px solid #dbe3ee;
+  border-left: 3px solid var(--border-soft);
   padding: 8px 0 8px 12px;
 }
 
@@ -2125,7 +2136,7 @@ onBeforeUnmount(() => {
 
 .paper-timeline__item p {
   margin: 6px 0 0;
-  color: #475569;
+  color: var(--text-muted);
   line-height: 1.45;
 }
 
@@ -2138,7 +2149,7 @@ onBeforeUnmount(() => {
 }
 
 .order-review-cell__hint {
-  color: #b91c1c;
+  color: var(--danger);
   font-size: 12px;
   font-weight: 600;
 }

@@ -666,7 +666,7 @@ function numberFromConfig(value: unknown, fallback: number) {
 
 .wake-overdue-alert {
   margin-bottom: 14px;
-  border-left: 4px solid #d97706;
+  border-left: 4px solid var(--attention);
 }
 
 .wake-overdue-alert__body {
@@ -683,10 +683,10 @@ function numberFromConfig(value: unknown, fallback: number) {
 }
 
 .wake-overdue-panel {
-  border: 1px solid #fcd34d;
-  border-left: 4px solid #d97706;
+  border: 1px solid var(--attention-border);
+  border-left: 4px solid var(--attention);
   border-radius: 8px;
-  background: #fffbeb;
+  background: var(--attention-soft);
   padding: 14px;
   margin-bottom: 14px;
 }
@@ -702,9 +702,9 @@ function numberFromConfig(value: unknown, fallback: number) {
   display: grid;
   gap: 10px;
   min-width: 0;
-  border: 1px solid #f3d27d;
+  border: 1px solid var(--attention-border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 12px;
 }
 
@@ -723,7 +723,7 @@ function numberFromConfig(value: unknown, fallback: number) {
 }
 
 .wake-overdue-card__reason {
-  color: #1f2937;
+  color: var(--text-main);
   font-weight: 600;
   line-height: 1.5;
 }
@@ -732,7 +732,7 @@ function numberFromConfig(value: unknown, fallback: number) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px 10px;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -749,13 +749,13 @@ function numberFromConfig(value: unknown, fallback: number) {
 }
 
 .wake-overdue-text {
-  color: #b45309;
+  color: var(--attention);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 
 :deep(.wake-plan-overdue-row) .el-table__cell {
-  background: #fffbeb !important;
+  background: var(--attention-soft) !important;
 }
 
 @media (max-width: 767px) {

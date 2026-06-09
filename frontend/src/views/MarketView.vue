@@ -271,13 +271,16 @@ import {
   TickMarkType,
   type Time
 } from 'lightweight-charts'
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { api, apiErrorText, jsonapiResource, unwrapJsonApiCollection, unwrapJsonApiResource } from '../api'
 import { nextCursorFromDocument, useCursorPagination } from '../composables/useCursorPagination'
 import { useResponsive } from '../composables/useResponsive'
+import { useTheme } from '../composables/useTheme'
 import { formatDateTimeUtc8, getUtc8DateParts, parseBusinessDate, toUnixSecondsUtc8 } from '../utils/datetime'
+import { chartTheme } from '../utils/theme'
 
 const { isMobile, isTablet } = useResponsive()
+const { resolvedTheme } = useTheme()
 const teams = ref<any[]>([])
 const selectedTeamId = ref<number | null>(null)
 const candidates = ref<any[]>([])
@@ -547,27 +550,28 @@ function renderChart() {
   if (!chartContainer.value) return
   disposeChart()
   if (!seriesRows.value.length) return
+  const colors = chartTheme()
 
   chart = createChart(chartContainer.value, {
     autoSize: true,
     layout: {
-      background: { type: ColorType.Solid, color: '#ffffff' },
-      textColor: '#334155',
+      background: { type: ColorType.Solid, color: colors.background },
+      textColor: colors.text,
       attributionLogo: false
     },
     grid: {
-      vertLines: { color: '#eef2f7' },
-      horzLines: { color: '#eef2f7' }
+      vertLines: { color: colors.grid },
+      horzLines: { color: colors.grid }
     },
     rightPriceScale: {
-      borderColor: '#dbe3ee',
+      borderColor: colors.border,
       scaleMargins: {
         top: 0.08,
         bottom: seriesRange.value === 'intraday' || seriesRange.value === 'five_day' ? 0.08 : 0.26
       }
     },
     timeScale: {
-      borderColor: '#dbe3ee',
+      borderColor: colors.border,
       timeVisible: seriesRange.value === 'intraday' || seriesRange.value === 'five_day',
       secondsVisible: false,
       tickMarkFormatter: formatTickMark
@@ -582,26 +586,26 @@ function renderChart() {
 
   if (seriesRange.value === 'intraday' || seriesRange.value === 'five_day') {
     priceSeries = chart.addSeries(AreaSeries, {
-      lineColor: '#2563eb',
-      topColor: 'rgba(37, 99, 235, 0.22)',
-      bottomColor: 'rgba(37, 99, 235, 0.02)',
+      lineColor: colors.line,
+      topColor: colors.lineTop,
+      bottomColor: colors.lineBottom,
       lineWidth: 2
     })
     priceSeries.setData(toLineData())
   } else {
     priceSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#dc2626',
-      downColor: '#059669',
-      borderUpColor: '#dc2626',
-      borderDownColor: '#059669',
-      wickUpColor: '#dc2626',
-      wickDownColor: '#059669'
+      upColor: colors.up,
+      downColor: colors.down,
+      borderUpColor: colors.up,
+      borderDownColor: colors.down,
+      wickUpColor: colors.up,
+      wickDownColor: colors.down
     })
     priceSeries.setData(toCandleData())
     volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: 'volume' },
       priceScaleId: 'volume',
-      color: 'rgba(100, 116, 139, 0.35)'
+      color: colors.volume
     })
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
@@ -663,6 +667,7 @@ function toCandleData() {
 }
 
 function toVolumeData() {
+  const colors = chartTheme()
   const deduped = new Map<string, { time: Time; value: number; color: string }>()
   for (const row of seriesRows.value) {
     const value = Number(row.volume)
@@ -674,7 +679,7 @@ function toVolumeData() {
     deduped.set(String(row.time), {
       time,
       value,
-      color: rising ? 'rgba(220, 38, 38, 0.28)' : 'rgba(5, 150, 105, 0.28)'
+      color: rising ? colors.upSoft : colors.downSoft
     })
   }
   return Array.from(deduped.values())
@@ -772,5 +777,10 @@ onMounted(async () => {
   await loadTeams()
   await loadWatchlist()
 })
+
+watch(resolvedTheme, () => {
+  if (chart && seriesRows.value.length) renderChart()
+})
+
 onBeforeUnmount(disposeChart)
 </script>

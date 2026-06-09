@@ -8,6 +8,26 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <title>TradingCopilot</title>
+    <script>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('tradingcopilot_theme_mode')
+          const mode = ['light', 'dark', 'system'].includes(stored) ? stored : 'system'
+          const storedPalette = localStorage.getItem('tradingcopilot_theme_palette')
+          const palette = ['emerald', 'blue', 'violet', 'coral', 'graphite'].includes(storedPalette) ? storedPalette : 'emerald'
+          const systemDark = matchMedia('(prefers-color-scheme: dark)').matches
+          const theme = mode === 'system' ? (systemDark ? 'dark' : 'light') : mode
+          document.documentElement.dataset.theme = theme
+          document.documentElement.dataset.themeMode = mode
+          document.documentElement.dataset.palette = palette
+          document.documentElement.style.colorScheme = theme
+        } catch {
+          document.documentElement.dataset.theme = 'light'
+          document.documentElement.dataset.themeMode = 'system'
+          document.documentElement.dataset.palette = 'emerald'
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

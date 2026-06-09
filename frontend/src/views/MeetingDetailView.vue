@@ -1275,7 +1275,7 @@ useAutoRefresh({
 }
 
 .reference-card-leaf {
-  box-shadow: inset 0 0 0 1px rgba(32, 178, 107, 0.12), var(--shadow-card);
+  box-shadow: inset 0 0 0 1px var(--focus-ring), var(--shadow-card);
 }
 
 .reference-card-external {
@@ -1298,8 +1298,8 @@ useAutoRefresh({
   height: 22px;
   padding: 0 8px;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: var(--info-soft);
+  color: var(--accent-secondary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1392,18 +1392,18 @@ useAutoRefresh({
 }
 
 .trust-gate-pass {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
+  border-color: color-mix(in srgb, var(--success) 38%, var(--border-soft));
+  background: var(--success-soft);
 }
 
 .trust-gate-warning {
-  border-color: #fde68a;
-  background: #fffbeb;
+  border-color: var(--attention-border);
+  background: var(--attention-soft);
 }
 
 .trust-gate-blocked {
-  border-color: #fecaca;
-  background: #fef2f2;
+  border-color: color-mix(in srgb, var(--danger) 38%, var(--border-soft));
+  background: var(--danger-soft);
 }
 
 .trust-section {
@@ -1474,7 +1474,7 @@ useAutoRefresh({
 }
 
 .trust-unsupported-item {
-  color: #7f1d1d;
+  color: var(--danger);
 }
 
 .trust-diff-item {
@@ -1500,9 +1500,9 @@ useAutoRefresh({
 .trust-action-item {
   display: grid;
   gap: 6px;
-  border: 1px solid #f1d5a8;
+  border: 1px solid var(--attention-border);
   border-radius: var(--radius-panel);
-  background: #fffaf0;
+  background: var(--attention-soft);
   padding: 10px;
 }
 

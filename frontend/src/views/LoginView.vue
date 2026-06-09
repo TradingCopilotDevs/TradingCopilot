@@ -1,5 +1,6 @@
 <template>
   <div class="login">
+    <ThemeModeControl class="login-theme" />
     <el-form class="login-panel" :model="form" label-position="top" @submit.prevent="submit">
       <div class="login-brand">
         <span class="brand-mark">投</span>
@@ -22,6 +23,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api, apiErrorText } from '../api'
 import { setAuthToken } from '../auth'
+import ThemeModeControl from '../components/ThemeModeControl.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -61,11 +63,23 @@ async function submit() {
 
 <style scoped>
 .login {
+  position: relative;
   min-height: 100vh;
   display: grid;
+  gap: 18px;
   place-items: center;
   padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(180deg, #f7fafc 0%, var(--app-bg) 100%);
+  background:
+    linear-gradient(135deg, var(--hero-wash-start) 0%, transparent 46%),
+    linear-gradient(180deg, var(--content-bg-start) 0%, var(--app-bg) 100%);
+}
+
+.login-theme {
+  position: fixed;
+  top: calc(18px + env(safe-area-inset-top, 0px));
+  right: 18px;
+  z-index: 10;
+  width: min(360px, calc(100vw - 36px));
 }
 
 .login-panel {
@@ -76,7 +90,7 @@ async function submit() {
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-panel);
   padding: 28px;
-  box-shadow: 0 18px 42px rgba(22, 32, 51, 0.1);
+  box-shadow: var(--shadow-floating);
 }
 
 .login-brand {
@@ -103,6 +117,15 @@ async function submit() {
 }
 
 @media (max-width: 767px) {
+  .login {
+    align-content: center;
+  }
+
+  .login-theme {
+    position: static;
+    width: min(360px, 100%);
+  }
+
   .login-panel {
     padding: 20px;
   }

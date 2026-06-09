@@ -689,7 +689,7 @@ useAutoRefresh({
 }
 
 .dashboard-alert--actionable {
-  border-left: 4px solid #d97706;
+  border-left: 4px solid var(--attention);
 }
 
 .dashboard-alert__body {
@@ -726,14 +726,14 @@ useAutoRefresh({
   display: grid;
   gap: 2px;
   min-width: 0;
-  border: 1px solid #f4d37a;
+  border: 1px solid var(--attention-border);
   border-radius: 8px;
-  background: #fffaf0;
+  background: var(--attention-soft);
   padding: 8px 10px;
 }
 
 .dashboard-alert__object strong {
-  color: #7c2d12;
+  color: var(--attention);
 }
 
 .dashboard-alert__more {
@@ -755,10 +755,10 @@ useAutoRefresh({
 }
 
 .dashboard-status-card {
-  border: 1px solid #dbe3ee;
-  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
   padding: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-subtle) 100%);
 }
 
 .dashboard-status-card__head {
@@ -772,7 +772,7 @@ useAutoRefresh({
   margin-top: 10px;
   font-size: 16px;
   font-weight: 600;
-  color: #18212f;
+  color: var(--text-main);
 }
 
 .dashboard-status-card__detail {
@@ -804,15 +804,15 @@ useAutoRefresh({
 }
 
 .dashboard-kv {
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: #fbfdff;
+  background: var(--surface-subtle);
   padding: 12px;
 }
 
 .dashboard-kv span {
   display: block;
-  color: #5f6f84;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -820,7 +820,7 @@ useAutoRefresh({
   display: block;
   margin-top: 8px;
   font-size: 18px;
-  color: #18212f;
+  color: var(--text-main);
 }
 
 .dashboard-message-text {
