@@ -24,10 +24,13 @@
           </div>
         </div>
         <el-menu router :default-active="menuActivePath" class="menu">
-          <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
-            <el-icon><component :is="item.icon" /></el-icon>
-            <span>{{ item.label }}</span>
-          </el-menu-item>
+          <template v-for="section in menuSections" :key="section.label">
+            <div class="menu-section-label">{{ section.label }}</div>
+            <el-menu-item v-for="item in section.items" :key="item.path" :index="item.path">
+              <el-icon><component :is="item.icon" /></el-icon>
+              <span>{{ item.label }}</span>
+            </el-menu-item>
+          </template>
         </el-menu>
         <div class="sidebar-actions">
           <el-button :icon="SwitchButton" plain @click="logout">退出</el-button>
@@ -47,10 +50,13 @@
         </div>
       </div>
       <el-menu :default-active="menuActivePath" class="menu" @select="handleMenuSelect">
-        <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
-          <el-icon><component :is="item.icon" /></el-icon>
-          <span>{{ item.label }}</span>
-        </el-menu-item>
+        <template v-for="section in menuSections" :key="section.label">
+          <div class="menu-section-label">{{ section.label }}</div>
+          <el-menu-item v-for="item in section.items" :key="item.path" :index="item.path">
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </el-menu-item>
+        </template>
       </el-menu>
       <div class="sidebar-actions">
         <el-button :icon="SwitchButton" plain @click="logout">退出</el-button>
@@ -90,23 +96,39 @@ const route = useRoute()
 const { isMobileNav } = useResponsive()
 const mobileMenuOpen = ref(false)
 
-const menuItems = [
-  { path: '/admin', label: '团队安全', icon: UserFilled },
-  { path: '/ops', label: '运维状态', icon: Monitor },
-  { path: '/', label: '总览', icon: DataBoard },
-  { path: '/setup', label: '设置向导', icon: Setting },
-  { path: '/meetings', label: '会议', icon: ChatLineRound },
-  { path: '/ingested-messages', label: '消息库', icon: Message },
-  { path: '/paper', label: '模拟盘', icon: Wallet },
-  { path: '/wake', label: '唤醒计划', icon: Timer },
-  { path: '/research-team', label: '投研团队', icon: OfficeBuilding },
-  { path: '/market', label: '行情与自选', icon: TrendCharts },
-  { path: '/message-subscriptions', label: '消息订阅器', icon: Bell },
-  { path: '/model-providers', label: '模型提供商', icon: Cpu },
-  { path: '/platform-adapters', label: '平台适配器', icon: Connection },
-  { path: '/settings', label: '系统设置', icon: Setting },
-  { path: '/logs', label: '系统日志', icon: Tickets }
+const menuSections = [
+  {
+    label: '使用',
+    items: [
+      { path: '/', label: '总览', icon: DataBoard },
+      { path: '/meetings', label: '会议', icon: ChatLineRound },
+      { path: '/ingested-messages', label: '消息库', icon: Message },
+      { path: '/message-subscriptions', label: '消息订阅器', icon: Bell },
+      { path: '/paper', label: '模拟盘', icon: Wallet },
+      { path: '/wake', label: '唤醒计划', icon: Timer },
+      { path: '/research-team', label: '投研团队', icon: OfficeBuilding },
+      { path: '/market', label: '行情与自选', icon: TrendCharts }
+    ]
+  },
+  {
+    label: '管理',
+    items: [
+      { path: '/setup', label: '设置向导', icon: Setting },
+      { path: '/model-providers', label: '模型提供商', icon: Cpu },
+      { path: '/platform-adapters', label: '平台适配器', icon: Connection },
+      { path: '/settings', label: '系统设置', icon: Setting },
+      { path: '/admin', label: '团队安全', icon: UserFilled },
+      { path: '/ops', label: '运维状态', icon: Monitor }
+    ]
+  },
+  {
+    label: '日志',
+    items: [
+      { path: '/logs', label: '系统日志', icon: Tickets }
+    ]
+  }
 ]
+const menuItems = menuSections.flatMap((section) => section.items)
 
 const menuActivePath = computed(() => {
   if (route.path.startsWith('/meetings')) return '/meetings'

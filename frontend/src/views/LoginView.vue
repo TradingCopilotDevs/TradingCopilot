@@ -1,7 +1,13 @@
 <template>
   <div class="login">
     <el-form class="login-panel" :model="form" label-position="top" @submit.prevent="submit">
-      <h1>A 股协同投研</h1>
+      <div class="login-brand">
+        <span class="brand-mark">投</span>
+        <div>
+          <h1>TradingCopilot</h1>
+          <p>A 股协同投研</p>
+        </div>
+      </div>
       <el-alert v-if="bootstrapRequired" type="info" :closable="false" title="首次启动，请创建管理员账户。" />
       <el-form-item label="用户名"><el-input v-model="form.username" autocomplete="username" /></el-form-item>
       <el-form-item label="密码"><el-input v-model="form.password" type="password" autocomplete="current-password" /></el-form-item>
@@ -59,15 +65,37 @@ async function submit() {
   display: grid;
   place-items: center;
   padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(180deg, #eef3f8 0%, #e3ebf4 100%);
+  background: linear-gradient(180deg, #f7fafc 0%, var(--app-bg) 100%);
 }
 
 .login-panel {
+  display: grid;
+  gap: 16px;
   width: min(420px, 100%);
-  background: #ffffff;
-  border: 1px solid #dbe3ee;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
   padding: 28px;
+  box-shadow: 0 18px 42px rgba(22, 32, 51, 0.1);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-brand h1 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.login-brand p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .login-submit {

@@ -66,13 +66,15 @@
     </div>
 
     <div class="detail-side">
-      <div class="panel">
-        <div class="section-head">
-          <h2>可信度</h2>
-          <el-tag :type="confidenceTagType(trustReport?.confidence)" effect="plain">
-            {{ confidenceLabel(trustReport?.confidence) }}
-          </el-tag>
-        </div>
+      <div class="panel detail-side-panel">
+        <el-tabs v-model="detailSideTab" class="detail-side-tabs">
+          <el-tab-pane label="可信度" name="trust">
+            <div class="section-head">
+              <h2>可信度</h2>
+              <el-tag :type="confidenceTagType(trustReport?.confidence)" effect="plain">
+                {{ confidenceLabel(trustReport?.confidence) }}
+              </el-tag>
+            </div>
         <div class="trust-metrics">
           <div>
             <span>证据</span>
@@ -226,13 +228,13 @@
             <li v-for="item in trustGaps" :key="item">{{ trustGapLabel(item) }}</li>
           </ul>
         </div>
-      </div>
+          </el-tab-pane>
 
-      <div class="panel">
-        <div class="section-head">
-          <h2>引用链</h2>
-          <el-button link type="primary" @click="loadReferences">刷新</el-button>
-        </div>
+          <el-tab-pane label="引用链" name="references">
+            <div class="section-head">
+              <h2>引用链</h2>
+              <el-button link type="primary" @click="loadReferences">刷新</el-button>
+            </div>
         <div v-if="!referenceChain.length" class="muted">暂无引用</div>
         <div
           v-for="(item, index) in referenceChain"
@@ -271,13 +273,13 @@
             <span v-else class="muted">{{ closedReferenceLabel(item, index) }}</span>
           </div>
         </div>
-      </div>
+          </el-tab-pane>
 
-      <div class="panel">
-        <div class="section-head">
-          <h2>唤醒计划</h2>
-          <el-button link type="primary" @click="loadWakePlans">刷新</el-button>
-        </div>
+          <el-tab-pane label="唤醒计划" name="wake">
+            <div class="section-head">
+              <h2>唤醒计划</h2>
+              <el-button link type="primary" @click="loadWakePlans">刷新</el-button>
+            </div>
         <div v-if="!wakePlans.length" class="muted">暂无唤醒计划</div>
         <div v-for="plan in wakePlans" :key="plan.id" class="reference-card">
           <div class="reference-head">
@@ -290,6 +292,8 @@
           <div>{{ plan.reason }}</div>
           <div class="muted">下次检查：{{ formatDateTimeUtc8(plan.nextCheckAt) }}</div>
         </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </div>
   </div>
@@ -397,6 +401,7 @@ const referenceChain = ref<ChainItem[]>([])
 const referenceCandidates = ref<Meeting[]>([])
 const referenceDialogVisible = ref(false)
 const referenceForm = reactive({ targetMeetingId: undefined as number | undefined, note: '' })
+const detailSideTab = ref('trust')
 const trustReviewComments = reactive<Record<string, string>>({})
 const trustReviewLoading = ref(false)
 const recapActionReviewComments = reactive<Record<string, string>>({})
@@ -1226,17 +1231,55 @@ useAutoRefresh({
   max-width: 100%;
 }
 
+.detail-side {
+  position: sticky;
+  top: var(--shell-padding);
+  align-self: start;
+}
+
+.detail-side-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 300px);
+  min-height: 420px;
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+.detail-side-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.detail-side-tabs :deep(.el-tabs__header) {
+  flex: 0 0 auto;
+  margin-bottom: 14px;
+}
+
+.detail-side-tabs :deep(.el-tabs__content) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.detail-side-tabs :deep(.el-tab-pane) {
+  min-width: 0;
+}
+
 .reference-card-deleted {
   border-style: dashed;
-  background: #f8fafc;
+  background: var(--surface-muted);
 }
 
 .reference-card-leaf {
-  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(32, 178, 107, 0.12), var(--shadow-card);
 }
 
 .reference-card-external {
-  border-color: #cbd5e1;
+  border-color: var(--border-strong);
 }
 
 .reference-path {
@@ -1263,7 +1306,7 @@ useAutoRefresh({
 
 .reference-path-text {
   min-width: 0;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -1296,20 +1339,20 @@ useAutoRefresh({
 
 .trust-metrics div {
   min-width: 0;
-  border: 1px solid #dbe3ee;
-  border-radius: 8px;
-  background: #fbfdff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
   padding: 10px 12px;
 }
 
 .trust-metrics span {
   display: block;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .trust-metrics strong {
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 20px;
 }
 
@@ -1319,9 +1362,9 @@ useAutoRefresh({
   justify-content: space-between;
   gap: 10px;
   margin-top: 14px;
-  border: 1px solid #dbe3ee;
-  border-radius: 8px;
-  background: #fbfdff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
   padding: 10px 12px;
 }
 
@@ -1335,14 +1378,14 @@ useAutoRefresh({
 
 .trust-gate strong {
   display: block;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 13px;
 }
 
 .trust-gate span {
   display: block;
   margin-top: 3px;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -1395,7 +1438,7 @@ useAutoRefresh({
 .trust-gap-list {
   margin: 0;
   padding-left: 18px;
-  color: #64748b;
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 
@@ -1414,7 +1457,7 @@ useAutoRefresh({
   grid-template-columns: auto minmax(0, 1fr);
   gap: 6px 8px;
   align-items: start;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.45;
 }
@@ -1438,7 +1481,7 @@ useAutoRefresh({
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.45;
   min-width: 0;
@@ -1458,7 +1501,7 @@ useAutoRefresh({
   display: grid;
   gap: 6px;
   border: 1px solid #f1d5a8;
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   background: #fffaf0;
   padding: 10px;
 }
@@ -1480,7 +1523,7 @@ useAutoRefresh({
 
 .trust-action-spec {
   min-width: 0;
-  color: #1e293b;
+  color: var(--text-main);
   font-size: 13px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -1519,15 +1562,15 @@ useAutoRefresh({
 .trust-review-item {
   display: grid;
   gap: 8px;
-  border: 1px solid #dbe3ee;
-  border-radius: 8px;
-  background: #fbfdff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
   padding: 10px;
 }
 
 .trust-review-sentence {
   min-width: 0;
-  color: #1e293b;
+  color: var(--text-main);
   font-size: 13px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -1555,6 +1598,23 @@ useAutoRefresh({
 
   .trust-binding-item .muted {
     grid-column: 1;
+  }
+}
+
+@media (max-width: 1200px) {
+  .detail-side {
+    position: static;
+  }
+
+  .detail-side-panel {
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .detail-side-tabs :deep(.el-tabs__content) {
+    overflow: visible;
+    padding-right: 0;
   }
 }
 </style>
