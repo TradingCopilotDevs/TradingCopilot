@@ -8274,6 +8274,9 @@ type OpsTaskType = string
 // OrderId defines model for OrderId.
 type OrderId = string
 
+// Overdue defines model for Overdue.
+type Overdue = bool
+
 // PageCursor defines model for PageCursor.
 type PageCursor = string
 
@@ -8797,8 +8800,11 @@ type GetWakePlansParams struct {
 	ResearchTeamId *ResearchTeamId `form:"researchTeamId,omitempty" json:"researchTeamId,omitempty"`
 	Status         *Status         `form:"status,omitempty" json:"status,omitempty"`
 	MeetingId      *MeetingIdQuery `form:"meetingId,omitempty" json:"meetingId,omitempty"`
-	PageLimit      *PageLimit      `form:"page[limit],omitempty" json:"page[limit],omitempty"`
-	PageCursor     *PageCursor     `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+
+	// Overdue Only return active wake plans whose nextCheckAt is due.
+	Overdue    *Overdue    `form:"overdue,omitempty" json:"overdue,omitempty"`
+	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
 }
 
 // PostAdminSessionRevokeApplicationVndAPIPlusJSONRequestBody defines body for PostAdminSessionRevoke for application/vnd.api+json ContentType.
@@ -21191,6 +21197,19 @@ func (siw *ServerInterfaceWrapper) GetWakePlans(w http.ResponseWriter, r *http.R
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "meetingId"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "meetingId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "overdue" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "overdue", r.URL.Query(), &params.Overdue, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "overdue"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "overdue", Err: err})
 		}
 		return
 	}
