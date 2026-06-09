@@ -139,6 +139,8 @@ func TestApplyMeetingRecapActionsRejectsInvalidWakePlan(t *testing.T) {
 	mustMeeting(t, err)
 	roleKey := "moderator"
 	recap := map[string]any{
+		"facts":     []string{"The meeting proposed an indicator follow-up."},
+		"citations": []string{"@moderator"},
 		"wake_plans": []map[string]any{
 			{"trigger_type": "indicator", "reason": "missing condition", "trigger_config": map[string]any{"topic": "invalid"}},
 		},
@@ -151,10 +153,92 @@ func TestApplyMeetingRecapActionsRejectsInvalidWakePlan(t *testing.T) {
 		t.Fatalf("invalid recap wake plan should not be created, got %d", count)
 	}
 	var event domainmeeting.Event
-	mustMeeting(t, db.First(&event, "meeting_id = ? AND type = ? AND role_key = ?", meeting.ID, domainkernel.EventError, roleKey).Error)
-	if !strings.Contains(event.Content, "Failed to create wake plan") || !strings.Contains(event.Content, "requires code") {
+	mustMeeting(t, db.First(&event, "meeting_id = ? AND type = ? AND role_key = ? AND payload LIKE ?", meeting.ID, domainkernel.EventSystem, roleKey, "%recap_actions_blocked%").Error)
+	if !strings.Contains(event.Content, "blocked by evidence policy") || !strings.Contains(event.Content, "requires code") {
 		t.Fatalf("unexpected wake plan error event: %+v", event)
 	}
+}
+
+func TestApplyMeetingRecapActionsBlocksExecutableActionsWithoutEvidence(t *testing.T) {
+	db := newMeetingTestDB(t)
+	meeting, err := CreateMeeting(db, "evidence gate", "manual")
+	mustMeeting(t, err)
+	roleKey := "moderator"
+	recap := map[string]any{
+		"summary": "track 000001",
+		"watchlist_actions": []map[string]any{
+			{"code": "000001", "active": true},
+		},
+		"wake_plans": []map[string]any{
+			{"trigger_type": "time", "next_check_at": "2026-05-10 09:30:00", "trigger_config": map[string]any{"topic": "follow up"}},
+		},
+		"orders": []map[string]any{
+			{"code": "000001", "side": "buy", "quantity": 100, "suggested_price": 10},
+		},
+	}
+
+	mustMeeting(t, ApplyMeetingRecapActions(db, meeting, nil, roleKey, recap))
+	var watchlistCount, wakeCount, orderCount int64
+	db.Model(&domainmarket.WatchlistItem{}).Count(&watchlistCount)
+	db.Model(&domainwake.Plan{}).Count(&wakeCount)
+	db.Model(&domainpaper.Order{}).Count(&orderCount)
+	if watchlistCount != 0 || wakeCount != 0 || orderCount != 0 {
+		t.Fatalf("blocked recap actions should not create records, watchlist=%d wake=%d orders=%d", watchlistCount, wakeCount, orderCount)
+	}
+	var event domainmeeting.Event
+	mustMeeting(t, db.First(&event, "meeting_id = ? AND type = ? AND role_key = ? AND payload LIKE ?", meeting.ID, domainkernel.EventSystem, roleKey, "%recap_actions_blocked%").Error)
+	if !strings.Contains(event.Content, "blocked by evidence policy") || !strings.Contains(event.Content, "structured fact or inference") {
+		t.Fatalf("unexpected blocked action event: %+v", event)
+	}
+	payload := meetingTestPayload(t, event)
+	if payload["suggestion_count"] != float64(3) {
+		t.Fatalf("blocked action suggestion count mismatch: %+v", payload)
+	}
+	assertRecapActionSuggestion(t, payload, 0, "watchlist", "blocked")
+	assertRecapActionSuggestion(t, payload, 1, "wake_plan", "blocked")
+	assertRecapActionSuggestion(t, payload, 2, "paper_order", "blocked")
+}
+
+func TestApplyMeetingRecapActionsRequiresReviewForWeakRoleOnlyCitations(t *testing.T) {
+	db := newMeetingTestDB(t)
+	meeting, err := CreateMeeting(db, "weak evidence", "manual")
+	mustMeeting(t, err)
+	roleKey := "moderator"
+	recap := map[string]any{
+		"facts":      []string{"000001 was mentioned by the moderator."},
+		"inferences": []string{"A follow-up action may be useful."},
+		"citations":  []string{"@moderator"},
+		"watchlist_actions": []map[string]any{
+			{"code": "000001", "active": true},
+		},
+		"wake_plans": []map[string]any{
+			{"trigger_type": "time", "next_check_at": "2026-05-10 09:30:00", "trigger_config": map[string]any{"topic": "follow up"}},
+		},
+		"orders": []map[string]any{
+			{"code": "000001", "side": "buy", "quantity": 100, "suggested_price": 10},
+		},
+	}
+
+	mustMeeting(t, ApplyMeetingRecapActions(db, meeting, nil, roleKey, recap))
+	var watchlistCount, wakeCount, orderCount int64
+	db.Model(&domainmarket.WatchlistItem{}).Count(&watchlistCount)
+	db.Model(&domainwake.Plan{}).Count(&wakeCount)
+	db.Model(&domainpaper.Order{}).Count(&orderCount)
+	if watchlistCount != 0 || wakeCount != 0 || orderCount != 0 {
+		t.Fatalf("weakly cited recap actions should wait for review, watchlist=%d wake=%d orders=%d", watchlistCount, wakeCount, orderCount)
+	}
+	var event domainmeeting.Event
+	mustMeeting(t, db.First(&event, "meeting_id = ? AND type = ? AND role_key = ? AND payload LIKE ?", meeting.ID, domainkernel.EventSystem, roleKey, "%recap_actions_review_required%").Error)
+	if !strings.Contains(event.Content, "manual review") || !strings.Contains(string(event.Payload), "weak_reference_review") {
+		t.Fatalf("unexpected review-required event: %+v payload=%s", event, event.Payload)
+	}
+	payload := meetingTestPayload(t, event)
+	if payload["suggestion_count"] != float64(3) || payload["disposition"] != "manual_review_required" {
+		t.Fatalf("review action suggestion payload mismatch: %+v", payload)
+	}
+	assertRecapActionSuggestion(t, payload, 0, "watchlist", "manual_review_required")
+	assertRecapActionSuggestion(t, payload, 1, "wake_plan", "manual_review_required")
+	assertRecapActionSuggestion(t, payload, 2, "paper_order", "manual_review_required")
 }
 
 func TestProcessDueWakePlansFiresIndicatorTrigger(t *testing.T) {
@@ -445,6 +529,9 @@ func TestApplyMeetingRecapActionsCreatesWatchlistWakeAndOrder(t *testing.T) {
 	recap := map[string]any{
 		"summary":    "track bank",
 		"conclusion": "pilot buy",
+		"facts":      []string{"000001 was discussed as a China-listed candidate."},
+		"inferences": []string{"A small pilot order and follow-up wake plan are justified."},
+		"citations":  []string{"@analyst", "market.realtime_quote"},
 		"watchlist_actions": []map[string]any{
 			{"code": "000001", "name": "Ping An Bank", "note": "watch valuation", "active": true},
 		},
@@ -497,6 +584,9 @@ func TestApplyMeetingRecapActionsAddsOrderSymbolsToWatchlist(t *testing.T) {
 	recap := map[string]any{
 		"summary":    "Worth tracking before action.",
 		"conclusion": "Observe 600519 and pilot 000001.",
+		"facts":      []string{"600519 and 000001 were discussed in the recap."},
+		"inferences": []string{"Both symbols should stay visible for follow-up review."},
+		"citations":  []string{"@moderator", "meeting.context"},
 		"orders": []map[string]any{
 			{"code": "000001", "side": "buy", "quantity": 100, "suggested_price": 10, "reason": "pilot order"},
 		},
@@ -527,6 +617,9 @@ func TestRunMeetingOnceAppliesModeratorRecapActions(t *testing.T) {
 		"tags":["bank","pilot"],
 		"summary":"summary from moderator",
 		"conclusion":"conclusion from moderator",
+		"facts":["000001 was discussed in the meeting"],
+		"inferences":["tracking and a pilot order are justified"],
+		"citations":["@moderator","meeting.context"],
 		"watchlist_actions":[{"code":"000001","note":"track final","active":true}],
 		"wake_plans":[{"trigger_type":"time","next_check_at":"2026-05-10 09:30:00","reason":"follow-up","trigger_config":{"topic":"next"}}],
 		"orders":[{"code":"000001","side":"buy","quantity":100,"suggested_price":10,"reason":"pilot"}]
@@ -561,9 +654,9 @@ func TestRunMeetingOnceManagedRunnerPlansToolRequestsAndRecap(t *testing.T) {
 		`{"content":"kickoff","continue_discussion":true,"questions":[{"target":"analyst","question":"check quote"}],"focus_roles":["analyst"]}`,
 		`not json`,
 		`{"type":"tool_request","tool_calls":[{"tool":"market.realtime_quote","arguments":{"code":"600519"},"reason":"need quote"}]}`,
-		`{"type":"analysis","content":"quote reviewed","questions":[{"target":"all","question":"any risk?"}],"mentions":["moderator"],"citations":["market.realtime_quote"],"confidence":"high"}`,
+		`{"type":"analysis","content":"quote reviewed","facts":["600519 latest quote came from market.realtime_quote"],"assumptions":["liquidity remains normal"],"inferences":["quote supports continued watchlist tracking"],"evidence_gaps":["need next trading day volume confirmation"],"questions":[{"target":"all","question":"any risk?"}],"mentions":["moderator"],"citations":["market.realtime_quote"],"confidence":"high"}`,
 		`{"content":"enough","continue_discussion":false,"questions":[],"focus_roles":[]}`,
-		`{"topic":"final 600519","tags":["quote"],"summary":"managed summary","conclusion":"managed conclusion","watchlist_actions":[{"code":"600519","note":"track quote","active":true}],"wake_plans":[],"orders":[]}`,
+		`{"topic":"final 600519","tags":["quote"],"summary":"managed summary","conclusion":"managed conclusion","facts":["600519 quote came from market.realtime_quote"],"assumptions":["liquidity remains normal"],"inferences":["quote supports continued watchlist tracking"],"evidence_gaps":["need next trading day volume confirmation"],"citations":["@analyst","market.realtime_quote"],"watchlist_actions":[{"code":"600519","note":"track quote","active":true}],"wake_plans":[],"orders":[]}`,
 	}
 	var calls int
 	var requestPayloads []map[string]any
@@ -641,8 +734,11 @@ func TestRunMeetingOnceManagedRunnerPlansToolRequestsAndRecap(t *testing.T) {
 	mustMeeting(t, db.First(&toolLog, "meeting_id = ? AND role_key = ? AND tool_name = ?", meeting.ID, "analyst", "market.realtime_quote").Error)
 	var analystEvent domainmeeting.Event
 	mustMeeting(t, db.First(&analystEvent, "meeting_id = ? AND role_key = ? AND type = ?", meeting.ID, "analyst", domainkernel.EventRoleMessage).Error)
-	if !strings.Contains(string(analystEvent.Payload), `"confidence":"high"`) || !strings.Contains(string(analystEvent.Payload), "market.realtime_quote") {
+	if !strings.Contains(string(analystEvent.Payload), `"confidence":"high"`) || !strings.Contains(string(analystEvent.Payload), "market.realtime_quote") || !strings.Contains(string(analystEvent.Payload), "liquidity remains normal") || !strings.Contains(string(analystEvent.Payload), "need next trading day volume confirmation") {
 		t.Fatalf("analyst payload missing metadata: %s", analystEvent.Payload)
+	}
+	if !strings.Contains(string(analystEvent.Payload), `"prompt_snapshot"`) || !strings.Contains(string(analystEvent.Payload), managedMeetingPromptVersion) || !strings.Contains(string(analystEvent.Payload), `"promptHash"`) {
+		t.Fatalf("analyst payload missing prompt snapshot: %s", analystEvent.Payload)
 	}
 	var watchlist domainmarket.WatchlistItem
 	mustMeeting(t, db.First(&watchlist, "code = ?", "600519").Error)
@@ -770,8 +866,8 @@ func TestRunMeetingOnceManagedRunnerRetriesInvalidWakePlanRecap(t *testing.T) {
 	responses := []string{
 		`{"content":"kickoff","continue_discussion":true,"questions":[{"target":"analyst","question":"answer"}]}`,
 		`{"type":"analysis","content":"Use 510300 only if it crosses 4.25.","confidence":"medium"}`,
-		`{"topic":"final","tags":["etf"],"summary":"summary","conclusion":"watch trigger","watchlist_actions":[],"wake_plans":[{"trigger_type":"indicator","reason":"price trigger","trigger_config":{"threshold":4.25}}],"orders":[]}`,
-		`{"topic":"final","tags":["etf"],"summary":"summary","conclusion":"watch trigger","watchlist_actions":[],"wake_plans":[{"trigger_type":"indicator","reason":"price trigger","trigger_config":{"code":"510300","threshold":4.25}}],"orders":[]}`,
+		`{"topic":"final","tags":["etf"],"summary":"summary","conclusion":"watch trigger","facts":["510300 was discussed as the target instrument"],"assumptions":[],"inferences":["price 4.25 is the follow-up threshold"],"evidence_gaps":[],"citations":["@analyst"],"watchlist_actions":[],"wake_plans":[{"trigger_type":"indicator","reason":"price trigger","trigger_config":{"threshold":4.25}}],"orders":[]}`,
+		`{"topic":"final","tags":["etf"],"summary":"summary","conclusion":"watch trigger","facts":["510300 was discussed as the target instrument"],"assumptions":[],"inferences":["price 4.25 is the follow-up threshold"],"evidence_gaps":[],"citations":["@analyst","meeting.context"],"watchlist_actions":[],"wake_plans":[{"trigger_type":"indicator","reason":"price trigger","trigger_config":{"code":"510300","threshold":4.25}}],"orders":[]}`,
 	}
 	var calls int
 	var requestPayloads []map[string]any
@@ -818,6 +914,67 @@ func TestRunMeetingOnceManagedRunnerRetriesInvalidWakePlanRecap(t *testing.T) {
 	mustMeeting(t, db.First(&plan, "meeting_id = ?", meeting.ID).Error)
 	if !strings.Contains(string(plan.TriggerConfig), "510300") {
 		t.Fatalf("wake plan missing corrected code: %s", plan.TriggerConfig)
+	}
+}
+
+func TestRunMeetingOnceManagedRunnerRetriesActionRecapWithoutEvidence(t *testing.T) {
+	fastMeetingAITestSettings(t)
+	responses := []string{
+		`{"content":"kickoff","continue_discussion":true,"questions":[{"target":"analyst","question":"answer"}]}`,
+		`{"type":"analysis","content":"Track 600519 after quote review.","facts":["600519 was reviewed"],"assumptions":[],"inferences":["tracking is reasonable"],"evidence_gaps":[],"mentions":["moderator"],"citations":["market.realtime_quote"],"confidence":"medium"}`,
+		`{"topic":"final","tags":["quote"],"summary":"summary","conclusion":"track 600519","watchlist_actions":[{"code":"600519","note":"track","active":true}],"wake_plans":[],"orders":[]}`,
+		`{"topic":"final","tags":["quote"],"summary":"summary","conclusion":"track 600519","facts":["600519 was reviewed by analyst"],"assumptions":[],"inferences":["watchlist tracking is reasonable"],"evidence_gaps":[],"citations":["@analyst","market.realtime_quote"],"watchlist_actions":[{"code":"600519","note":"track","active":true}],"wake_plans":[],"orders":[]}`,
+	}
+	var calls int
+	var requestPayloads []map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatal(err)
+		}
+		requestPayloads = append(requestPayloads, payload)
+		if calls >= len(responses) {
+			t.Fatalf("unexpected extra model call %d", calls+1)
+		}
+		content := responses[calls]
+		calls++
+		_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": content}}}})
+	}))
+	defer srv.Close()
+
+	db := newMeetingTestDB(t)
+	providerID := seedMeetingAIProvider(t, db, srv.URL)
+	model := "m"
+	moderator := domainai.AgentRole{Key: "moderator", Name: "Moderator", Responsibility: "moderate", PromptTemplate: "moderate", ProviderID: &providerID, Model: &model, Enabled: true, SortOrder: 1}
+	analyst := domainai.AgentRole{Key: "analyst", Name: "Analyst", Responsibility: "analyze", PromptTemplate: "analyze", ProviderID: &providerID, Model: &model, Enabled: true, SortOrder: 2}
+	teamID := ensureTestResearchTeam(db)
+	mustMeeting(t, saveTestAgentRole(db, teamID, &moderator))
+	mustMeeting(t, saveTestAgentRole(db, teamID, &analyst))
+	mustMeeting(t, db.Create(&domainsettings.AppSetting{Key: "MEETING_MAX_ROUNDS", Value: JSON(map[string]any{"value": 1})}).Error)
+	meeting, err := CreateMeeting(db, "600519 evidence gated action", "manual")
+	mustMeeting(t, err)
+
+	mustMeeting(t, RunMeetingOnce(db, meeting.ID))
+	if calls != len(responses) {
+		t.Fatalf("expected %d model calls, got %d", len(responses), calls)
+	}
+	retryMessages := requestMessages(t, requestPayloads[3])
+	if len(retryMessages) != 3 || !strings.Contains(retryMessages[2]["content"], "executable actions require at least one structured fact or inference") || !strings.Contains(retryMessages[2]["content"], "include facts or inferences plus citations") {
+		t.Fatalf("action evidence retry payload mismatch: %+v", retryMessages)
+	}
+	var watchlist domainmarket.WatchlistItem
+	mustMeeting(t, db.First(&watchlist, "research_team_id = ? AND code = ?", teamID, "600519").Error)
+	var recapEvent domainmeeting.Event
+	mustMeeting(t, db.First(&recapEvent, "meeting_id = ? AND role_key = ? AND type = ? AND payload LIKE ?", meeting.ID, "moderator", domainkernel.EventRoleMessage, "%recap_completed%").Error)
+	var payload map[string]any
+	mustMeeting(t, json.Unmarshal(recapEvent.Payload, &payload))
+	rawRecap, err := extractMeetingRecapJSON(stringFromAny(payload["raw_json"]))
+	mustMeeting(t, err)
+	if got := stringList(rawRecap["citations"]); len(got) != 2 || got[0] != "@analyst" || got[1] != "market.realtime_quote" {
+		t.Fatalf("recap citations missing: %+v payload=%s", rawRecap, recapEvent.Payload)
+	}
+	if got := stringList(rawRecap["facts"]); len(got) != 1 || got[0] != "600519 was reviewed by analyst" {
+		t.Fatalf("recap facts missing: %+v payload=%s", rawRecap, recapEvent.Payload)
 	}
 }
 
@@ -1125,6 +1282,33 @@ func requestMessages(t *testing.T, payload map[string]any) []map[string]string {
 		out = append(out, map[string]string{"role": fmt.Sprint(obj["role"]), "content": fmt.Sprint(obj["content"])})
 	}
 	return out
+}
+
+func meetingTestPayload(t *testing.T, event domainmeeting.Event) map[string]any {
+	t.Helper()
+	var payload map[string]any
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		t.Fatal(err)
+	}
+	return payload
+}
+
+func assertRecapActionSuggestion(t *testing.T, payload map[string]any, index int, actionType string, disposition string) {
+	t.Helper()
+	raw, ok := payload["suggested_actions"].([]any)
+	if !ok || index < 0 || index >= len(raw) {
+		t.Fatalf("missing suggested action %d: %+v", index, payload)
+	}
+	suggestion, ok := raw[index].(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected suggested action %d: %+v", index, raw[index])
+	}
+	if suggestion["action_type"] != actionType || suggestion["disposition"] != disposition {
+		t.Fatalf("suggested action %d mismatch: %+v", index, suggestion)
+	}
+	if spec, ok := suggestion["spec"].(map[string]any); !ok || len(spec) == 0 {
+		t.Fatalf("suggested action %d missing spec: %+v", index, suggestion)
+	}
 }
 
 func managedPayloadGoldenFragments(t *testing.T) map[string][]string {

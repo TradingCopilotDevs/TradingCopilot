@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
+	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
 	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
-	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
 	"strconv"
 	"strings"
 	"time"
@@ -75,32 +74,18 @@ func runModeratorPlan(ctx context.Context, db *gorm.DB, meeting domainmeeting.Me
 }
 
 func fallbackModeratorPlanFromText(raw string, roles []domainai.AgentRole, moderator domainai.AgentRole, kickoff bool) (moderatorPlan, bool) {
-	content := strings.TrimSpace(raw)
-	if !looksLikeSubstantiveMarkdown(content) {
-		return moderatorPlan{}, false
-	}
-	plan := moderatorPlan{Content: content, Raw: raw, ContinueDiscussion: kickoff}
-	if kickoff {
-		plan.ContinueDiscussion = true
-		for _, role := range roles {
-			if role.Key == moderator.Key {
-				continue
-			}
-			plan.Questions = append(plan.Questions, map[string]string{"target": role.Key, "question": "Provide the most important judgment and evidence from your responsibility area."})
-		}
-	}
-	return plan, true
+	return appmeeting.FallbackModeratorPlanFromText(raw, participantRoleKeys(roles, moderator.Key), kickoff)
 }
 
-func looksLikeSubstantiveMarkdown(text string) bool {
-	text = strings.TrimSpace(text)
-	if len([]rune(text)) < 80 {
-		return false
+func participantRoleKeys(roles []domainai.AgentRole, excludeKey string) []string {
+	keys := []string{}
+	for _, role := range roles {
+		if role.Key == excludeKey {
+			continue
+		}
+		keys = append(keys, role.Key)
 	}
-	if strings.HasPrefix(text, "#") || strings.Contains(text, "\n#") || strings.Contains(text, "\n- ") || strings.Contains(text, "\n* ") {
-		return true
-	}
-	return strings.Count(text, "\n") >= 2
+	return keys
 }
 
 func finalizeManagedMeeting(ctx context.Context, db *gorm.DB, meeting *domainmeeting.Meeting, moderator domainai.AgentRole, modelName string, settings config.Settings, runID string) error {
@@ -111,10 +96,12 @@ func finalizeManagedMeeting(ctx context.Context, db *gorm.DB, meeting *domainmee
 	if err := gormrepo.NewMeetingRepository(db).MarkRecapRunning(ctx, meeting.ID, runID, now); err != nil {
 		return errMeetingRunSuperseded
 	}
-	recap, raw, err := callRoleModelJSONValidated(ctx, db, meeting.ID, moderator, modelName, []map[string]string{
+	recapMessages := []map[string]string{
 		{"role": "system", "content": moderatorRecapPrompt(moderator)},
 		{"role": "user", "content": buildRecapContext(db, *meeting)},
-	}, "Your previous response was not a valid JSON object. Return one JSON object only.", tokenLabel(moderator.Key, "recap"), validateModeratorRecapActions, moderatorRecapValidationRetryInstruction)
+	}
+	recapPromptSnapshot := rolePromptSnapshot(moderator, modelName, recapMessages, tokenLabel(moderator.Key, "recap"), managedMeetingPromptVersion)
+	recap, raw, err := callRoleModelJSONValidated(ctx, db, meeting.ID, moderator, modelName, recapMessages, "Your previous response was not a valid JSON object. Return one JSON object only.", tokenLabel(moderator.Key, "recap"), validateModeratorRecapActions, moderatorRecapValidationRetryInstruction)
 	if err != nil {
 		return err
 	}
@@ -127,7 +114,8 @@ func finalizeManagedMeeting(ctx context.Context, db *gorm.DB, meeting *domainmee
 	conclusion := firstNonEmptyString(stringFromAny(recap["conclusion"]), valueOrEmpty(meeting.Conclusion), summary, meeting.Topic)
 	markdown := formatRecapMarkdown(topic, tags, summary, conclusion, recap)
 	recapEvent, err := AppendEvent(db, meeting.ID, domainkernel.EventRoleMessage, &moderator.Key, markdown, map[string]any{
-		"status": "recap_completed", "role_name": moderator.Name, "topic": topic, "tags": tags, "raw_json": raw,
+		"status": "recap_completed", "role_name": moderator.Name, "provider_id": providerIDForRole(moderator), "provider_name": providerName(moderator),
+		"model": modelName, "prompt_version": managedMeetingPromptVersion, "prompt_snapshot": recapPromptSnapshot, "topic": topic, "tags": tags, "raw_json": raw,
 	})
 	if err != nil {
 		return err
@@ -205,28 +193,11 @@ func callRoleModelJSONValidated(ctx context.Context, db *gorm.DB, meetingID uint
 }
 
 func validateModeratorRecapActions(recap map[string]any) error {
-	for index, raw := range objectList(recap["wake_plans"]) {
-		triggerType := domainkernel.WakeTriggerType(strings.ToLower(firstNonEmptyString(stringFromAny(raw["trigger_type"]), string(domainkernel.WakeTime))))
-		triggerConfig := raw["trigger_config"]
-		if triggerConfig == nil {
-			triggerConfig = map[string]any{}
-		}
-		plan := domainwake.Plan{
-			TriggerType:   triggerType,
-			TriggerConfig: JSON(triggerConfig),
-			Status:        domainkernel.WakeActive,
-		}
-		if err := appwake.ValidatePlan(&plan); err != nil {
-			return fmt.Errorf("wake_plans[%d]: %w", index, err)
-		}
-	}
-	return nil
+	return appmeeting.ValidateModeratorRecapActions(recap)
 }
 
 func moderatorRecapValidationRetryInstruction(err error) string {
-	return "Your previous response was valid JSON but contained invalid executable actions: " + err.Error() + `. Return one corrected JSON object only.
-For indicator wake_plans, trigger_config must include code, symbol, or ticker, plus a numeric threshold, target, target_price, value, or target_value.
-Do not include an indicator wake_plan if the meeting transcript lacks a concrete code and numeric threshold.`
+	return appmeeting.ModeratorRecapValidationRetryInstruction(err)
 }
 
 func chatRole(ctx context.Context, db *gorm.DB, meetingID uint, role domainai.AgentRole, modelName string, messages []map[string]string, label string) (string, error) {
@@ -239,12 +210,27 @@ func chatRole(ctx context.Context, db *gorm.DB, meetingID uint, role domainai.Ag
 	}
 	settings := config.Load()
 	client := ai.Client{Provider: *role.Provider, Security: security.New(settings), Settings: settings, HTTPClient: runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleAI, settings.AIChatTimeout)}
+	started := time.Now()
 	result, err := client.ChatWithUsageWithContext(ctx, messages, modelName)
+	latency := time.Since(started)
 	if err != nil {
 		return "", err
 	}
 	actual := actualChatTokens(modelName, messages, result.Content, result.Usage)
 	_ = settleMeetingTokenUsage(ctx, db, meetingID, reserved, actual, label)
+	promptSnapshot := rolePromptSnapshot(role, modelName, messages, label, managedMeetingPromptVersion)
+	_, _ = AppendEvent(db, meetingID, domainkernel.EventToolCall, &role.Key, role.Name+" completed model call "+modelName+".", map[string]any{
+		"status":          "model_call_completed",
+		"model_called":    true,
+		"role_name":       role.Name,
+		"provider_id":     role.Provider.ID,
+		"provider_name":   role.Provider.Name,
+		"model":           modelName,
+		"prompt_version":  managedMeetingPromptVersion,
+		"prompt_snapshot": promptSnapshot,
+		"token_usage":     tokenUsagePayload(result.Usage, reserved, actual),
+		"latency_ms":      latency.Milliseconds(),
+	})
 	return result.Content, nil
 }
 
@@ -290,8 +276,8 @@ Additional instruction: %s
 
 Return JSON only.
 If you need tools, return: {"type":"tool_request","tool_calls":[{"tool":"...","arguments":{},"reason":"..."}]}.
-If you can speak, return: {"type":"analysis","content":"markdown text","questions":[{"target":"role_key|all","question":"..."}],"mentions":["role_key"],"citations":["@role_key or source"],"confidence":"low|medium|high"}.
-Separate facts, assumptions, evidence gaps, risks, invalidation conditions, and decision impact. Do not produce the final meeting recap.`, role.Name, role.Responsibility, stage, role.PromptTemplate)
+If you can speak, return: {"type":"analysis","content":"markdown text","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"questions":[{"target":"role_key|all","question":"..."}],"mentions":["role_key"],"citations":["@role_key or source"],"confidence":"low|medium|high"}.
+Facts must be directly supported by context or tool results; assumptions and inferences must not be mixed into facts. Do not produce the final meeting recap.`, role.Name, role.Responsibility, stage, role.PromptTemplate)
 }
 
 func moderatorPlanContext(db *gorm.DB, meeting domainmeeting.Meeting, roles []domainai.AgentRole, roleBrief []string, priorDiscussion []map[string]any, pendingQuestions []map[string]string, roundNumber int, kickoff bool) string {
@@ -317,7 +303,8 @@ func moderatorPlanContext(db *gorm.DB, meeting domainmeeting.Meeting, roles []do
 
 func moderatorRecapPrompt(moderator domainai.AgentRole) string {
 	return fmt.Sprintf(`You are %s. Produce the final meeting recap in JSON only.
-Return schema: {"topic":"final topic","tags":["tag"],"summary":"short summary","conclusion":"final actionable conclusion","watchlist_actions":[{"code":"000001","name":"optional","note":"why","active":true}],"wake_plans":[{"trigger_type":"time|indicator|event","next_check_at":"YYYY-MM-DD HH:MM:SS","reason":"...","trigger_config":{"topic":"optional follow-up topic"}}],"orders":[{"account_id":1,"code":"000001","side":"buy|sell","quantity":100,"position_pct":0.05,"suggested_price":12.34,"reason":"..."}]}.
+Return schema: {"topic":"final topic","tags":["tag"],"summary":"short summary","conclusion":"final actionable conclusion","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"citations":["@role_key or tool/source"],"watchlist_actions":[{"code":"000001","name":"optional","note":"why","active":true}],"wake_plans":[{"trigger_type":"time|indicator|event","next_check_at":"YYYY-MM-DD HH:MM:SS","reason":"...","trigger_config":{"topic":"optional follow-up topic"}}],"orders":[{"account_id":1,"code":"000001","side":"buy|sell","quantity":100,"position_pct":0.05,"suggested_price":12.34,"reason":"..."}]}.
+Facts and inferences must be traceable to the transcript, referenced meetings, or tool results through citations. Put unsupported ideas in assumptions or evidence_gaps, not facts or inferences.
 Always think in terms of executable system actions, not prose only.
 If the meeting concludes a symbol should be tracked, include it in watchlist_actions.
 If the meeting concludes a small pilot position should be opened, include an order.
@@ -588,6 +575,41 @@ func sanitizeCitations(raw any) []string {
 		}
 	}
 	return out
+}
+
+func sanitizeClaimList(raw any, limit int) []string {
+	seen := map[string]struct{}{}
+	out := []string{}
+	for _, item := range anyList(raw) {
+		text := ""
+		if obj, ok := item.(map[string]any); ok {
+			text = firstNonEmptyString(stringFromAny(obj["text"]), stringFromAny(obj["claim"]), stringFromAny(obj["content"]))
+		} else {
+			text = stringFromAny(item)
+		}
+		text = truncatePlain(text, 220)
+		if text == "" {
+			continue
+		}
+		if _, ok := seen[text]; ok {
+			continue
+		}
+		seen[text] = struct{}{}
+		out = append(out, text)
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out
+}
+
+func firstNonEmptyAny(values ...any) any {
+	for _, value := range values {
+		if strings.TrimSpace(fmt.Sprint(value)) != "" && value != nil {
+			return value
+		}
+	}
+	return nil
 }
 
 func focusedParticipantRoles(participants []domainai.AgentRole, questions []map[string]string, extraFocus []string) []domainai.AgentRole {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
 
 	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
@@ -42,20 +43,16 @@ func RunMeetingOnceWithContext(ctx context.Context, db *gorm.DB, meetingID uint)
 		return err
 	}
 	meeting := meetingFromModel(meetingRow)
-	if meeting.Status == domainkernel.MeetingCancelled || meeting.Status == domainkernel.MeetingCompleted || meeting.Status == domainkernel.MeetingFailed {
+	if appmeeting.IsTerminalStatus(meeting.Status) {
 		return nil
 	}
-	now := time.Now()
-	runID := fmt.Sprintf("go-%d-%d", meetingID, now.UnixNano())
-	meeting.Status = domainkernel.MeetingRunning
-	meeting.StartedAt = &now
-	meeting.HeartbeatAt = &now
-	meeting.RunID = &runID
-	meeting.RunAttempt++
+	startPlan := appmeeting.NewRunStartPlan(meetingID, appmeeting.DefaultRunnerName, time.Now())
+	runID := startPlan.RunID
+	appmeeting.ApplyRunStart(&meeting, startPlan)
 	if err := saveMeeting(db, &meeting); err != nil {
 		return err
 	}
-	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, nil, "Virtual research meeting started.", map[string]any{"status": "running", "runner": "go", "run_id": runID})
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, nil, appmeeting.RunStartedEventContent, appmeeting.RunStartedEventPayload(startPlan))
 	if err := ensureActiveMeetingRun(db, meeting.ID, runID); err != nil {
 		return nil
 	}
@@ -110,8 +107,9 @@ func RunMeetingOnceWithContext(ctx context.Context, db *gorm.DB, meetingID uint)
 	if err := ensureActiveMeetingRun(db, meeting.ID, runID); err != nil {
 		return nil
 	}
-	summary := "Go migration runner completed the configured multi-role research flow."
-	conclusion := "No investment advice. Review each role event, assumptions, risks, and source quality before taking any action."
+	defaults := appmeeting.LegacyCompletionDefaults()
+	summary := defaults.Summary
+	conclusion := defaults.Conclusion
 	if recap, applied, err := TryApplyModeratorRecapFromEvents(db, &meeting); err == nil && applied {
 		if value := strings.TrimSpace(stringFromAny(recap["summary"])); value != "" {
 			summary = value
@@ -158,14 +156,21 @@ func runRoleAnalysis(db *gorm.DB, meeting domainmeeting.Meeting, role domainai.A
 	if role.Model != nil {
 		model = *role.Model
 	}
-	content, err := client.Chat([]map[string]string{
+	messages := []map[string]string{
 		{"role": "system", "content": role.PromptTemplate},
 		{"role": "user", "content": "Meeting topic: " + meeting.Topic + "\nProvide a concise, verifiable response with risk boundaries for your role."},
-	}, model)
+	}
+	content, err := client.Chat(messages, model)
 	if err != nil {
 		return fmt.Sprintf("%s AI provider call failed: %v", role.Name, err), map[string]any{"status": "role_error", "error": err.Error()}
 	}
-	return content, map[string]any{"status": "role_completed", "provider_id": provider.ID, "model": firstNonEmptyString(model, provider.DefaultModel)}
+	roleForSnapshot := role
+	roleForSnapshot.Provider = &provider
+	modelName := firstNonEmptyString(model, provider.DefaultModel)
+	return content, map[string]any{
+		"status": "role_completed", "provider_id": provider.ID, "provider_name": provider.Name, "model": modelName,
+		"prompt_version": legacyMeetingPromptVersion, "prompt_snapshot": rolePromptSnapshot(roleForSnapshot, modelName, messages, tokenLabel(role.Key, "legacy"), legacyMeetingPromptVersion),
+	}
 }
 
 func hasModeratorRecapEvent(db *gorm.DB, meetingID uint) bool {
@@ -182,7 +187,7 @@ func firstNonEmptyString(values ...string) string {
 }
 
 func CancelMeeting(db *gorm.DB, meeting *domainmeeting.Meeting, reason string) error {
-	if meeting.Status == domainkernel.MeetingCompleted || meeting.Status == domainkernel.MeetingFailed || meeting.Status == domainkernel.MeetingCancelled {
+	if appmeeting.IsTerminalStatus(meeting.Status) {
 		return nil
 	}
 	now := time.Now()

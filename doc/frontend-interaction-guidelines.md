@@ -22,6 +22,12 @@ TradingCopilot 前端页面使用 Vue 3 和 Element Plus。工作流页面应保
 - 会删除数据、取消工作或重置默认值的危险操作（Dangerous actions）必须要求确认。
 - API 错误消息应使用 `apiErrorText`；视图文件不应定义本地 `errorText` 或 `apiErrorMessage` 辅助函数。
 
+## 认证会话
+
+- 前端默认把当前 bearer token 存在 `sessionStorage`，不得新增持久化 `localStorage` token 写入。
+- 读取 token 时必须清理旧版 `localStorage` key，避免升级后留下长期有效的旧会话。
+- 全局导航必须提供退出入口；退出应调用 `POST /auth/logout` 撤销当前后端会话，再清理本地 token 并返回登录页。
+
 ## 易变数据（Volatile Data）
 
 - 记录可能由后台 worker 创建或修改的页面必须使用共享的 `useAutoRefresh` 组合式函数。

@@ -68,6 +68,168 @@
     <div class="detail-side">
       <div class="panel">
         <div class="section-head">
+          <h2>可信度</h2>
+          <el-tag :type="confidenceTagType(trustReport?.confidence)" effect="plain">
+            {{ confidenceLabel(trustReport?.confidence) }}
+          </el-tag>
+        </div>
+        <div class="trust-metrics">
+          <div>
+            <span>证据</span>
+            <strong>{{ trustReport?.evidenceCount ?? 0 }}</strong>
+          </div>
+          <div>
+            <span>引用</span>
+            <strong>{{ trustReport?.citationCount ?? 0 }}</strong>
+          </div>
+          <div>
+            <span>模型快照</span>
+            <strong>{{ trustReport?.modelSnapshotCount ?? 0 }}</strong>
+          </div>
+          <div>
+            <span>结论版本</span>
+            <strong>{{ trustConclusionCount }}</strong>
+          </div>
+        </div>
+        <div class="trust-gate" :class="`trust-gate-${trustEvidenceGateStatus}`">
+          <div>
+            <strong>证据门禁</strong>
+            <span>{{ trustEvidenceGateSummary }}</span>
+          </div>
+          <el-tag :type="evidenceGateTagType(trustEvidenceGateStatus)" effect="dark">
+            {{ evidenceGateLabel(trustEvidenceGateStatus) }}
+          </el-tag>
+        </div>
+        <div v-if="trustUnsupportedClaims.length" class="trust-section">
+          <strong>缺证声明</strong>
+          <div class="trust-binding-list">
+            <div v-for="item in trustUnsupportedClaims" :key="item.id || item.claim" class="trust-binding-item trust-unsupported-item">
+              <el-tag size="small" :type="claimTypeTag(item.claimType)" effect="plain">{{ claimTypeLabel(item.claimType) }}</el-tag>
+              <span class="trust-binding-claim">{{ item.claim }}</span>
+              <span class="muted">{{ unsupportedClaimText(item) }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-if="trustRecapActionSuggestions.length" class="trust-section">
+          <strong>待复核动作</strong>
+          <div class="trust-action-list">
+            <div v-for="item in trustRecapActionSuggestions" :key="item.id || `${item.eventId}-${item.actionIndex}`" class="trust-action-item">
+              <div class="trust-action-head">
+                <el-tag size="small" :type="recapActionTagType(item.disposition)" effect="plain">
+                  {{ recapActionTypeLabel(item.actionType) }}
+                </el-tag>
+                <span class="muted">{{ recapActionDispositionLabel(item.disposition) }} / 事件 #{{ item.eventId || '-' }}</span>
+              </div>
+              <div class="trust-action-spec">{{ recapActionSpecText(item.spec) }}</div>
+              <div class="muted trust-action-reason">{{ item.reason || '需要人工复核后再执行' }}</div>
+              <div class="muted">{{ recapActionEvidenceText(item.evidenceSummary) }}</div>
+              <div v-if="recapActionLatestReview(item)" class="trust-action-review">
+                <el-tag size="small" :type="recapActionReviewTag(recapActionLatestReview(item)?.decision)" effect="plain">
+                  {{ recapActionReviewLabel(recapActionLatestReview(item)?.decision) }}
+                </el-tag>
+                <span class="muted">{{ recapActionReviewMeta(recapActionLatestReview(item)) }}</span>
+              </div>
+              <el-input
+                v-model="recapActionReviewComments[recapActionKey(item)]"
+                size="small"
+                placeholder="动作复核备注"
+                clearable
+              />
+              <div class="toolbar compact-toolbar">
+                <el-button size="small" type="success" plain :loading="recapActionReviewLoading" @click="submitRecapActionReview(item, 'approved')">
+                  确认有效
+                </el-button>
+                <el-button size="small" type="warning" plain :loading="recapActionReviewLoading" @click="submitRecapActionReview(item, 'needs_evidence')">
+                  补证据
+                </el-button>
+                <el-button size="small" type="danger" plain :loading="recapActionReviewLoading" @click="submitRecapActionReview(item, 'rejected')">
+                  驳回
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="trust-section">
+          <strong>事实 / 假设 / 推断</strong>
+          <div class="trust-claims">
+            <el-tag v-for="item in trustFacts" :key="`fact-${item}`" type="success" effect="plain">{{ item }}</el-tag>
+            <el-tag v-for="item in trustAssumptions" :key="`assumption-${item}`" type="warning" effect="plain">{{ item }}</el-tag>
+            <el-tag v-for="item in trustInferences" :key="`inference-${item}`" type="info" effect="plain">{{ item }}</el-tag>
+            <span v-if="!trustFacts.length && !trustAssumptions.length && !trustInferences.length" class="muted">暂无结构化声明</span>
+          </div>
+        </div>
+        <div v-if="trustClaimBindings.length" class="trust-section">
+          <strong>声明证据绑定</strong>
+          <div class="trust-binding-list">
+            <div v-for="item in trustClaimBindings" :key="item.id" class="trust-binding-item">
+              <el-tag size="small" :type="claimTypeTag(item.claimType)" effect="plain">{{ claimTypeLabel(item.claimType) }}</el-tag>
+              <span class="trust-binding-claim">{{ item.claim }}</span>
+              <span class="muted">{{ bindingEvidenceText(item) }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-if="trustEvidenceGaps.length" class="trust-section">
+          <strong>证据缺口</strong>
+          <ul class="trust-gap-list">
+            <li v-for="item in trustEvidenceGaps" :key="`evidence-gap-${item}`">{{ item }}</li>
+          </ul>
+        </div>
+        <div v-if="trustConclusionDiffs.length" class="trust-section">
+          <strong>结论变更</strong>
+          <div class="trust-diff-list">
+            <div v-for="(item, index) in trustConclusionDiffs" :key="`diff-${index}`" class="trust-diff-item">
+              <el-tag :type="item.changed ? 'warning' : 'info'" effect="plain">{{ item.changed ? '已变化' : '未变化' }}</el-tag>
+              <span>{{ trustDiffText(item) }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-if="trustReviewCandidates.length" class="trust-section">
+          <strong>结论逐句复核</strong>
+          <div class="trust-review-list">
+            <div v-for="item in trustReviewCandidates" :key="item.key" class="trust-review-item">
+              <div class="trust-review-sentence">{{ item.sentence }}</div>
+              <div class="trust-review-meta">
+                <el-tag
+                  v-if="item.latestReview"
+                  size="small"
+                  :type="reviewVerdictTag(item.latestReview.verdict)"
+                  effect="plain"
+                >
+                  {{ reviewVerdictLabel(item.latestReview.verdict) }}
+                </el-tag>
+                <span v-else class="muted">未复核</span>
+                <span class="muted">{{ trustReviewRefsText(item) }}</span>
+              </div>
+              <el-input
+                v-model="trustReviewComments[item.key]"
+                size="small"
+                placeholder="复核备注"
+                clearable
+              />
+              <div class="toolbar compact-toolbar">
+                <el-button size="small" type="success" plain :loading="trustReviewLoading" @click="submitTrustReview(item, 'confirmed')">
+                  确认
+                </el-button>
+                <el-button size="small" type="warning" plain :loading="trustReviewLoading" @click="submitTrustReview(item, 'needs_evidence')">
+                  补证据
+                </el-button>
+                <el-button size="small" type="danger" plain :loading="trustReviewLoading" @click="submitTrustReview(item, 'rejected')">
+                  驳回
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="trustGaps.length" class="trust-section">
+          <strong>缺口</strong>
+          <ul class="trust-gap-list">
+            <li v-for="item in trustGaps" :key="item">{{ trustGapLabel(item) }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
           <h2>引用链</h2>
           <el-button link type="primary" @click="loadReferences">刷新</el-button>
         </div>
@@ -173,12 +335,16 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   api,
+  apiErrorText,
   jsonapiResource,
   unwrapJsonApiCollection,
   unwrapJsonApiResource,
   type Meeting,
   type MeetingEvent,
+  type MeetingRecapActionReviewAttributes,
+  type MeetingRecapActionSuggestion,
   type MeetingReference,
+  type MeetingTrustReviewAttributes,
   type WakePlan
 } from '../api'
 import { useAutoRefresh } from '../composables/useAutoRefresh'
@@ -206,6 +372,17 @@ interface RoleState {
 }
 
 type ChainItem = MeetingReference & { depth: number }
+type TrustReviewVerdict = 'confirmed' | 'needs_evidence' | 'rejected' | 'superseded'
+type RecapActionReviewDecision = 'approved' | 'needs_evidence' | 'rejected' | 'superseded'
+
+interface TrustReviewCandidate {
+  key: string
+  sentence: string
+  sentenceId: string
+  citationIds: string[]
+  evidenceEventIds: number[]
+  latestReview?: MeetingTrustReviewAttributes
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -220,6 +397,10 @@ const referenceChain = ref<ChainItem[]>([])
 const referenceCandidates = ref<Meeting[]>([])
 const referenceDialogVisible = ref(false)
 const referenceForm = reactive({ targetMeetingId: undefined as number | undefined, note: '' })
+const trustReviewComments = reactive<Record<string, string>>({})
+const trustReviewLoading = ref(false)
+const recapActionReviewComments = reactive<Record<string, string>>({})
+const recapActionReviewLoading = ref(false)
 const markdown = new MarkdownIt({ html: false, linkify: true, breaks: true })
 
 const dialogWidth = computed(() => (isMobile.value ? '100%' : isTablet.value ? '90vw' : '620px'))
@@ -280,6 +461,52 @@ const statusType = computed(() => {
   if (meeting.value?.status === 'failed') return 'danger'
   if (meeting.value?.status === 'cancelled') return 'info'
   return 'warning'
+})
+const trustReport = computed(() => meeting.value?.trustReport || null)
+const trustFacts = computed(() => trustReport.value?.claimBreakdown?.facts || [])
+const trustAssumptions = computed(() => trustReport.value?.claimBreakdown?.assumptions || [])
+const trustInferences = computed(() => trustReport.value?.claimBreakdown?.inferences || [])
+const trustEvidenceGaps = computed(() => trustReport.value?.evidenceGaps || [])
+const trustConclusionDiffs = computed<Record<string, any>[]>(() => trustReport.value?.conclusionDiffs || [])
+const trustGaps = computed(() => trustReport.value?.gaps || [])
+const trustConclusionCount = computed(() => trustReport.value?.conclusionHistory?.length || 0)
+const trustEvidenceGate = computed<Record<string, any>>(() => {
+  const gate = trustReport.value?.evidenceGate as Record<string, any> | undefined
+  if (gate) return gate
+  return {
+    status: trustReport.value?.evidenceGateStatus || 'warning',
+    unsupportedClaimCount: trustReport.value?.unsupportedClaimCount || 0,
+    unsupportedClaims: trustReport.value?.unsupportedClaims || []
+  }
+})
+const trustEvidenceGateStatus = computed(() => String(trustEvidenceGate.value.status || 'warning'))
+const trustUnsupportedClaims = computed<Record<string, any>[]>(() => {
+  const claims = trustEvidenceGate.value.unsupportedClaims || trustReport.value?.unsupportedClaims || []
+  return Array.isArray(claims) ? claims.slice(0, 8) : []
+})
+const trustEvidenceGateSummary = computed(() => evidenceGateSummary(trustEvidenceGate.value))
+const trustClaimBindings = computed<Record<string, any>[]>(() => (trustReport.value?.claimEvidenceBindings || []).slice(0, 6))
+const trustSentenceReviews = computed<MeetingTrustReviewAttributes[]>(() => trustReport.value?.sentenceReviews || [])
+const trustRecapActionSuggestions = computed<MeetingRecapActionSuggestion[]>(() => {
+  const suggestions = trustReport.value?.recapActionSuggestions || []
+  return Array.isArray(suggestions) ? suggestions.slice(0, 8) : []
+})
+const trustReviewCandidates = computed<TrustReviewCandidate[]>(() => {
+  const sentences = currentConclusionSentences().slice(0, 8)
+  return sentences.map((sentence, index) => {
+    const sentenceKey = normalizeTrustSentenceText(sentence)
+    const key = `${sentenceKey || 'sentence'}:${index}`
+    const binding = matchingTrustBinding(sentence)
+    const latestReview = [...trustSentenceReviews.value].reverse().find((review) => normalizeTrustSentenceText(review.sentence || '') === sentenceKey)
+    return {
+      key,
+      sentence,
+      sentenceId: String(latestReview?.sentenceId || ''),
+      citationIds: trustStringArray(binding?.citationIds),
+      evidenceEventIds: trustNumberArray(binding?.evidenceEventIds),
+      latestReview
+    }
+  })
 })
 const roleStates = computed<RoleState[]>(() => {
   const byName = new Map<string, RoleState>()
@@ -424,6 +651,71 @@ async function saveReference() {
   referenceForm.note = ''
   ElMessage.success('引用已保存')
   await loadReferences()
+}
+
+async function submitTrustReview(item: TrustReviewCandidate, verdict: TrustReviewVerdict) {
+  if (!item.sentence || trustReviewLoading.value) return
+  trustReviewLoading.value = true
+  try {
+    await api.post(
+      `/meetings/${id}/trust-reviews`,
+      jsonapiResource('meeting-trust-reviews', {
+        sentenceId: item.sentenceId || undefined,
+        sentence: item.sentence,
+        verdict,
+        citationIds: item.citationIds,
+        evidenceEventIds: item.evidenceEventIds,
+        comment: trustReviewComments[item.key] || ''
+      })
+    )
+    trustReviewComments[item.key] = ''
+    ElMessage.success('复核记录已保存')
+    await loadMeeting()
+  } catch (error) {
+    ElMessage.error(apiErrorText(error, '复核记录保存失败'))
+  } finally {
+    trustReviewLoading.value = false
+  }
+}
+
+async function submitRecapActionReview(item: MeetingRecapActionSuggestion, decision: RecapActionReviewDecision) {
+  const key = recapActionKey(item)
+  if (!key || recapActionReviewLoading.value) return
+  if (decision === 'approved') {
+    try {
+      await ElMessageBox.confirm(
+        '确认后只记录人工复核结论，不会自动创建自选、唤醒计划或模拟盘订单。',
+        '确认复核动作',
+        { type: 'warning', confirmButtonText: '确认有效', cancelButtonText: '取消' }
+      )
+    } catch {
+      return
+    }
+  }
+  recapActionReviewLoading.value = true
+  try {
+    await api.post(
+      `/meetings/${id}/recap-action-reviews`,
+      jsonapiResource('meeting-recap-action-reviews', {
+        suggestionId: item.id,
+        sourceEventId: item.eventId,
+        actionIndex: item.actionIndex,
+        actionType: item.actionType,
+        decision,
+        citationIds: recapActionCitationIds(item),
+        evidenceEventIds: recapActionEvidenceEventIds(item),
+        comment: recapActionReviewComments[key] || '',
+        confirm: decision === 'approved'
+      })
+    )
+    recapActionReviewComments[key] = ''
+    ElMessage.success('动作复核记录已保存')
+    await loadMeeting()
+  } catch (error) {
+    ElMessage.error(apiErrorText(error, '动作复核记录保存失败'))
+  } finally {
+    recapActionReviewLoading.value = false
+  }
 }
 
 function payloadStatus(event?: MeetingEvent) {
@@ -577,6 +869,277 @@ function roleTagType(status: string) {
   return 'warning'
 }
 
+function confidenceLabel(value: string | null | undefined) {
+  const map: Record<string, string> = {
+    unknown: '未知',
+    low: '低',
+    medium: '中',
+    high: '高'
+  }
+  return map[String(value || 'unknown')] || value || '未知'
+}
+
+function confidenceTagType(value: string | null | undefined) {
+  const map: Record<string, 'success' | 'warning' | 'danger' | 'info'> = {
+    high: 'success',
+    medium: 'warning',
+    low: 'danger',
+    unknown: 'info'
+  }
+  return map[String(value || 'unknown')] || 'info'
+}
+
+function evidenceGateLabel(value: string | null | undefined) {
+  return ({
+    pass: '已通过',
+    warning: '需关注',
+    blocked: '已阻断'
+  } as Record<string, string>)[String(value || '')] || '需关注'
+}
+
+function evidenceGateTagType(value: string | null | undefined) {
+  return ({
+    pass: 'success',
+    warning: 'warning',
+    blocked: 'danger'
+  } as Record<string, 'success' | 'warning' | 'danger'>)[String(value || '')] || 'warning'
+}
+
+function evidenceGateSummary(gate: Record<string, any>) {
+  const checked = Number(gate.checkedClaimCount || 0)
+  const supported = Number(gate.supportedClaimCount || 0)
+  const unsupported = Number(gate.unsupportedClaimCount || 0)
+  const status = String(gate.status || 'warning')
+  if (status === 'blocked') return `发现 ${unsupported} 条事实/推断缺少证据或引用`
+  if (status === 'pass') return `已检查 ${checked} 条事实/推断声明，其中 ${supported} 条已绑定证据`
+  if (checked > 0) return `已检查 ${checked} 条事实/推断声明，建议人工复核`
+  return '尚无可门禁的事实/推断声明'
+}
+
+function currentConclusionSentences() {
+  const history = Array.isArray(trustReport.value?.conclusionHistory) ? (trustReport.value?.conclusionHistory as Record<string, any>[]) : []
+  const latest = history[history.length - 1] || {}
+  const text = String(latest.conclusion || latest.summary || meeting.value?.conclusion || '').trim()
+  return splitTrustSentences(text)
+}
+
+function splitTrustSentences(text: string) {
+  const matches = text.match(/[^.!?;。！？；\n]+[.!?;。！？；]?/g) || []
+  return matches.map((item) => item.trim()).filter(Boolean)
+}
+
+function matchingTrustBinding(sentence: string) {
+  const sentenceKey = normalizeTrustSentenceText(sentence)
+  if (!sentenceKey) return null
+  const bindings = Array.isArray(trustReport.value?.claimEvidenceBindings) ? (trustReport.value?.claimEvidenceBindings as Record<string, any>[]) : []
+  return bindings.find((item) => {
+    const claimKey = normalizeTrustSentenceText(String(item.claim || ''))
+    return claimKey && (sentenceKey.includes(claimKey) || claimKey.includes(sentenceKey))
+  }) || null
+}
+
+function normalizeTrustSentenceText(value: string) {
+  return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+function trustStringArray(value: unknown) {
+  return Array.isArray(value) ? value.map((item) => String(item).trim()).filter(Boolean) : []
+}
+
+function trustNumberArray(value: unknown) {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => Number(item)).filter((item) => Number.isFinite(item) && item > 0)
+}
+
+function recapActionKey(item: MeetingRecapActionSuggestion) {
+  return String(item.id || `${item.eventId || 'event'}-${item.actionIndex ?? 0}`)
+}
+
+function recapActionLatestReview(item: MeetingRecapActionSuggestion): MeetingRecapActionReviewAttributes | null {
+  return item.latestReview || null
+}
+
+function recapActionCitationIds(item: MeetingRecapActionSuggestion) {
+  const summary = item.evidenceSummary && typeof item.evidenceSummary === 'object'
+    ? (item.evidenceSummary as Record<string, unknown>)
+    : {}
+  return trustStringArray(summary.citations)
+}
+
+function recapActionEvidenceEventIds(item: MeetingRecapActionSuggestion) {
+  const summary = item.evidenceSummary && typeof item.evidenceSummary === 'object'
+    ? (item.evidenceSummary as Record<string, unknown>)
+    : {}
+  return trustNumberArray(summary.evidence_event_ids ?? summary.evidenceEventIds)
+}
+
+function trustReviewRefsText(item: TrustReviewCandidate) {
+  const evidenceText = item.evidenceEventIds.length ? `证据事件 #${item.evidenceEventIds.join('、')}` : '未绑定证据事件'
+  const citationText = item.citationIds.length ? `引用 ${item.citationIds.join('、')}` : '未绑定引用'
+  return `${evidenceText}，${citationText}`
+}
+
+function recapActionTypeLabel(value: unknown) {
+  return ({
+    watchlist: '自选',
+    wake_plan: '唤醒',
+    paper_order: '模拟单'
+  } as Record<string, string>)[String(value || '')] || String(value || '动作')
+}
+
+function recapActionDispositionLabel(value: unknown) {
+  return ({
+    blocked: '已阻断',
+    manual_review_required: '待人工复核'
+  } as Record<string, string>)[String(value || '')] || String(value || '待处理')
+}
+
+function recapActionTagType(value: unknown) {
+  return ({
+    blocked: 'danger',
+    manual_review_required: 'warning'
+  } as Record<string, 'danger' | 'warning' | 'info'>)[String(value || '')] || 'info'
+}
+
+function recapActionReviewLabel(value: unknown) {
+  return ({
+    approved: '已确认',
+    needs_evidence: '待补证据',
+    rejected: '已驳回',
+    superseded: '已替代'
+  } as Record<string, string>)[String(value || '')] || '未复核'
+}
+
+function recapActionReviewTag(value: unknown) {
+  return ({
+    approved: 'success',
+    needs_evidence: 'warning',
+    rejected: 'danger',
+    superseded: 'info'
+  } as Record<string, 'success' | 'warning' | 'danger' | 'info'>)[String(value || '')] || 'info'
+}
+
+function recapActionReviewMeta(review: MeetingRecapActionReviewAttributes | null) {
+  if (!review) return '尚未记录人工复核'
+  const reviewer = review.reviewer || 'unknown'
+  const time = review.reviewedAt ? formatDateTimeUtc8(review.reviewedAt) : '-'
+  const note = review.comment ? ` / ${review.comment}` : ''
+  return `${reviewer} / ${time}${note}`
+}
+
+function recapActionSpecText(value: unknown) {
+  const spec = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  const parts = [
+    compactActionValue('代码', spec.code),
+    compactActionValue('名称', spec.name),
+    compactActionValue('方向', spec.side),
+    compactActionValue('数量', spec.quantity),
+    compactActionValue('价格', spec.suggested_price ?? spec.suggestedPrice),
+    compactActionValue('触发', spec.trigger_type ?? spec.triggerType),
+    compactActionValue('原因', spec.reason ?? spec.note)
+  ].filter(Boolean)
+  if (parts.length) return parts.join(' / ')
+  try {
+    const text = JSON.stringify(spec)
+    return text && text !== '{}' ? text.slice(0, 180) : '无动作参数'
+  } catch {
+    return '无动作参数'
+  }
+}
+
+function compactActionValue(label: string, value: unknown) {
+  if (value === null || value === undefined || value === '') return ''
+  return `${label}: ${String(value).slice(0, 80)}`
+}
+
+function recapActionEvidenceText(value: unknown) {
+  const summary = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  const facts = trustStringArray(summary.facts).slice(0, 2)
+  const inferences = trustStringArray(summary.inferences).slice(0, 2)
+  const citations = trustStringArray(summary.citations).slice(0, 3)
+  const pieces = [
+    facts.length ? `事实 ${facts.join('；')}` : '',
+    inferences.length ? `推断 ${inferences.join('；')}` : '',
+    citations.length ? `引用 ${citations.join('、')}` : ''
+  ].filter(Boolean)
+  return pieces.length ? pieces.join(' / ') : '未提供可展示的证据摘要'
+}
+
+function reviewVerdictLabel(value: string | null | undefined) {
+  return ({
+    confirmed: '已确认',
+    needs_evidence: '待补证据',
+    rejected: '已驳回',
+    superseded: '已替代'
+  } as Record<string, string>)[String(value || '')] || '未复核'
+}
+
+function reviewVerdictTag(value: string | null | undefined) {
+  return ({
+    confirmed: 'success',
+    needs_evidence: 'warning',
+    rejected: 'danger',
+    superseded: 'info'
+  } as Record<string, 'success' | 'warning' | 'danger' | 'info'>)[String(value || '')] || 'info'
+}
+
+function trustGapLabel(value: string) {
+  const map: Record<string, string> = {
+    'no structured tool evidence captured': '缺少结构化工具证据',
+    'no structured citations captured': '缺少结构化引用来源',
+    'no model snapshot captured': '缺少模型快照'
+  }
+  return map[value] || value
+}
+
+function trustDiffText(item: Record<string, any>) {
+  const from = String(item.fromSource || '上版')
+  const to = String(item.toSource || '新版')
+  const added = Number(item.addedSentenceCount || 0)
+  const removed = Number(item.removedSentenceCount || 0)
+  const unchanged = Number(item.unchangedSentenceCount || 0)
+  const sentenceSummary = `新增 ${added} 句，移除 ${removed} 句，保留 ${unchanged} 句`
+  const addedSentences = Array.isArray(item.addedSentences) ? item.addedSentences : []
+  const removedSentences = Array.isArray(item.removedSentences) ? item.removedSentences : []
+  const firstSentence = String(addedSentences[0] || removedSentences[0] || '').trim()
+  if (firstSentence) return `${from} → ${to}：${sentenceSummary}；${firstSentence}`
+  const after = String(item.afterPreview || '').trim()
+  if (!after) return `${from} → ${to}：${sentenceSummary}`
+  return `${from} → ${to}：${sentenceSummary}；${after}`
+}
+
+function claimTypeLabel(value: string) {
+  return ({
+    fact: '事实',
+    assumption: '假设',
+    inference: '推断',
+    evidence_gap: '缺口'
+  } as Record<string, string>)[String(value || '')] || '声明'
+}
+
+function claimTypeTag(value: string) {
+  return ({
+    fact: 'success',
+    assumption: 'warning',
+    inference: 'info',
+    evidence_gap: 'danger'
+  } as Record<string, string>)[String(value || '')] || 'info'
+}
+
+function bindingEvidenceText(item: Record<string, any>) {
+  const evidence = Array.isArray(item.evidenceEventIds) ? item.evidenceEventIds : []
+  const citations = Array.isArray(item.citationIds) ? item.citationIds : []
+  const evidenceText = evidence.length ? `证据事件 #${evidence.join('、#')}` : '无结构化证据事件'
+  const citationText = citations.length ? `引用 ${citations.join('、')}` : '无结构化引用'
+  return `${evidenceText}；${citationText}`
+}
+
+function unsupportedClaimText(item: Record<string, any>) {
+  const eventId = item.eventId ? `事件 #${item.eventId}` : '未知事件'
+  const reason = String(item.reason || '缺少结构化证据事件和引用')
+  return `${eventId}：${reason}`
+}
+
 function referenceTypeLabel(type: string) {
   if (type === 'telegram_message') return '采集消息'
   if (type === 'meeting') return '历史会议'
@@ -704,5 +1267,199 @@ useAutoRefresh({
   justify-content: space-between;
   gap: 8px;
   margin-top: 8px;
+}
+
+.trust-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.trust-metrics div {
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fbfdff;
+  padding: 10px 12px;
+}
+
+.trust-metrics span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.trust-metrics strong {
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.trust-gate {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fbfdff;
+  padding: 10px 12px;
+}
+
+.trust-gate strong {
+  display: block;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.trust-gate span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.trust-gate-pass {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.trust-gate-warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.trust-gate-blocked {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.trust-section {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.trust-claims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trust-gap-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #64748b;
+}
+
+.trust-diff-list {
+  display: grid;
+  gap: 8px;
+}
+
+.trust-binding-list {
+  display: grid;
+  gap: 8px;
+}
+
+.trust-binding-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 8px;
+  align-items: start;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.trust-binding-claim {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.trust-unsupported-item {
+  color: #7f1d1d;
+}
+
+.trust-diff-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.trust-action-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trust-action-item {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #f1d5a8;
+  border-radius: 8px;
+  background: #fffaf0;
+  padding: 10px;
+}
+
+.trust-action-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.trust-action-spec {
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.trust-action-reason {
+  overflow-wrap: anywhere;
+}
+
+.trust-action-review {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.trust-review-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trust-review-item {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fbfdff;
+  padding: 10px;
+}
+
+.trust-review-sentence {
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.trust-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>

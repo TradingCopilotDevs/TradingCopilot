@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: tradingcopilot-integration-postgres
+    environment:
+      POSTGRES_DB: tradingcopilot_test
+      POSTGRES_USER: tc_test
+      POSTGRES_PASSWORD: tc_test_password_change_me
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - tradingcopilot-integration-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tc_test -d tradingcopilot_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: tradingcopilot-integration-redis
+    command: ["redis-server", "--requirepass", "tc_redis_password_change_me"]
+    ports:
+      - "127.0.0.1:16379:6379"
+    volumes:
+      - tradingcopilot-integration-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "tc_redis_password_change_me", "PING"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  tradingcopilot-integration-postgres:
+  tradingcopilot-integration-redis:

@@ -7,19 +7,20 @@ type NamingStrategy struct {
 }
 
 var tableNameOverrides = map[string]string{
-	"Provider":       "ai_providers",
-	"ProviderModel":  "ai_provider_models",
-	"Symbol":         "market_symbols",
-	"Channel":        "telegram_channels",
-	"Message":        "telegram_messages",
-	"Event":          "meeting_events",
-	"Reference":      "meeting_references",
-	"Plan":           "wake_plans",
-	"Account":        "paper_accounts",
-	"Order":          "paper_orders",
-	"Position":       "paper_positions",
-	"Fill":           "paper_fills",
-	"EquitySnapshot": "paper_equity_snapshots",
+	"Provider":        "ai_providers",
+	"ProviderModel":   "ai_provider_models",
+	"Symbol":          "market_symbols",
+	"Channel":         "telegram_channels",
+	"Message":         "telegram_messages",
+	"Event":           "meeting_events",
+	"Reference":       "meeting_references",
+	"Plan":            "wake_plans",
+	"Account":         "paper_accounts",
+	"Order":           "paper_orders",
+	"Position":        "paper_positions",
+	"Fill":            "paper_fills",
+	"EquitySnapshot":  "paper_equity_snapshots",
+	"CorporateAction": "paper_corporate_actions",
 }
 
 func NewNamingStrategy(delegate schema.Namer) NamingStrategy {

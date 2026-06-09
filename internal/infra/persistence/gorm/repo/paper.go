@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
+	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
 	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"time"
 
@@ -224,6 +225,21 @@ func (r PaperRepository) ListFills(ctx context.Context, accountID uint, limit in
 	return paperFillsToDomain(rows), nil
 }
 
+func (r PaperRepository) ListCorporateActions(ctx context.Context, accountID uint, limit int, cursorID uint64) ([]domainpaper.CorporateAction, error) {
+	var rows []persistmodel.PaperCorporateAction
+	q := r.db.WithContext(ctx).Where("account_id = ?", accountID)
+	if cursorID > 0 {
+		q = q.Where("id < ?", cursorID)
+	}
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+	if err := q.Order("id desc").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return paperCorporateActionsToDomain(rows), nil
+}
+
 func (r PaperRepository) ListOrders(ctx context.Context, limit int, cursorID uint64) ([]domainpaper.Order, error) {
 	var rows []persistmodel.PaperOrder
 	q := r.db.WithContext(ctx)
@@ -312,6 +328,27 @@ func (r PaperRepository) CreateFill(ctx context.Context, row *domainpaper.Fill) 
 func (r PaperRepository) CreateEquitySnapshot(ctx context.Context, row *domainpaper.EquitySnapshot) error {
 	modelRow := paperEquitySnapshotToModel(*row)
 	return r.db.WithContext(ctx).Create(&modelRow).Error
+}
+
+func (r PaperRepository) CreateCorporateAction(ctx context.Context, row *domainpaper.CorporateAction) error {
+	modelRow := paperCorporateActionToModel(*row)
+	if err := r.db.WithContext(ctx).Create(&modelRow).Error; err != nil {
+		return err
+	}
+	*row = paperCorporateActionFromModel(modelRow)
+	return nil
+}
+
+func (r PaperRepository) DailyBarsForBacktest(ctx context.Context, code string, start time.Time, end time.Time, limit int) ([]domainmarket.DailyBar, error) {
+	var rows []persistmodel.DailyBar
+	query := r.db.WithContext(ctx).Where("code = ? AND trade_date >= ? AND trade_date <= ?", code, start, end)
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if err := query.Order("trade_date asc").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return dailyBarsToDomain(rows), nil
 }
 
 func riskConfigsToDomain(rows []persistmodel.RiskConfig) []domainpaper.RiskConfig {
@@ -576,5 +613,49 @@ func paperEquitySnapshotToModel(row domainpaper.EquitySnapshot) persistmodel.Pap
 		UnrealizedPNL: row.UnrealizedPNL,
 		RealizedPNL:   row.RealizedPNL,
 		DailyPNL:      row.DailyPNL,
+	}
+}
+
+func paperCorporateActionsToDomain(rows []persistmodel.PaperCorporateAction) []domainpaper.CorporateAction {
+	out := make([]domainpaper.CorporateAction, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, paperCorporateActionFromModel(row))
+	}
+	return out
+}
+
+func paperCorporateActionFromModel(row persistmodel.PaperCorporateAction) domainpaper.CorporateAction {
+	return domainpaper.CorporateAction{
+		ID:             row.ID,
+		AccountID:      row.AccountID,
+		Code:           row.Code,
+		ActionType:     row.ActionType,
+		ExDate:         row.ExDate,
+		CashPerShare:   row.CashPerShare,
+		ShareRatio:     row.ShareRatio,
+		AffectedShares: row.AffectedShares,
+		CashAmount:     row.CashAmount,
+		Status:         row.Status,
+		Note:           row.Note,
+		AppliedAt:      row.AppliedAt,
+		CreatedAt:      row.CreatedAt,
+	}
+}
+
+func paperCorporateActionToModel(row domainpaper.CorporateAction) persistmodel.PaperCorporateAction {
+	return persistmodel.PaperCorporateAction{
+		ID:             row.ID,
+		AccountID:      row.AccountID,
+		Code:           row.Code,
+		ActionType:     row.ActionType,
+		ExDate:         row.ExDate,
+		CashPerShare:   row.CashPerShare,
+		ShareRatio:     row.ShareRatio,
+		AffectedShares: row.AffectedShares,
+		CashAmount:     row.CashAmount,
+		Status:         row.Status,
+		Note:           row.Note,
+		AppliedAt:      row.AppliedAt,
+		CreatedAt:      row.CreatedAt,
 	}
 }

@@ -33,7 +33,7 @@ func validateIndicatorPlan(plan *domainwake.Plan) error {
 	}
 	for i, condition := range conditions {
 		code := strings.TrimSpace(firstNonEmptyString(stringFromConfig(condition["code"]), stringFromConfig(condition["symbol"]), stringFromConfig(condition["ticker"])))
-		thresholdText := firstNonEmptyString(stringFromConfig(condition["threshold"]), stringFromConfig(condition["target"]), stringFromConfig(condition["target_price"]), stringFromConfig(condition["value"]), stringFromConfig(condition["target_value"]))
+		thresholdText := firstNonEmptyString(stringFromConfig(condition["threshold"]), stringFromConfig(condition["target"]), stringFromConfig(condition["targetPrice"]), stringFromConfig(condition["target_price"]), stringFromConfig(condition["value"]), stringFromConfig(condition["targetValue"]), stringFromConfig(condition["target_value"]))
 		if code == "" {
 			return fmt.Errorf("indicator wake condition %d requires code, symbol, or ticker", i+1)
 		}
@@ -55,13 +55,13 @@ func validateEventPlan(plan *domainwake.Plan) error {
 	if strings.TrimSpace(firstNonEmptyString(stringFromConfig(cfg["regex"]), stringFromConfig(cfg["pattern"]))) != "" {
 		return nil
 	}
-	if len(stringsFromConfig(firstNonNil(cfg["related_symbols"], cfg["symbols"], cfg["codes"]))) > 0 {
+	if len(stringsFromConfig(firstNonNil(cfg["relatedSymbols"], cfg["related_symbols"], cfg["symbols"], cfg["codes"]))) > 0 {
 		return nil
 	}
-	if len(stringsFromConfig(firstNonNil(cfg["decisions"], cfg["decision"], cfg["filter_decision"]))) > 0 {
+	if len(stringsFromConfig(firstNonNil(cfg["decisions"], cfg["decision"], cfg["filterDecision"], cfg["filter_decision"]))) > 0 {
 		return nil
 	}
-	if len(stringsFromConfig(firstNonNil(cfg["channel_ids"], cfg["channels"], cfg["channel_id"]))) > 0 {
+	if len(stringsFromConfig(firstNonNil(cfg["channelIds"], cfg["channelID"], cfg["channel_ids"], cfg["channels"], cfg["channel_id"]))) > 0 {
 		return nil
 	}
 	return fmt.Errorf("event wake requires keywords, regex, symbols, decisions, or channel filters")

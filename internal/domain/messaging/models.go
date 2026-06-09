@@ -19,6 +19,13 @@ const (
 	FilterStatusFailed     = "failed"
 )
 
+const (
+	FeedbackHelpful       = "helpful"
+	FeedbackNoise         = "noise"
+	FeedbackMisclassified = "misclassified"
+	FeedbackNeutral       = "neutral"
+)
+
 type MessageSubscription struct {
 	ID                  uint
 	Provider            string
@@ -67,6 +74,9 @@ type IngestedMessage struct {
 	RelatedSymbols  kernel.JSON
 	FilteredAt      *time.Time
 	FilterID        *uint
+	FeedbackLabel   *string
+	FeedbackComment *string
+	FeedbackAt      *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

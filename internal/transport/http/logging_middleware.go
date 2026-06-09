@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -90,6 +91,12 @@ func requestLogger(next http.Handler) http.Handler {
 			zap.Bool("noise", noise),
 			zap.String("requestId", middleware.GetReqID(r.Context())),
 			zap.String("remoteAddr", r.RemoteAddr),
+		}
+		if spanCtx := trace.SpanContextFromContext(r.Context()); spanCtx.IsValid() {
+			fields = append(fields,
+				zap.String("traceId", spanCtx.TraceID().String()),
+				zap.String("spanId", spanCtx.SpanID().String()),
+			)
 		}
 		if status >= 500 {
 			zap.L().Error(message, fields...)

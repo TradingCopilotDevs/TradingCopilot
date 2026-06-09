@@ -74,8 +74,87 @@ func TestFillOrderGeneratesFeesAndUpdatesAccountPosition(t *testing.T) {
 	assertDecimalEqual(t, refreshed.Cash, "89994.90")
 }
 
+func TestFillOrderSupportsPartialFillAndCancelRemaining(t *testing.T) {
+	db := newPaperTestDB(t)
+	cfg := createRiskConfig(t, db, "partial", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "partial-acct", decimal.NewFromInt(100000), &cfg.ID)
+	order := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(100)}
+	must(t, db.Create(&order).Error)
+
+	must(t, FillOrderWithInput(db, &order, domainpaper.OrderFillInput{Price: decimal.NewFromInt(100), Quantity: 40}))
+
+	if order.Status != domainkernel.OrderPending {
+		t.Fatalf("expected partial order to remain pending, got %s", order.Status)
+	}
+	if order.FilledAt != nil {
+		t.Fatalf("partial order should not have final filled_at: %v", order.FilledAt)
+	}
+	assertDecimalEqual(t, order.NetAmount, "4005.0400")
+	var position domainpaper.Position
+	must(t, db.First(&position, "account_id = ? AND code = ?", account.ID, "600519").Error)
+	if position.Quantity != 40 {
+		t.Fatalf("position quantity = %d, want 40", position.Quantity)
+	}
+	var refreshed domainpaper.Account
+	must(t, db.First(&refreshed, account.ID).Error)
+	assertDecimalEqual(t, refreshed.Cash, "95994.96")
+	fills := listFills(t, db, account.ID)
+	if len(fills) != 1 || fills[0].Quantity != 40 {
+		t.Fatalf("fills mismatch: %+v", fills)
+	}
+	public := PaperOrdersPublic(db, []domainpaper.Order{order})[0]
+	if public["filled_quantity"] != 40 || public["remaining_quantity"] != 60 || public["partial_fill_count"] != 1 {
+		t.Fatalf("public fill progress mismatch: %+v", public)
+	}
+
+	must(t, CancelOrder(db, &order))
+	if order.Status != domainkernel.OrderCancelled {
+		t.Fatalf("expected cancelled remaining order, got %s", order.Status)
+	}
+	if err := FillOrderWithInput(db, &order, domainpaper.OrderFillInput{Price: decimal.NewFromInt(100), Quantity: 60}); err == nil {
+		t.Fatal("expected cancelled order fill to fail")
+	}
+	if fills := listFills(t, db, account.ID); len(fills) != 1 {
+		t.Fatalf("cancelled remaining quantity should not create fills: %+v", fills)
+	}
+}
+
+func TestFillOrderCompletesAfterMultiplePartialFills(t *testing.T) {
+	db := newPaperTestDB(t)
+	cfg := createRiskConfig(t, db, "partial-complete", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "partial-complete-acct", decimal.NewFromInt(100000), &cfg.ID)
+	order := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(100)}
+	must(t, db.Create(&order).Error)
+
+	must(t, FillOrderWithInput(db, &order, domainpaper.OrderFillInput{Price: decimal.NewFromInt(100), Quantity: 40}))
+	must(t, FillOrderWithInput(db, &order, domainpaper.OrderFillInput{Price: decimal.NewFromInt(101), Quantity: 60}))
+
+	if order.Status != domainkernel.OrderFilled {
+		t.Fatalf("expected completed order, got %s", order.Status)
+	}
+	if order.FilledAt == nil {
+		t.Fatal("completed order should have filled_at")
+	}
+	assertDecimalEqual(t, order.FilledPrice, "100.6000")
+	assertDecimalEqual(t, order.Commission, "10.0000")
+	assertDecimalEqual(t, order.TransferFee, "0.1006")
+	assertDecimalEqual(t, order.NetAmount, "10070.1006")
+	fills := listFills(t, db, account.ID)
+	if len(fills) != 2 || fills[0].Quantity != 40 || fills[1].Quantity != 60 {
+		t.Fatalf("fills mismatch: %+v", fills)
+	}
+	public := PaperOrdersPublic(db, []domainpaper.Order{order})[0]
+	if public["filled_quantity"] != 100 || public["remaining_quantity"] != 0 || public["partial_fill_count"] != 2 {
+		t.Fatalf("public fill progress mismatch: %+v", public)
+	}
+}
+
 func TestSellOrderRealizesPNL(t *testing.T) {
 	db := newPaperTestDB(t)
+	buyNow := time.Date(2026, 5, 6, 10, 0, 0, 0, appTZ)
+	oldNow := paperNow
+	paperNow = func() time.Time { return buyNow }
+	defer func() { paperNow = oldNow }()
 	cfg := createRiskConfig(t, db, "default", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
 	account := createPaperAccount(t, db, "acct", decimal.NewFromInt(100000), &cfg.ID)
 
@@ -85,6 +164,7 @@ func TestSellOrderRealizesPNL(t *testing.T) {
 		t.Fatalf("buy status mismatch: %s", buyOrder.Status)
 	}
 	must(t, FillOrder(db, buyOrder, decimal.NewFromInt(100)))
+	paperNow = func() time.Time { return buyNow.AddDate(0, 0, 1) }
 	sellOrder, err := CreateOrderFromSpec(db, map[string]any{"account_id": account.ID, "code": "600519", "side": "sell", "quantity": 100, "suggested_price": 110})
 	must(t, err)
 	if sellOrder.Status != domainkernel.OrderPending {
@@ -103,6 +183,157 @@ func TestSellOrderRealizesPNL(t *testing.T) {
 	}
 	if !refreshed.Cash.GreaterThan(decimal.NewFromInt(100000)) {
 		t.Fatalf("expected cash above initial cash, got %s", refreshed.Cash)
+	}
+}
+
+func TestSellOrderRejectsSameDayBuyByTPlusOne(t *testing.T) {
+	db := newPaperTestDB(t)
+	fixedNow := time.Date(2026, 5, 6, 10, 0, 0, 0, appTZ)
+	oldNow := paperNow
+	paperNow = func() time.Time { return fixedNow }
+	defer func() { paperNow = oldNow }()
+	cfg := createRiskConfig(t, db, "default", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "acct", decimal.NewFromInt(100000), &cfg.ID)
+
+	buyOrder, err := CreateOrderFromSpec(db, map[string]any{"account_id": account.ID, "code": "600519", "side": "buy", "quantity": 100, "suggested_price": 100})
+	must(t, err)
+	must(t, FillOrder(db, buyOrder, decimal.NewFromInt(100)))
+	sellOrder, err := CreateOrderFromSpec(db, map[string]any{"account_id": account.ID, "code": "600519", "side": "sell", "quantity": 100, "suggested_price": 101})
+	must(t, err)
+	if sellOrder.Status != domainkernel.OrderRejected {
+		t.Fatalf("expected same-day sell rejected, got %s", sellOrder.Status)
+	}
+	if sellOrder.Reason == nil || !contains(*sellOrder.Reason, "T+1") {
+		t.Fatalf("missing T+1 rejection reason: %v", sellOrder.Reason)
+	}
+}
+
+func TestFillOrderBlocksOutsideDailyPriceLimit(t *testing.T) {
+	db := newPaperTestDB(t)
+	fixedNow := time.Date(2026, 5, 7, 10, 0, 0, 0, appTZ)
+	oldNow := paperNow
+	paperNow = func() time.Time { return fixedNow }
+	defer func() { paperNow = oldNow }()
+	cfg := createRiskConfig(t, db, "default", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "acct", decimal.NewFromInt(100000), &cfg.ID)
+	must(t, db.Create(&domainmarket.DailyBar{Code: "600519", TradeDate: fixedNow.AddDate(0, 0, -1), Close: decimal.NewFromInt(100)}).Error)
+	order := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(111)}
+	must(t, db.Create(&order).Error)
+
+	must(t, FillOrder(db, &order, decimal.NewFromInt(111)))
+	must(t, db.First(&order, order.ID).Error)
+	if order.Status != domainkernel.OrderPending {
+		t.Fatalf("expected price-limited order to remain pending, got %s", order.Status)
+	}
+	if order.ExecutionNote == nil || !contains(*order.ExecutionNote, "daily price limit") {
+		t.Fatalf("missing price-limit note: %v", order.ExecutionNote)
+	}
+}
+
+func TestExecuteDueOrdersBlocksSuspendedQuote(t *testing.T) {
+	db := newPaperTestDB(t)
+	fixedNow := time.Date(2026, 5, 7, 10, 0, 0, 0, appTZ)
+	oldNow := paperNow
+	paperNow = func() time.Time { return fixedNow }
+	defer func() { paperNow = oldNow }()
+	cfg := createRiskConfig(t, db, "default", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "acct", decimal.NewFromInt(100000), &cfg.ID)
+	must(t, db.Create(&domainmarket.RealtimeQuote{Code: "600519", QuoteTime: fixedNow, Price: decimal.NewFromInt(100), Volume: decimal.Zero}).Error)
+	order := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(100), ExecuteAfter: &fixedNow}
+	must(t, db.Create(&order).Error)
+
+	_, err := ExecuteDueOrders(db, 10)
+	must(t, err)
+	must(t, db.First(&order, order.ID).Error)
+	if order.Status != domainkernel.OrderPending {
+		t.Fatalf("expected suspended order to remain pending, got %s", order.Status)
+	}
+	if order.ExecutionNote == nil || !contains(*order.ExecutionNote, "zero volume") {
+		t.Fatalf("missing suspended quote note: %v", order.ExecutionNote)
+	}
+}
+
+func TestExecuteDueOrdersAppliesSlippage(t *testing.T) {
+	db := newPaperTestDB(t)
+	fixedNow := time.Date(2026, 5, 7, 10, 0, 0, 0, appTZ)
+	oldNow := paperNow
+	paperNow = func() time.Time { return fixedNow }
+	defer func() { paperNow = oldNow }()
+	cfg := createRiskConfig(t, db, "default", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "acct", decimal.NewFromInt(100000), &cfg.ID)
+	order := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(100), ExecuteAfter: &fixedNow}
+	must(t, db.Create(&order).Error)
+
+	_, err := ExecuteDueOrders(db, 10)
+	must(t, err)
+	must(t, db.First(&order, order.ID).Error)
+	if order.Status != domainkernel.OrderFilled {
+		t.Fatalf("expected filled order, got %s", order.Status)
+	}
+	assertDecimalEqual(t, order.FilledPrice, "100.0500")
+	if order.ExecutionNote == nil || !contains(*order.ExecutionNote, "slippage") || !contains(*order.ExecutionNote, "automatically") {
+		t.Fatalf("missing slippage note: %v", order.ExecutionNote)
+	}
+}
+
+func TestExecuteDueOrdersCapsAutoFillsByRealtimeVolumeBudget(t *testing.T) {
+	db := newPaperTestDB(t)
+	fixedNow := time.Date(2026, 5, 7, 10, 0, 0, 0, appTZ)
+	oldNow := paperNow
+	paperNow = func() time.Time { return fixedNow }
+	defer func() { paperNow = oldNow }()
+	cfg := createRiskConfig(t, db, "volume-budget", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "volume-acct", decimal.NewFromInt(100000), &cfg.ID)
+	must(t, db.Create(&domainmarket.RealtimeQuote{Code: "600519", QuoteTime: fixedNow, Price: decimal.NewFromInt(100), Volume: decimal.NewFromInt(500)}).Error)
+	first := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(100), ExecuteAfter: &fixedNow}
+	second := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(100), ExecuteAfter: &fixedNow}
+	must(t, db.Create(&first).Error)
+	must(t, db.Create(&second).Error)
+
+	_, err := ExecuteDueOrders(db, 10)
+	must(t, err)
+	must(t, db.First(&first, first.ID).Error)
+	must(t, db.First(&second, second.ID).Error)
+	if first.Status != domainkernel.OrderPending || second.Status != domainkernel.OrderPending {
+		t.Fatalf("orders should remain pending after volume-constrained run: first=%s second=%s", first.Status, second.Status)
+	}
+	progress := PaperOrdersPublic(db, []domainpaper.Order{first, second})
+	if progress[0]["filled_quantity"] != 50 || progress[0]["remaining_quantity"] != 50 {
+		t.Fatalf("first order progress mismatch: %+v", progress[0])
+	}
+	if progress[1]["filled_quantity"] != 0 || progress[1]["remaining_quantity"] != 100 {
+		t.Fatalf("second order progress mismatch: %+v", progress[1])
+	}
+	fills := listFills(t, db, account.ID)
+	if len(fills) != 1 || fills[0].OrderID != first.ID || fills[0].Quantity != 50 {
+		t.Fatalf("fills mismatch: %+v", fills)
+	}
+	assertDecimalEqual(t, fills[0].Price, "100.2000")
+	if first.ExecutionNote == nil || !contains(*first.ExecutionNote, "volume participation") || !contains(*first.ExecutionNote, "price impact") || !contains(*first.ExecutionNote, "Auto match report") || !contains(*first.ExecutionNote, "Partially filled automatically") {
+		t.Fatalf("first order should explain volume-constrained price-impact partial fill: %v", first.ExecutionNote)
+	}
+	if second.ExecutionNote == nil || !contains(*second.ExecutionNote, "budget is exhausted") {
+		t.Fatalf("second order should explain exhausted volume budget: %v", second.ExecutionNote)
+	}
+}
+
+func TestExecuteDueOrdersExpiresOldPendingOrder(t *testing.T) {
+	db := newPaperTestDB(t)
+	fixedNow := time.Date(2026, 5, 7, 10, 0, 0, 0, appTZ)
+	oldNow := paperNow
+	paperNow = func() time.Time { return fixedNow }
+	defer func() { paperNow = oldNow }()
+	cfg := createRiskConfig(t, db, "default", decimal.NewFromInt(1), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "acct", decimal.NewFromInt(100000), &cfg.ID)
+	expiredAt := fixedNow.Add(-time.Minute)
+	order := domainpaper.Order{AccountID: account.ID, Code: "600519", Side: domainkernel.OrderBuy, Quantity: 100, Status: domainkernel.OrderPending, SuggestedPrice: decimal.NewFromInt(100), ExecuteAfter: &fixedNow, ExpireAt: &expiredAt}
+	must(t, db.Create(&order).Error)
+
+	_, err := ExecuteDueOrders(db, 10)
+	must(t, err)
+	must(t, db.First(&order, order.ID).Error)
+	if order.Status != domainkernel.OrderExpired {
+		t.Fatalf("expected expired order, got %s", order.Status)
 	}
 }
 
@@ -271,6 +502,35 @@ func TestSubmitOrderAllowsETFLOFWhenEnabled(t *testing.T) {
 	}
 	if order.Code != "510300" || !cfg.AllowETFLOF {
 		t.Fatalf("ETF/LOF compatibility mismatch: code=%s allow=%v", order.Code, cfg.AllowETFLOF)
+	}
+}
+
+func TestMeetingOrderRequiresManualApprovalBeforeSubmit(t *testing.T) {
+	db := newPaperTestDB(t)
+	_, accounts, err := EnsureDefaultPaperSetup(db)
+	must(t, err)
+	order, err := CreateOrderFromSpec(db, map[string]any{
+		"account_id":              accounts[0].ID,
+		"meeting_id":              7,
+		"source_meeting_event_id": 9,
+		"code":                    "600519",
+		"side":                    "buy",
+		"quantity":                100,
+		"suggested_price":         100,
+	})
+	must(t, err)
+	if order.Status != domainkernel.OrderSuggested {
+		t.Fatalf("expected suggested before approval, got %s", order.Status)
+	}
+	if order.SubmittedAt != nil || order.ExecuteAfter != nil {
+		t.Fatalf("suggested order should not be submitted yet: %+v", order)
+	}
+	if order.ExecutionNote == nil || !contains(*order.ExecutionNote, "Awaiting manual approval") {
+		t.Fatalf("missing approval note: %v", order.ExecutionNote)
+	}
+	must(t, SubmitOrder(db, order))
+	if order.Status != domainkernel.OrderPending || order.SubmittedAt == nil || order.ExecuteAfter == nil {
+		t.Fatalf("expected pending after approval submit, got %+v", order)
 	}
 }
 
@@ -552,6 +812,52 @@ func TestPaperPerformanceComputesDrawdownAndWinRateFromSnapshots(t *testing.T) {
 	}
 }
 
+func TestPaperPerformanceIncludesAttributionAndRiskAlerts(t *testing.T) {
+	db := newPaperTestDB(t)
+	cfg := createRiskConfig(t, db, "risk-insight", decimal.RequireFromString("0.20"), decimal.NewFromInt(1), true)
+	account := createPaperAccount(t, db, "risk-acct", decimal.NewFromInt(50000), &cfg.ID)
+	must(t, db.Create(&domainmarket.Symbol{Code: "600519", Name: "Kweichow Moutai", Exchange: "SH", Active: true}).Error)
+	must(t, db.Create(&domainpaper.Position{
+		AccountID:     account.ID,
+		Code:          "600519",
+		Quantity:      100,
+		AvgCost:       decimal.NewFromInt(100),
+		CostAmount:    decimal.NewFromInt(10000),
+		LastPrice:     decimal.NewFromInt(600),
+		MarketValue:   decimal.NewFromInt(60000),
+		UnrealizedPNL: decimal.NewFromInt(50000),
+		UpdatedAt:     time.Now(),
+	}).Error)
+	must(t, db.Create(&domainpaper.Fill{AccountID: account.ID, OrderID: 1, Code: "600519", Side: domainkernel.OrderSell, Quantity: 100, Price: decimal.NewFromInt(600), RealizedPNL: decimal.NewFromInt(1200), FilledAt: time.Now()}).Error)
+
+	perf := PaperPerformance(db, *account)
+	attribution := perf["attribution"].([]map[string]any)
+	if len(attribution) != 1 {
+		t.Fatalf("expected one attribution row, got %+v", attribution)
+	}
+	if attribution[0]["code"] != "600519" {
+		t.Fatalf("attribution code mismatch: %+v", attribution[0])
+	}
+	if attribution[0]["symbol_name"].(*string) == nil || *attribution[0]["symbol_name"].(*string) != "Kweichow Moutai" {
+		t.Fatalf("attribution symbol mismatch: %+v", attribution[0]["symbol_name"])
+	}
+	if !attribution[0]["weight_pct"].(decimal.Decimal).GreaterThan(decimal.NewFromInt(50)) {
+		t.Fatalf("expected high position weight, got %+v", attribution[0])
+	}
+	if !attribution[0]["realized_pnl"].(decimal.Decimal).Equal(decimal.NewFromInt(1200)) {
+		t.Fatalf("expected realized pnl in attribution, got %+v", attribution[0])
+	}
+
+	alerts := perf["risk_alerts"].([]map[string]any)
+	if !hasPaperRiskAlert(alerts, "position_concentration", "critical") {
+		t.Fatalf("expected critical concentration alert, got %+v", alerts)
+	}
+	summary := perf["risk_summary"].(map[string]any)
+	if summary["status"] != "critical" || summary["critical_count"].(int) == 0 {
+		t.Fatalf("risk summary mismatch: %+v", summary)
+	}
+}
+
 func newPaperTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
@@ -636,6 +942,15 @@ func contains(value string, needle string) bool {
 func containsUint(values []uint, needle uint) bool {
 	for _, value := range values {
 		if value == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func hasPaperRiskAlert(alerts []map[string]any, key string, severity string) bool {
+	for _, alert := range alerts {
+		if alert["key"] == key && alert["severity"] == severity {
 			return true
 		}
 	}

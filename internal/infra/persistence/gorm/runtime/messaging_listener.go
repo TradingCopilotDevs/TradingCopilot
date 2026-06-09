@@ -90,13 +90,13 @@ func (r Runner) runMessageSubscriptionLiveLoop(ctx context.Context) error {
 				return err
 			}
 			if appmessaging.IsTelegramRuntimeConfigError(err) {
-				infralogging.Logger().Warn("message subscription live listener disabled",
+				infralogging.Logger().Info("message subscription live listener disabled",
 					infralogging.Event("messaging.listener"),
 					infralogging.Group("messaging"),
 					infralogging.Method("listen"),
 					infralogging.Status(infralogging.StatusSkipped),
 					zap.Any(infralogging.FieldDuration, nil),
-					zap.Error(err),
+					zap.String("reason", err.Error()),
 				)
 			} else {
 				r.recordMessageSubscriptionHeartbeat(err.Error())
@@ -111,6 +111,17 @@ func (r Runner) runMessageSubscriptionLiveLoop(ctx context.Context) error {
 func (r Runner) runMessageSubscriptionListenerOnce(ctx context.Context) (err error) {
 	start := time.Now()
 	defer func() {
+		if appmessaging.IsTelegramRuntimeConfigError(err) {
+			infralogging.Logger().Info("message subscription listener iteration skipped",
+				infralogging.Event("messaging.listener"),
+				infralogging.Group("messaging"),
+				infralogging.Method("listen"),
+				infralogging.Status(infralogging.StatusSkipped),
+				infralogging.DurationSince(start),
+				zap.String("reason", err.Error()),
+			)
+			return
+		}
 		infralogging.LogOperation(start, "messaging.listener", "messaging", "listen", "message subscription listener iteration completed", err)
 	}()
 	usecase := messagingUsecase(r)

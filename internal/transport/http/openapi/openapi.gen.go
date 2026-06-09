@@ -19,6 +19,138 @@ const (
 	BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"
 )
 
+// Defines values for AdminUserAttributesRole.
+const (
+	AdminUserAttributesRoleAdmin    AdminUserAttributesRole = "admin"
+	AdminUserAttributesRoleOperator AdminUserAttributesRole = "operator"
+	AdminUserAttributesRoleOwner    AdminUserAttributesRole = "owner"
+	AdminUserAttributesRoleViewer   AdminUserAttributesRole = "viewer"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserAttributesRole enum.
+func (e AdminUserAttributesRole) Valid() bool {
+	switch e {
+	case AdminUserAttributesRoleAdmin:
+		return true
+	case AdminUserAttributesRoleOperator:
+		return true
+	case AdminUserAttributesRoleOwner:
+		return true
+	case AdminUserAttributesRoleViewer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserCreateDocumentDataAttributesRole.
+const (
+	AdminUserCreateDocumentDataAttributesRoleAdmin    AdminUserCreateDocumentDataAttributesRole = "admin"
+	AdminUserCreateDocumentDataAttributesRoleOperator AdminUserCreateDocumentDataAttributesRole = "operator"
+	AdminUserCreateDocumentDataAttributesRoleOwner    AdminUserCreateDocumentDataAttributesRole = "owner"
+	AdminUserCreateDocumentDataAttributesRoleViewer   AdminUserCreateDocumentDataAttributesRole = "viewer"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserCreateDocumentDataAttributesRole enum.
+func (e AdminUserCreateDocumentDataAttributesRole) Valid() bool {
+	switch e {
+	case AdminUserCreateDocumentDataAttributesRoleAdmin:
+		return true
+	case AdminUserCreateDocumentDataAttributesRoleOperator:
+		return true
+	case AdminUserCreateDocumentDataAttributesRoleOwner:
+		return true
+	case AdminUserCreateDocumentDataAttributesRoleViewer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserCreateDocumentDataType.
+const (
+	AdminUserCreateDocumentDataTypeAdminUsers AdminUserCreateDocumentDataType = "admin-users"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserCreateDocumentDataType enum.
+func (e AdminUserCreateDocumentDataType) Valid() bool {
+	switch e {
+	case AdminUserCreateDocumentDataTypeAdminUsers:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserPasswordResetDocumentDataType.
+const (
+	AdminUserPasswordResets AdminUserPasswordResetDocumentDataType = "admin-user-password-resets"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserPasswordResetDocumentDataType enum.
+func (e AdminUserPasswordResetDocumentDataType) Valid() bool {
+	switch e {
+	case AdminUserPasswordResets:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserResourceType.
+const (
+	AdminUserResourceTypeAdminUsers AdminUserResourceType = "admin-users"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserResourceType enum.
+func (e AdminUserResourceType) Valid() bool {
+	switch e {
+	case AdminUserResourceTypeAdminUsers:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserUpdateDocumentDataAttributesRole.
+const (
+	Admin    AdminUserUpdateDocumentDataAttributesRole = "admin"
+	Operator AdminUserUpdateDocumentDataAttributesRole = "operator"
+	Owner    AdminUserUpdateDocumentDataAttributesRole = "owner"
+	Viewer   AdminUserUpdateDocumentDataAttributesRole = "viewer"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserUpdateDocumentDataAttributesRole enum.
+func (e AdminUserUpdateDocumentDataAttributesRole) Valid() bool {
+	switch e {
+	case Admin:
+		return true
+	case Operator:
+		return true
+	case Owner:
+		return true
+	case Viewer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserUpdateDocumentDataType.
+const (
+	AdminUsers AdminUserUpdateDocumentDataType = "admin-users"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserUpdateDocumentDataType enum.
+func (e AdminUserUpdateDocumentDataType) Valid() bool {
+	switch e {
+	case AdminUsers:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AiProviderModelResourceType.
 const (
 	AiProviderModels AiProviderModelResourceType = "ai-provider-models"
@@ -184,6 +316,21 @@ func (e AppSettingUpsertResourceType) Valid() bool {
 	}
 }
 
+// Defines values for AuditEventResourceType.
+const (
+	AuditEvents AuditEventResourceType = "audit-events"
+)
+
+// Valid indicates whether the value is a known member of the AuditEventResourceType enum.
+func (e AuditEventResourceType) Valid() bool {
+	switch e {
+	case AuditEvents:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AuthBootstrapStateResourceId.
 const (
 	AuthBootstrapStateResourceIdDefault AuthBootstrapStateResourceId = "default"
@@ -232,15 +379,66 @@ func (e AuthCredentialsResourceType) Valid() bool {
 	}
 }
 
+// Defines values for AuthSessionAttributesStatus.
+const (
+	AuthSessionAttributesStatusActive  AuthSessionAttributesStatus = "active"
+	AuthSessionAttributesStatusExpired AuthSessionAttributesStatus = "expired"
+	AuthSessionAttributesStatusRevoked AuthSessionAttributesStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the AuthSessionAttributesStatus enum.
+func (e AuthSessionAttributesStatus) Valid() bool {
+	switch e {
+	case AuthSessionAttributesStatusActive:
+		return true
+	case AuthSessionAttributesStatusExpired:
+		return true
+	case AuthSessionAttributesStatusRevoked:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuthSessionResourceType.
+const (
+	AuthSessions AuthSessionResourceType = "auth-sessions"
+)
+
+// Valid indicates whether the value is a known member of the AuthSessionResourceType enum.
+func (e AuthSessionResourceType) Valid() bool {
+	switch e {
+	case AuthSessions:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuthSessionRevokeDocumentDataType.
+const (
+	AuthSessionRevokes AuthSessionRevokeDocumentDataType = "auth-session-revokes"
+)
+
+// Valid indicates whether the value is a known member of the AuthSessionRevokeDocumentDataType enum.
+func (e AuthSessionRevokeDocumentDataType) Valid() bool {
+	switch e {
+	case AuthSessionRevokes:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AuthTokenAttributesTokenType.
 const (
-	Bearer AuthTokenAttributesTokenType = "bearer"
+	AuthTokenAttributesTokenTypeBearer AuthTokenAttributesTokenType = "bearer"
 )
 
 // Valid indicates whether the value is a known member of the AuthTokenAttributesTokenType enum.
 func (e AuthTokenAttributesTokenType) Valid() bool {
 	switch e {
-	case Bearer:
+	case AuthTokenAttributesTokenTypeBearer:
 		return true
 	default:
 		return false
@@ -277,6 +475,24 @@ func (e AuthTokenResourceType) Valid() bool {
 	}
 }
 
+// Defines values for DashboardAlertLevel.
+const (
+	DashboardAlertLevelError   DashboardAlertLevel = "error"
+	DashboardAlertLevelWarning DashboardAlertLevel = "warning"
+)
+
+// Valid indicates whether the value is a known member of the DashboardAlertLevel enum.
+func (e DashboardAlertLevel) Valid() bool {
+	switch e {
+	case DashboardAlertLevelError:
+		return true
+	case DashboardAlertLevelWarning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DashboardResourceId.
 const (
 	DashboardResourceIdCurrent DashboardResourceId = "current"
@@ -301,6 +517,30 @@ const (
 func (e DashboardResourceType) Valid() bool {
 	switch e {
 	case Dashboards:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DashboardStatusItemStatus.
+const (
+	DashboardStatusItemStatusDisabled DashboardStatusItemStatus = "disabled"
+	DashboardStatusItemStatusError    DashboardStatusItemStatus = "error"
+	DashboardStatusItemStatusOk       DashboardStatusItemStatus = "ok"
+	DashboardStatusItemStatusWarning  DashboardStatusItemStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the DashboardStatusItemStatus enum.
+func (e DashboardStatusItemStatus) Valid() bool {
+	switch e {
+	case DashboardStatusItemStatusDisabled:
+		return true
+	case DashboardStatusItemStatusError:
+		return true
+	case DashboardStatusItemStatusOk:
+		return true
+	case DashboardStatusItemStatusWarning:
 		return true
 	default:
 		return false
@@ -339,13 +579,13 @@ func (e DeletionResourceType) Valid() bool {
 
 // Defines values for HealthAttributesStatus.
 const (
-	Ok HealthAttributesStatus = "ok"
+	HealthAttributesStatusOk HealthAttributesStatus = "ok"
 )
 
 // Valid indicates whether the value is a known member of the HealthAttributesStatus enum.
 func (e HealthAttributesStatus) Valid() bool {
 	switch e {
-	case Ok:
+	case HealthAttributesStatusOk:
 		return true
 	default:
 		return false
@@ -382,24 +622,180 @@ func (e HealthResourceType) Valid() bool {
 	}
 }
 
+// Defines values for IngestedMessageAttributesFeedbackLabel.
+const (
+	IngestedMessageAttributesFeedbackLabelHelpful       IngestedMessageAttributesFeedbackLabel = "helpful"
+	IngestedMessageAttributesFeedbackLabelMisclassified IngestedMessageAttributesFeedbackLabel = "misclassified"
+	IngestedMessageAttributesFeedbackLabelNeutral       IngestedMessageAttributesFeedbackLabel = "neutral"
+	IngestedMessageAttributesFeedbackLabelNoise         IngestedMessageAttributesFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageAttributesFeedbackLabel enum.
+func (e IngestedMessageAttributesFeedbackLabel) Valid() bool {
+	switch e {
+	case IngestedMessageAttributesFeedbackLabelHelpful:
+		return true
+	case IngestedMessageAttributesFeedbackLabelMisclassified:
+		return true
+	case IngestedMessageAttributesFeedbackLabelNeutral:
+		return true
+	case IngestedMessageAttributesFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IngestedMessageAttributesFilterStatus.
 const (
-	Failed     IngestedMessageAttributesFilterStatus = "failed"
-	Filtered   IngestedMessageAttributesFilterStatus = "filtered"
-	Filtering  IngestedMessageAttributesFilterStatus = "filtering"
-	Unfiltered IngestedMessageAttributesFilterStatus = "unfiltered"
+	IngestedMessageAttributesFilterStatusFailed     IngestedMessageAttributesFilterStatus = "failed"
+	IngestedMessageAttributesFilterStatusFiltered   IngestedMessageAttributesFilterStatus = "filtered"
+	IngestedMessageAttributesFilterStatusFiltering  IngestedMessageAttributesFilterStatus = "filtering"
+	IngestedMessageAttributesFilterStatusUnfiltered IngestedMessageAttributesFilterStatus = "unfiltered"
 )
 
 // Valid indicates whether the value is a known member of the IngestedMessageAttributesFilterStatus enum.
 func (e IngestedMessageAttributesFilterStatus) Valid() bool {
 	switch e {
-	case Failed:
+	case IngestedMessageAttributesFilterStatusFailed:
 		return true
-	case Filtered:
+	case IngestedMessageAttributesFilterStatusFiltered:
 		return true
-	case Filtering:
+	case IngestedMessageAttributesFilterStatusFiltering:
 		return true
-	case Unfiltered:
+	case IngestedMessageAttributesFilterStatusUnfiltered:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IngestedMessageFeedbackBatchDocumentDataAttributesLabel.
+const (
+	IngestedMessageFeedbackBatchDocumentDataAttributesLabelHelpful       IngestedMessageFeedbackBatchDocumentDataAttributesLabel = "helpful"
+	IngestedMessageFeedbackBatchDocumentDataAttributesLabelMisclassified IngestedMessageFeedbackBatchDocumentDataAttributesLabel = "misclassified"
+	IngestedMessageFeedbackBatchDocumentDataAttributesLabelNeutral       IngestedMessageFeedbackBatchDocumentDataAttributesLabel = "neutral"
+	IngestedMessageFeedbackBatchDocumentDataAttributesLabelNoise         IngestedMessageFeedbackBatchDocumentDataAttributesLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFeedbackBatchDocumentDataAttributesLabel enum.
+func (e IngestedMessageFeedbackBatchDocumentDataAttributesLabel) Valid() bool {
+	switch e {
+	case IngestedMessageFeedbackBatchDocumentDataAttributesLabelHelpful:
+		return true
+	case IngestedMessageFeedbackBatchDocumentDataAttributesLabelMisclassified:
+		return true
+	case IngestedMessageFeedbackBatchDocumentDataAttributesLabelNeutral:
+		return true
+	case IngestedMessageFeedbackBatchDocumentDataAttributesLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IngestedMessageFeedbackBatchDocumentDataId.
+const (
+	IngestedMessageFeedbackBatchDocumentDataIdCurrent IngestedMessageFeedbackBatchDocumentDataId = "current"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFeedbackBatchDocumentDataId enum.
+func (e IngestedMessageFeedbackBatchDocumentDataId) Valid() bool {
+	switch e {
+	case IngestedMessageFeedbackBatchDocumentDataIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IngestedMessageFeedbackBatchDocumentDataType.
+const (
+	IngestedMessageFeedbackBatchDocumentDataTypeIngestedMessageFeedbackBatches IngestedMessageFeedbackBatchDocumentDataType = "ingested-message-feedback-batches"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFeedbackBatchDocumentDataType enum.
+func (e IngestedMessageFeedbackBatchDocumentDataType) Valid() bool {
+	switch e {
+	case IngestedMessageFeedbackBatchDocumentDataTypeIngestedMessageFeedbackBatches:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel.
+const (
+	IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelHelpful       IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel = "helpful"
+	IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelMisclassified IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel = "misclassified"
+	IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelNeutral       IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel = "neutral"
+	IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelNoise         IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel enum.
+func (e IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel) Valid() bool {
+	switch e {
+	case IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelHelpful:
+		return true
+	case IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelMisclassified:
+		return true
+	case IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelNeutral:
+		return true
+	case IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IngestedMessageFeedbackBatchRequestDocumentDataType.
+const (
+	IngestedMessageFeedbackBatchRequestDocumentDataTypeIngestedMessageFeedbackBatches IngestedMessageFeedbackBatchRequestDocumentDataType = "ingested-message-feedback-batches"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFeedbackBatchRequestDocumentDataType enum.
+func (e IngestedMessageFeedbackBatchRequestDocumentDataType) Valid() bool {
+	switch e {
+	case IngestedMessageFeedbackBatchRequestDocumentDataTypeIngestedMessageFeedbackBatches:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IngestedMessageFeedbackDocumentDataAttributesLabel.
+const (
+	IngestedMessageFeedbackDocumentDataAttributesLabelHelpful       IngestedMessageFeedbackDocumentDataAttributesLabel = "helpful"
+	IngestedMessageFeedbackDocumentDataAttributesLabelMisclassified IngestedMessageFeedbackDocumentDataAttributesLabel = "misclassified"
+	IngestedMessageFeedbackDocumentDataAttributesLabelNeutral       IngestedMessageFeedbackDocumentDataAttributesLabel = "neutral"
+	IngestedMessageFeedbackDocumentDataAttributesLabelNoise         IngestedMessageFeedbackDocumentDataAttributesLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFeedbackDocumentDataAttributesLabel enum.
+func (e IngestedMessageFeedbackDocumentDataAttributesLabel) Valid() bool {
+	switch e {
+	case IngestedMessageFeedbackDocumentDataAttributesLabelHelpful:
+		return true
+	case IngestedMessageFeedbackDocumentDataAttributesLabelMisclassified:
+		return true
+	case IngestedMessageFeedbackDocumentDataAttributesLabelNeutral:
+		return true
+	case IngestedMessageFeedbackDocumentDataAttributesLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IngestedMessageFeedbackDocumentDataType.
+const (
+	IngestedMessageFeedbacks IngestedMessageFeedbackDocumentDataType = "ingested-message-feedbacks"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFeedbackDocumentDataType enum.
+func (e IngestedMessageFeedbackDocumentDataType) Valid() bool {
+	switch e {
+	case IngestedMessageFeedbacks:
 		return true
 	default:
 		return false
@@ -586,6 +982,96 @@ func (e MarketSymbolUpsertResourceType) Valid() bool {
 	}
 }
 
+// Defines values for MarketTaskAttributesAction.
+const (
+	MarketTaskAttributesActionRefreshDailyBars MarketTaskAttributesAction = "refresh_daily_bars"
+	MarketTaskAttributesActionRefreshQuote     MarketTaskAttributesAction = "refresh_quote"
+	MarketTaskAttributesActionSyncSymbols      MarketTaskAttributesAction = "sync_symbols"
+)
+
+// Valid indicates whether the value is a known member of the MarketTaskAttributesAction enum.
+func (e MarketTaskAttributesAction) Valid() bool {
+	switch e {
+	case MarketTaskAttributesActionRefreshDailyBars:
+		return true
+	case MarketTaskAttributesActionRefreshQuote:
+		return true
+	case MarketTaskAttributesActionSyncSymbols:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MarketTaskAttributesStatus.
+const (
+	Completed MarketTaskAttributesStatus = "completed"
+	Queued    MarketTaskAttributesStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the MarketTaskAttributesStatus enum.
+func (e MarketTaskAttributesStatus) Valid() bool {
+	switch e {
+	case Completed:
+		return true
+	case Queued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MarketTaskRequestAttributesAction.
+const (
+	MarketTaskRequestAttributesActionRefreshDailyBars MarketTaskRequestAttributesAction = "refresh_daily_bars"
+	MarketTaskRequestAttributesActionRefreshQuote     MarketTaskRequestAttributesAction = "refresh_quote"
+	MarketTaskRequestAttributesActionSyncSymbols      MarketTaskRequestAttributesAction = "sync_symbols"
+)
+
+// Valid indicates whether the value is a known member of the MarketTaskRequestAttributesAction enum.
+func (e MarketTaskRequestAttributesAction) Valid() bool {
+	switch e {
+	case MarketTaskRequestAttributesActionRefreshDailyBars:
+		return true
+	case MarketTaskRequestAttributesActionRefreshQuote:
+		return true
+	case MarketTaskRequestAttributesActionSyncSymbols:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MarketTaskRequestResourceType.
+const (
+	MarketTaskRequestResourceTypeMarketTasks MarketTaskRequestResourceType = "market-tasks"
+)
+
+// Valid indicates whether the value is a known member of the MarketTaskRequestResourceType enum.
+func (e MarketTaskRequestResourceType) Valid() bool {
+	switch e {
+	case MarketTaskRequestResourceTypeMarketTasks:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MarketTaskResourceType.
+const (
+	MarketTaskResourceTypeMarketTasks MarketTaskResourceType = "market-tasks"
+)
+
+// Valid indicates whether the value is a known member of the MarketTaskResourceType enum.
+func (e MarketTaskResourceType) Valid() bool {
+	switch e {
+	case MarketTaskResourceTypeMarketTasks:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MarketToolQueryDocumentDataType.
 const (
 	MarketToolQueries MarketToolQueryDocumentDataType = "market-tool-queries"
@@ -661,6 +1147,84 @@ func (e MeetingEventResourceType) Valid() bool {
 	}
 }
 
+// Defines values for MeetingRecapActionReviewAttributesDecision.
+const (
+	MeetingRecapActionReviewAttributesDecisionApproved      MeetingRecapActionReviewAttributesDecision = "approved"
+	MeetingRecapActionReviewAttributesDecisionNeedsEvidence MeetingRecapActionReviewAttributesDecision = "needs_evidence"
+	MeetingRecapActionReviewAttributesDecisionRejected      MeetingRecapActionReviewAttributesDecision = "rejected"
+	MeetingRecapActionReviewAttributesDecisionSuperseded    MeetingRecapActionReviewAttributesDecision = "superseded"
+)
+
+// Valid indicates whether the value is a known member of the MeetingRecapActionReviewAttributesDecision enum.
+func (e MeetingRecapActionReviewAttributesDecision) Valid() bool {
+	switch e {
+	case MeetingRecapActionReviewAttributesDecisionApproved:
+		return true
+	case MeetingRecapActionReviewAttributesDecisionNeedsEvidence:
+		return true
+	case MeetingRecapActionReviewAttributesDecisionRejected:
+		return true
+	case MeetingRecapActionReviewAttributesDecisionSuperseded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingRecapActionReviewCreateAttributesDecision.
+const (
+	MeetingRecapActionReviewCreateAttributesDecisionApproved      MeetingRecapActionReviewCreateAttributesDecision = "approved"
+	MeetingRecapActionReviewCreateAttributesDecisionNeedsEvidence MeetingRecapActionReviewCreateAttributesDecision = "needs_evidence"
+	MeetingRecapActionReviewCreateAttributesDecisionRejected      MeetingRecapActionReviewCreateAttributesDecision = "rejected"
+	MeetingRecapActionReviewCreateAttributesDecisionSuperseded    MeetingRecapActionReviewCreateAttributesDecision = "superseded"
+)
+
+// Valid indicates whether the value is a known member of the MeetingRecapActionReviewCreateAttributesDecision enum.
+func (e MeetingRecapActionReviewCreateAttributesDecision) Valid() bool {
+	switch e {
+	case MeetingRecapActionReviewCreateAttributesDecisionApproved:
+		return true
+	case MeetingRecapActionReviewCreateAttributesDecisionNeedsEvidence:
+		return true
+	case MeetingRecapActionReviewCreateAttributesDecisionRejected:
+		return true
+	case MeetingRecapActionReviewCreateAttributesDecisionSuperseded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingRecapActionReviewCreateDocumentDataType.
+const (
+	MeetingRecapActionReviewCreateDocumentDataTypeMeetingRecapActionReviews MeetingRecapActionReviewCreateDocumentDataType = "meeting-recap-action-reviews"
+)
+
+// Valid indicates whether the value is a known member of the MeetingRecapActionReviewCreateDocumentDataType enum.
+func (e MeetingRecapActionReviewCreateDocumentDataType) Valid() bool {
+	switch e {
+	case MeetingRecapActionReviewCreateDocumentDataTypeMeetingRecapActionReviews:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingRecapActionReviewResourceType.
+const (
+	MeetingRecapActionReviewResourceTypeMeetingRecapActionReviews MeetingRecapActionReviewResourceType = "meeting-recap-action-reviews"
+)
+
+// Valid indicates whether the value is a known member of the MeetingRecapActionReviewResourceType enum.
+func (e MeetingRecapActionReviewResourceType) Valid() bool {
+	switch e {
+	case MeetingRecapActionReviewResourceTypeMeetingRecapActionReviews:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MeetingReferenceCreateDocumentDataType.
 const (
 	MeetingReferenceCreateDocumentDataTypeMeetingReferences MeetingReferenceCreateDocumentDataType = "meeting-references"
@@ -721,6 +1285,171 @@ func (e MeetingStartDocumentDataType) Valid() bool {
 	}
 }
 
+// Defines values for MeetingTrustEvidenceGateStatus.
+const (
+	MeetingTrustEvidenceGateStatusBlocked MeetingTrustEvidenceGateStatus = "blocked"
+	MeetingTrustEvidenceGateStatusPass    MeetingTrustEvidenceGateStatus = "pass"
+	MeetingTrustEvidenceGateStatusWarning MeetingTrustEvidenceGateStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustEvidenceGateStatus enum.
+func (e MeetingTrustEvidenceGateStatus) Valid() bool {
+	switch e {
+	case MeetingTrustEvidenceGateStatusBlocked:
+		return true
+	case MeetingTrustEvidenceGateStatusPass:
+		return true
+	case MeetingTrustEvidenceGateStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingTrustReportConfidence.
+const (
+	MeetingTrustReportConfidenceHigh    MeetingTrustReportConfidence = "high"
+	MeetingTrustReportConfidenceLow     MeetingTrustReportConfidence = "low"
+	MeetingTrustReportConfidenceMedium  MeetingTrustReportConfidence = "medium"
+	MeetingTrustReportConfidenceUnknown MeetingTrustReportConfidence = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustReportConfidence enum.
+func (e MeetingTrustReportConfidence) Valid() bool {
+	switch e {
+	case MeetingTrustReportConfidenceHigh:
+		return true
+	case MeetingTrustReportConfidenceLow:
+		return true
+	case MeetingTrustReportConfidenceMedium:
+		return true
+	case MeetingTrustReportConfidenceUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingTrustReportEvidenceGateStatus.
+const (
+	MeetingTrustReportEvidenceGateStatusBlocked MeetingTrustReportEvidenceGateStatus = "blocked"
+	MeetingTrustReportEvidenceGateStatusPass    MeetingTrustReportEvidenceGateStatus = "pass"
+	MeetingTrustReportEvidenceGateStatusWarning MeetingTrustReportEvidenceGateStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustReportEvidenceGateStatus enum.
+func (e MeetingTrustReportEvidenceGateStatus) Valid() bool {
+	switch e {
+	case MeetingTrustReportEvidenceGateStatusBlocked:
+		return true
+	case MeetingTrustReportEvidenceGateStatusPass:
+		return true
+	case MeetingTrustReportEvidenceGateStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingTrustReportRecapActionReviewStatus.
+const (
+	MeetingTrustReportRecapActionReviewStatusBlocked     MeetingTrustReportRecapActionReviewStatus = "blocked"
+	MeetingTrustReportRecapActionReviewStatusClear       MeetingTrustReportRecapActionReviewStatus = "clear"
+	MeetingTrustReportRecapActionReviewStatusNeedsReview MeetingTrustReportRecapActionReviewStatus = "needs_review"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustReportRecapActionReviewStatus enum.
+func (e MeetingTrustReportRecapActionReviewStatus) Valid() bool {
+	switch e {
+	case MeetingTrustReportRecapActionReviewStatusBlocked:
+		return true
+	case MeetingTrustReportRecapActionReviewStatusClear:
+		return true
+	case MeetingTrustReportRecapActionReviewStatusNeedsReview:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingTrustReviewAttributesVerdict.
+const (
+	MeetingTrustReviewAttributesVerdictConfirmed     MeetingTrustReviewAttributesVerdict = "confirmed"
+	MeetingTrustReviewAttributesVerdictNeedsEvidence MeetingTrustReviewAttributesVerdict = "needs_evidence"
+	MeetingTrustReviewAttributesVerdictRejected      MeetingTrustReviewAttributesVerdict = "rejected"
+	MeetingTrustReviewAttributesVerdictSuperseded    MeetingTrustReviewAttributesVerdict = "superseded"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustReviewAttributesVerdict enum.
+func (e MeetingTrustReviewAttributesVerdict) Valid() bool {
+	switch e {
+	case MeetingTrustReviewAttributesVerdictConfirmed:
+		return true
+	case MeetingTrustReviewAttributesVerdictNeedsEvidence:
+		return true
+	case MeetingTrustReviewAttributesVerdictRejected:
+		return true
+	case MeetingTrustReviewAttributesVerdictSuperseded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingTrustReviewCreateAttributesVerdict.
+const (
+	MeetingTrustReviewCreateAttributesVerdictConfirmed     MeetingTrustReviewCreateAttributesVerdict = "confirmed"
+	MeetingTrustReviewCreateAttributesVerdictNeedsEvidence MeetingTrustReviewCreateAttributesVerdict = "needs_evidence"
+	MeetingTrustReviewCreateAttributesVerdictRejected      MeetingTrustReviewCreateAttributesVerdict = "rejected"
+	MeetingTrustReviewCreateAttributesVerdictSuperseded    MeetingTrustReviewCreateAttributesVerdict = "superseded"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustReviewCreateAttributesVerdict enum.
+func (e MeetingTrustReviewCreateAttributesVerdict) Valid() bool {
+	switch e {
+	case MeetingTrustReviewCreateAttributesVerdictConfirmed:
+		return true
+	case MeetingTrustReviewCreateAttributesVerdictNeedsEvidence:
+		return true
+	case MeetingTrustReviewCreateAttributesVerdictRejected:
+		return true
+	case MeetingTrustReviewCreateAttributesVerdictSuperseded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingTrustReviewCreateDocumentDataType.
+const (
+	MeetingTrustReviewCreateDocumentDataTypeMeetingTrustReviews MeetingTrustReviewCreateDocumentDataType = "meeting-trust-reviews"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustReviewCreateDocumentDataType enum.
+func (e MeetingTrustReviewCreateDocumentDataType) Valid() bool {
+	switch e {
+	case MeetingTrustReviewCreateDocumentDataTypeMeetingTrustReviews:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeetingTrustReviewResourceType.
+const (
+	MeetingTrustReviewResourceTypeMeetingTrustReviews MeetingTrustReviewResourceType = "meeting-trust-reviews"
+)
+
+// Valid indicates whether the value is a known member of the MeetingTrustReviewResourceType enum.
+func (e MeetingTrustReviewResourceType) Valid() bool {
+	switch e {
+	case MeetingTrustReviewResourceTypeMeetingTrustReviews:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MeetingUpdateDocumentDataType.
 const (
 	Meetings MeetingUpdateDocumentDataType = "meetings"
@@ -730,6 +1459,324 @@ const (
 func (e MeetingUpdateDocumentDataType) Valid() bool {
 	switch e {
 	case Meetings:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackEvaluationAttributesStatus.
+const (
+	MessageFeedbackEvaluationAttributesStatusEmpty             MessageFeedbackEvaluationAttributesStatus = "empty"
+	MessageFeedbackEvaluationAttributesStatusHealthy           MessageFeedbackEvaluationAttributesStatus = "healthy"
+	MessageFeedbackEvaluationAttributesStatusNeedsMoreFeedback MessageFeedbackEvaluationAttributesStatus = "needs_more_feedback"
+	MessageFeedbackEvaluationAttributesStatusNeedsReview       MessageFeedbackEvaluationAttributesStatus = "needs_review"
+	MessageFeedbackEvaluationAttributesStatusNoisy             MessageFeedbackEvaluationAttributesStatus = "noisy"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackEvaluationAttributesStatus enum.
+func (e MessageFeedbackEvaluationAttributesStatus) Valid() bool {
+	switch e {
+	case MessageFeedbackEvaluationAttributesStatusEmpty:
+		return true
+	case MessageFeedbackEvaluationAttributesStatusHealthy:
+		return true
+	case MessageFeedbackEvaluationAttributesStatusNeedsMoreFeedback:
+		return true
+	case MessageFeedbackEvaluationAttributesStatusNeedsReview:
+		return true
+	case MessageFeedbackEvaluationAttributesStatusNoisy:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackEvaluationResourceId.
+const (
+	MessageFeedbackEvaluationResourceIdCurrent MessageFeedbackEvaluationResourceId = "current"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackEvaluationResourceId enum.
+func (e MessageFeedbackEvaluationResourceId) Valid() bool {
+	switch e {
+	case MessageFeedbackEvaluationResourceIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackEvaluationResourceType.
+const (
+	MessageFeedbackEvaluations MessageFeedbackEvaluationResourceType = "message-feedback-evaluations"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackEvaluationResourceType enum.
+func (e MessageFeedbackEvaluationResourceType) Valid() bool {
+	switch e {
+	case MessageFeedbackEvaluations:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingExportAttributesFormat.
+const (
+	Jsonl MessageFeedbackTrainingExportAttributesFormat = "jsonl"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingExportAttributesFormat enum.
+func (e MessageFeedbackTrainingExportAttributesFormat) Valid() bool {
+	switch e {
+	case Jsonl:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingExportResourceType.
+const (
+	MessageFeedbackTrainingExports MessageFeedbackTrainingExportResourceType = "message-feedback-training-exports"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingExportResourceType enum.
+func (e MessageFeedbackTrainingExportResourceType) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingExports:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSampleAttributesFeedbackLabel.
+const (
+	MessageFeedbackTrainingSampleAttributesFeedbackLabelHelpful       MessageFeedbackTrainingSampleAttributesFeedbackLabel = "helpful"
+	MessageFeedbackTrainingSampleAttributesFeedbackLabelMisclassified MessageFeedbackTrainingSampleAttributesFeedbackLabel = "misclassified"
+	MessageFeedbackTrainingSampleAttributesFeedbackLabelNeutral       MessageFeedbackTrainingSampleAttributesFeedbackLabel = "neutral"
+	MessageFeedbackTrainingSampleAttributesFeedbackLabelNoise         MessageFeedbackTrainingSampleAttributesFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSampleAttributesFeedbackLabel enum.
+func (e MessageFeedbackTrainingSampleAttributesFeedbackLabel) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSampleAttributesFeedbackLabelHelpful:
+		return true
+	case MessageFeedbackTrainingSampleAttributesFeedbackLabelMisclassified:
+		return true
+	case MessageFeedbackTrainingSampleAttributesFeedbackLabelNeutral:
+		return true
+	case MessageFeedbackTrainingSampleAttributesFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSampleAttributesFilterStatus.
+const (
+	MessageFeedbackTrainingSampleAttributesFilterStatusFailed     MessageFeedbackTrainingSampleAttributesFilterStatus = "failed"
+	MessageFeedbackTrainingSampleAttributesFilterStatusFiltered   MessageFeedbackTrainingSampleAttributesFilterStatus = "filtered"
+	MessageFeedbackTrainingSampleAttributesFilterStatusFiltering  MessageFeedbackTrainingSampleAttributesFilterStatus = "filtering"
+	MessageFeedbackTrainingSampleAttributesFilterStatusUnfiltered MessageFeedbackTrainingSampleAttributesFilterStatus = "unfiltered"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSampleAttributesFilterStatus enum.
+func (e MessageFeedbackTrainingSampleAttributesFilterStatus) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSampleAttributesFilterStatusFailed:
+		return true
+	case MessageFeedbackTrainingSampleAttributesFilterStatusFiltered:
+		return true
+	case MessageFeedbackTrainingSampleAttributesFilterStatusFiltering:
+		return true
+	case MessageFeedbackTrainingSampleAttributesFilterStatusUnfiltered:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSampleAttributesSplit.
+const (
+	MessageFeedbackTrainingSampleAttributesSplitTrain      MessageFeedbackTrainingSampleAttributesSplit = "train"
+	MessageFeedbackTrainingSampleAttributesSplitValidation MessageFeedbackTrainingSampleAttributesSplit = "validation"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSampleAttributesSplit enum.
+func (e MessageFeedbackTrainingSampleAttributesSplit) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSampleAttributesSplitTrain:
+		return true
+	case MessageFeedbackTrainingSampleAttributesSplitValidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSampleResourceType.
+const (
+	MessageFeedbackTrainingSamples MessageFeedbackTrainingSampleResourceType = "message-feedback-training-samples"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSampleResourceType enum.
+func (e MessageFeedbackTrainingSampleResourceType) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSamples:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSnapshotFilterFeedbackLabel.
+const (
+	MessageFeedbackTrainingSnapshotFilterFeedbackLabelHelpful       MessageFeedbackTrainingSnapshotFilterFeedbackLabel = "helpful"
+	MessageFeedbackTrainingSnapshotFilterFeedbackLabelMisclassified MessageFeedbackTrainingSnapshotFilterFeedbackLabel = "misclassified"
+	MessageFeedbackTrainingSnapshotFilterFeedbackLabelNeutral       MessageFeedbackTrainingSnapshotFilterFeedbackLabel = "neutral"
+	MessageFeedbackTrainingSnapshotFilterFeedbackLabelNoise         MessageFeedbackTrainingSnapshotFilterFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSnapshotFilterFeedbackLabel enum.
+func (e MessageFeedbackTrainingSnapshotFilterFeedbackLabel) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSnapshotFilterFeedbackLabelHelpful:
+		return true
+	case MessageFeedbackTrainingSnapshotFilterFeedbackLabelMisclassified:
+		return true
+	case MessageFeedbackTrainingSnapshotFilterFeedbackLabelNeutral:
+		return true
+	case MessageFeedbackTrainingSnapshotFilterFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSnapshotResourceType.
+const (
+	MessageFeedbackTrainingSnapshots MessageFeedbackTrainingSnapshotResourceType = "message-feedback-training-snapshots"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSnapshotResourceType enum.
+func (e MessageFeedbackTrainingSnapshotResourceType) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSnapshots:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel.
+const (
+	MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelHelpful       MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel = "helpful"
+	MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelMisclassified MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel = "misclassified"
+	MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelNeutral       MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel = "neutral"
+	MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelNoise         MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel enum.
+func (e MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelHelpful:
+		return true
+	case MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelMisclassified:
+		return true
+	case MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelNeutral:
+		return true
+	case MessageFeedbackTrainingSnapshotSampleRefFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageFeedbackTrainingSnapshotSampleRefSplit.
+const (
+	MessageFeedbackTrainingSnapshotSampleRefSplitTrain      MessageFeedbackTrainingSnapshotSampleRefSplit = "train"
+	MessageFeedbackTrainingSnapshotSampleRefSplitValidation MessageFeedbackTrainingSnapshotSampleRefSplit = "validation"
+)
+
+// Valid indicates whether the value is a known member of the MessageFeedbackTrainingSnapshotSampleRefSplit enum.
+func (e MessageFeedbackTrainingSnapshotSampleRefSplit) Valid() bool {
+	switch e {
+	case MessageFeedbackTrainingSnapshotSampleRefSplitTrain:
+		return true
+	case MessageFeedbackTrainingSnapshotSampleRefSplitValidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSourceTrustAttributesStatus.
+const (
+	MessageSourceTrustAttributesStatusInsufficientFeedback MessageSourceTrustAttributesStatus = "insufficient_feedback"
+	MessageSourceTrustAttributesStatusLowConfidence        MessageSourceTrustAttributesStatus = "low_confidence"
+	MessageSourceTrustAttributesStatusTrusted              MessageSourceTrustAttributesStatus = "trusted"
+	MessageSourceTrustAttributesStatusWatch                MessageSourceTrustAttributesStatus = "watch"
+)
+
+// Valid indicates whether the value is a known member of the MessageSourceTrustAttributesStatus enum.
+func (e MessageSourceTrustAttributesStatus) Valid() bool {
+	switch e {
+	case MessageSourceTrustAttributesStatusInsufficientFeedback:
+		return true
+	case MessageSourceTrustAttributesStatusLowConfidence:
+		return true
+	case MessageSourceTrustAttributesStatusTrusted:
+		return true
+	case MessageSourceTrustAttributesStatusWatch:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSourceTrustReportResourceId.
+const (
+	MessageSourceTrustReportResourceIdCurrent MessageSourceTrustReportResourceId = "current"
+)
+
+// Valid indicates whether the value is a known member of the MessageSourceTrustReportResourceId enum.
+func (e MessageSourceTrustReportResourceId) Valid() bool {
+	switch e {
+	case MessageSourceTrustReportResourceIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSourceTrustReportResourceType.
+const (
+	MessageSourceTrustReports MessageSourceTrustReportResourceType = "message-source-trust-reports"
+)
+
+// Valid indicates whether the value is a known member of the MessageSourceTrustReportResourceType enum.
+func (e MessageSourceTrustReportResourceType) Valid() bool {
+	switch e {
+	case MessageSourceTrustReports:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSourceTrustResourceType.
+const (
+	MessageSourceTrustSources MessageSourceTrustResourceType = "message-source-trust-sources"
+)
+
+// Valid indicates whether the value is a known member of the MessageSourceTrustResourceType enum.
+func (e MessageSourceTrustResourceType) Valid() bool {
+	switch e {
+	case MessageSourceTrustSources:
 		return true
 	default:
 		return false
@@ -826,6 +1873,111 @@ func (e MessageSubscriptionCollectDocumentDataType) Valid() bool {
 	}
 }
 
+// Defines values for MessageSubscriptionDiagnosticAttributesProvider.
+const (
+	MessageSubscriptionDiagnosticAttributesProviderRssFeed         MessageSubscriptionDiagnosticAttributesProvider = "rss_feed"
+	MessageSubscriptionDiagnosticAttributesProviderTelegramChannel MessageSubscriptionDiagnosticAttributesProvider = "telegram_channel"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionDiagnosticAttributesProvider enum.
+func (e MessageSubscriptionDiagnosticAttributesProvider) Valid() bool {
+	switch e {
+	case MessageSubscriptionDiagnosticAttributesProviderRssFeed:
+		return true
+	case MessageSubscriptionDiagnosticAttributesProviderTelegramChannel:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionDiagnosticAttributesSeverity.
+const (
+	MessageSubscriptionDiagnosticAttributesSeverityBlocked  MessageSubscriptionDiagnosticAttributesSeverity = "blocked"
+	MessageSubscriptionDiagnosticAttributesSeverityDisabled MessageSubscriptionDiagnosticAttributesSeverity = "disabled"
+	MessageSubscriptionDiagnosticAttributesSeverityReady    MessageSubscriptionDiagnosticAttributesSeverity = "ready"
+	MessageSubscriptionDiagnosticAttributesSeverityWarning  MessageSubscriptionDiagnosticAttributesSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionDiagnosticAttributesSeverity enum.
+func (e MessageSubscriptionDiagnosticAttributesSeverity) Valid() bool {
+	switch e {
+	case MessageSubscriptionDiagnosticAttributesSeverityBlocked:
+		return true
+	case MessageSubscriptionDiagnosticAttributesSeverityDisabled:
+		return true
+	case MessageSubscriptionDiagnosticAttributesSeverityReady:
+		return true
+	case MessageSubscriptionDiagnosticAttributesSeverityWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionDiagnosticAttributesStatus.
+const (
+	MessageSubscriptionDiagnosticAttributesStatusBlocked  MessageSubscriptionDiagnosticAttributesStatus = "blocked"
+	MessageSubscriptionDiagnosticAttributesStatusDisabled MessageSubscriptionDiagnosticAttributesStatus = "disabled"
+	MessageSubscriptionDiagnosticAttributesStatusReady    MessageSubscriptionDiagnosticAttributesStatus = "ready"
+	MessageSubscriptionDiagnosticAttributesStatusWarning  MessageSubscriptionDiagnosticAttributesStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionDiagnosticAttributesStatus enum.
+func (e MessageSubscriptionDiagnosticAttributesStatus) Valid() bool {
+	switch e {
+	case MessageSubscriptionDiagnosticAttributesStatusBlocked:
+		return true
+	case MessageSubscriptionDiagnosticAttributesStatusDisabled:
+		return true
+	case MessageSubscriptionDiagnosticAttributesStatusReady:
+		return true
+	case MessageSubscriptionDiagnosticAttributesStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionDiagnosticCheckStatus.
+const (
+	MessageSubscriptionDiagnosticCheckStatusBlocked MessageSubscriptionDiagnosticCheckStatus = "blocked"
+	MessageSubscriptionDiagnosticCheckStatusInfo    MessageSubscriptionDiagnosticCheckStatus = "info"
+	MessageSubscriptionDiagnosticCheckStatusOk      MessageSubscriptionDiagnosticCheckStatus = "ok"
+	MessageSubscriptionDiagnosticCheckStatusWarning MessageSubscriptionDiagnosticCheckStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionDiagnosticCheckStatus enum.
+func (e MessageSubscriptionDiagnosticCheckStatus) Valid() bool {
+	switch e {
+	case MessageSubscriptionDiagnosticCheckStatusBlocked:
+		return true
+	case MessageSubscriptionDiagnosticCheckStatusInfo:
+		return true
+	case MessageSubscriptionDiagnosticCheckStatusOk:
+		return true
+	case MessageSubscriptionDiagnosticCheckStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionDiagnosticResourceType.
+const (
+	MessageSubscriptionDiagnostics MessageSubscriptionDiagnosticResourceType = "message-subscription-diagnostics"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionDiagnosticResourceType enum.
+func (e MessageSubscriptionDiagnosticResourceType) Valid() bool {
+	switch e {
+	case MessageSubscriptionDiagnostics:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MessageSubscriptionFilterResourceType.
 const (
 	MessageSubscriptionFilterResourceTypeMessageSubscriptionFilters MessageSubscriptionFilterResourceType = "message-subscription-filters"
@@ -916,6 +2068,135 @@ func (e MessageSubscriptionLoginVerifyDocumentDataType) Valid() bool {
 	}
 }
 
+// Defines values for MessageSubscriptionMaintenanceDocumentDataId.
+const (
+	MessageSubscriptionMaintenanceDocumentDataIdCurrent MessageSubscriptionMaintenanceDocumentDataId = "current"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionMaintenanceDocumentDataId enum.
+func (e MessageSubscriptionMaintenanceDocumentDataId) Valid() bool {
+	switch e {
+	case MessageSubscriptionMaintenanceDocumentDataIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionMaintenanceDocumentDataType.
+const (
+	MessageSubscriptionMaintenanceDocumentDataTypeMessageSubscriptionMaintenanceResults MessageSubscriptionMaintenanceDocumentDataType = "message-subscription-maintenance-results"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionMaintenanceDocumentDataType enum.
+func (e MessageSubscriptionMaintenanceDocumentDataType) Valid() bool {
+	switch e {
+	case MessageSubscriptionMaintenanceDocumentDataTypeMessageSubscriptionMaintenanceResults:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction.
+const (
+	ApplySourceTrustGovernance MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction = "apply_source_trust_governance"
+	AuditTelegramAccess        MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction = "audit_telegram_access"
+	ClearCollectError          MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction = "clear_collect_error"
+	QueueCollect               MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction = "queue_collect"
+	RepairDefaults             MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction = "repair_defaults"
+	RotateRssAuth              MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction = "rotate_rss_auth"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction enum.
+func (e MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction) Valid() bool {
+	switch e {
+	case ApplySourceTrustGovernance:
+		return true
+	case AuditTelegramAccess:
+		return true
+	case ClearCollectError:
+		return true
+	case QueueCollect:
+		return true
+	case RepairDefaults:
+		return true
+	case RotateRssAuth:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider.
+const (
+	MessageSubscriptionMaintenanceRequestDocumentDataAttributesProviderRssFeed         MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider = "rss_feed"
+	MessageSubscriptionMaintenanceRequestDocumentDataAttributesProviderTelegramChannel MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider = "telegram_channel"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider enum.
+func (e MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider) Valid() bool {
+	switch e {
+	case MessageSubscriptionMaintenanceRequestDocumentDataAttributesProviderRssFeed:
+		return true
+	case MessageSubscriptionMaintenanceRequestDocumentDataAttributesProviderTelegramChannel:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType.
+const (
+	MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthTypeBasic  MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType = "basic"
+	MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthTypeBearer MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType = "bearer"
+	MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthTypeNone   MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType = "none"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType enum.
+func (e MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType) Valid() bool {
+	switch e {
+	case MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthTypeBasic:
+		return true
+	case MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthTypeBearer:
+		return true
+	case MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthTypeNone:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionMaintenanceRequestDocumentDataId.
+const (
+	MessageSubscriptionMaintenanceRequestDocumentDataIdCurrent MessageSubscriptionMaintenanceRequestDocumentDataId = "current"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionMaintenanceRequestDocumentDataId enum.
+func (e MessageSubscriptionMaintenanceRequestDocumentDataId) Valid() bool {
+	switch e {
+	case MessageSubscriptionMaintenanceRequestDocumentDataIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionMaintenanceRequestDocumentDataType.
+const (
+	MessageSubscriptionMaintenanceRequestDocumentDataTypeMessageSubscriptionMaintenanceResults MessageSubscriptionMaintenanceRequestDocumentDataType = "message-subscription-maintenance-results"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionMaintenanceRequestDocumentDataType enum.
+func (e MessageSubscriptionMaintenanceRequestDocumentDataType) Valid() bool {
+	switch e {
+	case MessageSubscriptionMaintenanceRequestDocumentDataTypeMessageSubscriptionMaintenanceResults:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MessageSubscriptionResourceAttributesProvider.
 const (
 	MessageSubscriptionResourceAttributesProviderRssFeed         MessageSubscriptionResourceAttributesProvider = "rss_feed"
@@ -928,6 +2209,27 @@ func (e MessageSubscriptionResourceAttributesProvider) Valid() bool {
 	case MessageSubscriptionResourceAttributesProviderRssFeed:
 		return true
 	case MessageSubscriptionResourceAttributesProviderTelegramChannel:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageSubscriptionResourceAttributesRssAuthType.
+const (
+	MessageSubscriptionResourceAttributesRssAuthTypeBasic  MessageSubscriptionResourceAttributesRssAuthType = "basic"
+	MessageSubscriptionResourceAttributesRssAuthTypeBearer MessageSubscriptionResourceAttributesRssAuthType = "bearer"
+	MessageSubscriptionResourceAttributesRssAuthTypeNone   MessageSubscriptionResourceAttributesRssAuthType = "none"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionResourceAttributesRssAuthType enum.
+func (e MessageSubscriptionResourceAttributesRssAuthType) Valid() bool {
+	switch e {
+	case MessageSubscriptionResourceAttributesRssAuthTypeBasic:
+		return true
+	case MessageSubscriptionResourceAttributesRssAuthTypeBearer:
+		return true
+	case MessageSubscriptionResourceAttributesRssAuthTypeNone:
 		return true
 	default:
 		return false
@@ -997,6 +2299,27 @@ func (e MessageSubscriptionTestRequestDocumentDataAttributesProvider) Valid() bo
 	}
 }
 
+// Defines values for MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType.
+const (
+	MessageSubscriptionTestRequestDocumentDataAttributesRssAuthTypeBasic  MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType = "basic"
+	MessageSubscriptionTestRequestDocumentDataAttributesRssAuthTypeBearer MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType = "bearer"
+	MessageSubscriptionTestRequestDocumentDataAttributesRssAuthTypeNone   MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType = "none"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType enum.
+func (e MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType) Valid() bool {
+	switch e {
+	case MessageSubscriptionTestRequestDocumentDataAttributesRssAuthTypeBasic:
+		return true
+	case MessageSubscriptionTestRequestDocumentDataAttributesRssAuthTypeBearer:
+		return true
+	case MessageSubscriptionTestRequestDocumentDataAttributesRssAuthTypeNone:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MessageSubscriptionTestRequestDocumentDataType.
 const (
 	MessageSubscriptionTestRequestDocumentDataTypeMessageSubscriptionTests MessageSubscriptionTestRequestDocumentDataType = "message-subscription-tests"
@@ -1030,6 +2353,27 @@ func (e MessageSubscriptionUpsertDocumentDataAttributesProvider) Valid() bool {
 	}
 }
 
+// Defines values for MessageSubscriptionUpsertDocumentDataAttributesRssAuthType.
+const (
+	Basic  MessageSubscriptionUpsertDocumentDataAttributesRssAuthType = "basic"
+	Bearer MessageSubscriptionUpsertDocumentDataAttributesRssAuthType = "bearer"
+	None   MessageSubscriptionUpsertDocumentDataAttributesRssAuthType = "none"
+)
+
+// Valid indicates whether the value is a known member of the MessageSubscriptionUpsertDocumentDataAttributesRssAuthType enum.
+func (e MessageSubscriptionUpsertDocumentDataAttributesRssAuthType) Valid() bool {
+	switch e {
+	case Basic:
+		return true
+	case Bearer:
+		return true
+	case None:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MessageSubscriptionUpsertDocumentDataType.
 const (
 	MessageSubscriptionUpsertDocumentDataTypeMessageSubscriptions MessageSubscriptionUpsertDocumentDataType = "message-subscriptions"
@@ -1039,6 +2383,459 @@ const (
 func (e MessageSubscriptionUpsertDocumentDataType) Valid() bool {
 	switch e {
 	case MessageSubscriptionUpsertDocumentDataTypeMessageSubscriptions:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsAICostRateCoverageStatus.
+const (
+	OpsAICostRateCoverageStatusEmpty   OpsAICostRateCoverageStatus = "empty"
+	OpsAICostRateCoverageStatusOk      OpsAICostRateCoverageStatus = "ok"
+	OpsAICostRateCoverageStatusWarning OpsAICostRateCoverageStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsAICostRateCoverageStatus enum.
+func (e OpsAICostRateCoverageStatus) Valid() bool {
+	switch e {
+	case OpsAICostRateCoverageStatusEmpty:
+		return true
+	case OpsAICostRateCoverageStatusOk:
+		return true
+	case OpsAICostRateCoverageStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsAIProviderDiagnosticsStatus.
+const (
+	OpsAIProviderDiagnosticsStatusDisabled OpsAIProviderDiagnosticsStatus = "disabled"
+	OpsAIProviderDiagnosticsStatusOk       OpsAIProviderDiagnosticsStatus = "ok"
+	OpsAIProviderDiagnosticsStatusWarning  OpsAIProviderDiagnosticsStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsAIProviderDiagnosticsStatus enum.
+func (e OpsAIProviderDiagnosticsStatus) Valid() bool {
+	switch e {
+	case OpsAIProviderDiagnosticsStatusDisabled:
+		return true
+	case OpsAIProviderDiagnosticsStatusOk:
+		return true
+	case OpsAIProviderDiagnosticsStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsAIUsageDiagnosticsCostAmountSource.
+const (
+	OpsAIUsageDiagnosticsCostAmountSourceConfiguredRates OpsAIUsageDiagnosticsCostAmountSource = "configured_rates"
+	OpsAIUsageDiagnosticsCostAmountSourceMixed           OpsAIUsageDiagnosticsCostAmountSource = "mixed"
+	OpsAIUsageDiagnosticsCostAmountSourceNotConfigured   OpsAIUsageDiagnosticsCostAmountSource = "not_configured"
+	OpsAIUsageDiagnosticsCostAmountSourceProviderPayload OpsAIUsageDiagnosticsCostAmountSource = "provider_payload"
+)
+
+// Valid indicates whether the value is a known member of the OpsAIUsageDiagnosticsCostAmountSource enum.
+func (e OpsAIUsageDiagnosticsCostAmountSource) Valid() bool {
+	switch e {
+	case OpsAIUsageDiagnosticsCostAmountSourceConfiguredRates:
+		return true
+	case OpsAIUsageDiagnosticsCostAmountSourceMixed:
+		return true
+	case OpsAIUsageDiagnosticsCostAmountSourceNotConfigured:
+		return true
+	case OpsAIUsageDiagnosticsCostAmountSourceProviderPayload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsAIUsageDiagnosticsCostBudgetStatus.
+const (
+	OpsAIUsageDiagnosticsCostBudgetStatusExceeded      OpsAIUsageDiagnosticsCostBudgetStatus = "exceeded"
+	OpsAIUsageDiagnosticsCostBudgetStatusNoCostData    OpsAIUsageDiagnosticsCostBudgetStatus = "no_cost_data"
+	OpsAIUsageDiagnosticsCostBudgetStatusNotConfigured OpsAIUsageDiagnosticsCostBudgetStatus = "not_configured"
+	OpsAIUsageDiagnosticsCostBudgetStatusOk            OpsAIUsageDiagnosticsCostBudgetStatus = "ok"
+	OpsAIUsageDiagnosticsCostBudgetStatusWarning       OpsAIUsageDiagnosticsCostBudgetStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsAIUsageDiagnosticsCostBudgetStatus enum.
+func (e OpsAIUsageDiagnosticsCostBudgetStatus) Valid() bool {
+	switch e {
+	case OpsAIUsageDiagnosticsCostBudgetStatusExceeded:
+		return true
+	case OpsAIUsageDiagnosticsCostBudgetStatusNoCostData:
+		return true
+	case OpsAIUsageDiagnosticsCostBudgetStatusNotConfigured:
+		return true
+	case OpsAIUsageDiagnosticsCostBudgetStatusOk:
+		return true
+	case OpsAIUsageDiagnosticsCostBudgetStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsAIUsageDiagnosticsStatus.
+const (
+	Empty    OpsAIUsageDiagnosticsStatus = "empty"
+	Observed OpsAIUsageDiagnosticsStatus = "observed"
+)
+
+// Valid indicates whether the value is a known member of the OpsAIUsageDiagnosticsStatus enum.
+func (e OpsAIUsageDiagnosticsStatus) Valid() bool {
+	switch e {
+	case Empty:
+		return true
+	case Observed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsAIUsageProviderModelCostAmountSource.
+const (
+	OpsAIUsageProviderModelCostAmountSourceConfiguredRates OpsAIUsageProviderModelCostAmountSource = "configured_rates"
+	OpsAIUsageProviderModelCostAmountSourceMixed           OpsAIUsageProviderModelCostAmountSource = "mixed"
+	OpsAIUsageProviderModelCostAmountSourceNotConfigured   OpsAIUsageProviderModelCostAmountSource = "not_configured"
+	OpsAIUsageProviderModelCostAmountSourceProviderPayload OpsAIUsageProviderModelCostAmountSource = "provider_payload"
+)
+
+// Valid indicates whether the value is a known member of the OpsAIUsageProviderModelCostAmountSource enum.
+func (e OpsAIUsageProviderModelCostAmountSource) Valid() bool {
+	switch e {
+	case OpsAIUsageProviderModelCostAmountSourceConfiguredRates:
+		return true
+	case OpsAIUsageProviderModelCostAmountSourceMixed:
+		return true
+	case OpsAIUsageProviderModelCostAmountSourceNotConfigured:
+		return true
+	case OpsAIUsageProviderModelCostAmountSourceProviderPayload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupRestoreDryRunAttributesDestructive.
+const (
+	False OpsBackupRestoreDryRunAttributesDestructive = false
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupRestoreDryRunAttributesDestructive enum.
+func (e OpsBackupRestoreDryRunAttributesDestructive) Valid() bool {
+	switch e {
+	case False:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupRestoreDryRunAttributesSandboxStatus.
+const (
+	OpsBackupRestoreDryRunAttributesSandboxStatusExtracted OpsBackupRestoreDryRunAttributesSandboxStatus = "extracted"
+	OpsBackupRestoreDryRunAttributesSandboxStatusWarning   OpsBackupRestoreDryRunAttributesSandboxStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupRestoreDryRunAttributesSandboxStatus enum.
+func (e OpsBackupRestoreDryRunAttributesSandboxStatus) Valid() bool {
+	switch e {
+	case OpsBackupRestoreDryRunAttributesSandboxStatusExtracted:
+		return true
+	case OpsBackupRestoreDryRunAttributesSandboxStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupRestoreDryRunAttributesStatus.
+const (
+	OpsBackupRestoreDryRunAttributesStatusValid   OpsBackupRestoreDryRunAttributesStatus = "valid"
+	OpsBackupRestoreDryRunAttributesStatusWarning OpsBackupRestoreDryRunAttributesStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupRestoreDryRunAttributesStatus enum.
+func (e OpsBackupRestoreDryRunAttributesStatus) Valid() bool {
+	switch e {
+	case OpsBackupRestoreDryRunAttributesStatusValid:
+		return true
+	case OpsBackupRestoreDryRunAttributesStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupRestoreDryRunResourceType.
+const (
+	OpsBackupRestoreDryRuns OpsBackupRestoreDryRunResourceType = "ops-backup-restore-dry-runs"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupRestoreDryRunResourceType enum.
+func (e OpsBackupRestoreDryRunResourceType) Valid() bool {
+	switch e {
+	case OpsBackupRestoreDryRuns:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupRunAttributesStatus.
+const (
+	Created OpsBackupRunAttributesStatus = "created"
+	Failed  OpsBackupRunAttributesStatus = "failed"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupRunAttributesStatus enum.
+func (e OpsBackupRunAttributesStatus) Valid() bool {
+	switch e {
+	case Created:
+		return true
+	case Failed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupRunResourceType.
+const (
+	OpsBackupRuns OpsBackupRunResourceType = "ops-backup-runs"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupRunResourceType enum.
+func (e OpsBackupRunResourceType) Valid() bool {
+	switch e {
+	case OpsBackupRuns:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupSandboxCheckStatus.
+const (
+	OpsBackupSandboxCheckStatusPass    OpsBackupSandboxCheckStatus = "pass"
+	OpsBackupSandboxCheckStatusWarning OpsBackupSandboxCheckStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupSandboxCheckStatus enum.
+func (e OpsBackupSandboxCheckStatus) Valid() bool {
+	switch e {
+	case OpsBackupSandboxCheckStatusPass:
+		return true
+	case OpsBackupSandboxCheckStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupsResourceId.
+const (
+	OpsBackupsResourceIdCurrent OpsBackupsResourceId = "current"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupsResourceId enum.
+func (e OpsBackupsResourceId) Valid() bool {
+	switch e {
+	case OpsBackupsResourceIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsBackupsResourceType.
+const (
+	OpsBackupReports OpsBackupsResourceType = "ops-backup-reports"
+)
+
+// Valid indicates whether the value is a known member of the OpsBackupsResourceType enum.
+func (e OpsBackupsResourceType) Valid() bool {
+	switch e {
+	case OpsBackupReports:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsJobActionResourceId.
+const (
+	RetryFailed OpsJobActionResourceId = "retry-failed"
+)
+
+// Valid indicates whether the value is a known member of the OpsJobActionResourceId enum.
+func (e OpsJobActionResourceId) Valid() bool {
+	switch e {
+	case RetryFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsJobActionResourceType.
+const (
+	OpsJobActions OpsJobActionResourceType = "ops-job-actions"
+)
+
+// Valid indicates whether the value is a known member of the OpsJobActionResourceType enum.
+func (e OpsJobActionResourceType) Valid() bool {
+	switch e {
+	case OpsJobActions:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsJobsResourceId.
+const (
+	OpsJobsResourceIdCurrent OpsJobsResourceId = "current"
+)
+
+// Valid indicates whether the value is a known member of the OpsJobsResourceId enum.
+func (e OpsJobsResourceId) Valid() bool {
+	switch e {
+	case OpsJobsResourceIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsJobsResourceType.
+const (
+	OpsJobReports OpsJobsResourceType = "ops-job-reports"
+)
+
+// Valid indicates whether the value is a known member of the OpsJobsResourceType enum.
+func (e OpsJobsResourceType) Valid() bool {
+	switch e {
+	case OpsJobReports:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsProviderHealthResourceId.
+const (
+	OpsProviderHealthResourceIdCurrent OpsProviderHealthResourceId = "current"
+)
+
+// Valid indicates whether the value is a known member of the OpsProviderHealthResourceId enum.
+func (e OpsProviderHealthResourceId) Valid() bool {
+	switch e {
+	case OpsProviderHealthResourceIdCurrent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsProviderHealthResourceType.
+const (
+	ProviderHealthReports OpsProviderHealthResourceType = "provider-health-reports"
+)
+
+// Valid indicates whether the value is a known member of the OpsProviderHealthResourceType enum.
+func (e OpsProviderHealthResourceType) Valid() bool {
+	switch e {
+	case ProviderHealthReports:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsQueueBacklogRiskLevel.
+const (
+	OpsQueueBacklogRiskLevelDanger  OpsQueueBacklogRiskLevel = "danger"
+	OpsQueueBacklogRiskLevelOk      OpsQueueBacklogRiskLevel = "ok"
+	OpsQueueBacklogRiskLevelWarning OpsQueueBacklogRiskLevel = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsQueueBacklogRiskLevel enum.
+func (e OpsQueueBacklogRiskLevel) Valid() bool {
+	switch e {
+	case OpsQueueBacklogRiskLevelDanger:
+		return true
+	case OpsQueueBacklogRiskLevelOk:
+		return true
+	case OpsQueueBacklogRiskLevelWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsQueueDiagnosticsStatus.
+const (
+	OpsQueueDiagnosticsStatusDisabled OpsQueueDiagnosticsStatus = "disabled"
+	OpsQueueDiagnosticsStatusError    OpsQueueDiagnosticsStatus = "error"
+	OpsQueueDiagnosticsStatusOk       OpsQueueDiagnosticsStatus = "ok"
+	OpsQueueDiagnosticsStatusWarning  OpsQueueDiagnosticsStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsQueueDiagnosticsStatus enum.
+func (e OpsQueueDiagnosticsStatus) Valid() bool {
+	switch e {
+	case OpsQueueDiagnosticsStatusDisabled:
+		return true
+	case OpsQueueDiagnosticsStatusError:
+		return true
+	case OpsQueueDiagnosticsStatusOk:
+		return true
+	case OpsQueueDiagnosticsStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsQueueFailedTaskState.
+const (
+	OpsQueueFailedTaskStateArchived OpsQueueFailedTaskState = "archived"
+	OpsQueueFailedTaskStateRetry    OpsQueueFailedTaskState = "retry"
+)
+
+// Valid indicates whether the value is a known member of the OpsQueueFailedTaskState enum.
+func (e OpsQueueFailedTaskState) Valid() bool {
+	switch e {
+	case OpsQueueFailedTaskStateArchived:
+		return true
+	case OpsQueueFailedTaskStateRetry:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsRecentErrorsStatus.
+const (
+	OpsRecentErrorsStatusOk      OpsRecentErrorsStatus = "ok"
+	OpsRecentErrorsStatusWarning OpsRecentErrorsStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the OpsRecentErrorsStatus enum.
+func (e OpsRecentErrorsStatus) Valid() bool {
+	switch e {
+	case OpsRecentErrorsStatusOk:
+		return true
+	case OpsRecentErrorsStatusWarning:
 		return true
 	default:
 		return false
@@ -1069,6 +2866,213 @@ const (
 func (e PaperAccountUpsertDocumentDataType) Valid() bool {
 	switch e {
 	case PaperAccountUpsertDocumentDataTypePaperAccounts:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperAttributionItemSource.
+const (
+	PaperAttributionItemSourceClosedRealized PaperAttributionItemSource = "closed_realized"
+	PaperAttributionItemSourceMixed          PaperAttributionItemSource = "mixed"
+	PaperAttributionItemSourceOpenPosition   PaperAttributionItemSource = "open_position"
+)
+
+// Valid indicates whether the value is a known member of the PaperAttributionItemSource enum.
+func (e PaperAttributionItemSource) Valid() bool {
+	switch e {
+	case PaperAttributionItemSourceClosedRealized:
+		return true
+	case PaperAttributionItemSourceMixed:
+		return true
+	case PaperAttributionItemSourceOpenPosition:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperBacktestDocumentDataType.
+const (
+	PaperBacktestDocumentDataTypePaperBacktests PaperBacktestDocumentDataType = "paper-backtests"
+)
+
+// Valid indicates whether the value is a known member of the PaperBacktestDocumentDataType enum.
+func (e PaperBacktestDocumentDataType) Valid() bool {
+	switch e {
+	case PaperBacktestDocumentDataTypePaperBacktests:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperBacktestOrderSide.
+const (
+	PaperBacktestOrderSideBuy  PaperBacktestOrderSide = "buy"
+	PaperBacktestOrderSideSell PaperBacktestOrderSide = "sell"
+)
+
+// Valid indicates whether the value is a known member of the PaperBacktestOrderSide enum.
+func (e PaperBacktestOrderSide) Valid() bool {
+	switch e {
+	case PaperBacktestOrderSideBuy:
+		return true
+	case PaperBacktestOrderSideSell:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperBacktestOrderStatus.
+const (
+	PaperBacktestOrderStatusFilled    PaperBacktestOrderStatus = "filled"
+	PaperBacktestOrderStatusRejected  PaperBacktestOrderStatus = "rejected"
+	PaperBacktestOrderStatusSuggested PaperBacktestOrderStatus = "suggested"
+)
+
+// Valid indicates whether the value is a known member of the PaperBacktestOrderStatus enum.
+func (e PaperBacktestOrderStatus) Valid() bool {
+	switch e {
+	case PaperBacktestOrderStatusFilled:
+		return true
+	case PaperBacktestOrderStatusRejected:
+		return true
+	case PaperBacktestOrderStatusSuggested:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperBacktestPolicyBrokerIntegration.
+const (
+	Disabled PaperBacktestPolicyBrokerIntegration = "disabled"
+)
+
+// Valid indicates whether the value is a known member of the PaperBacktestPolicyBrokerIntegration enum.
+func (e PaperBacktestPolicyBrokerIntegration) Valid() bool {
+	switch e {
+	case Disabled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperBacktestPolicyDataSource.
+const (
+	DailyBars PaperBacktestPolicyDataSource = "daily_bars"
+)
+
+// Valid indicates whether the value is a known member of the PaperBacktestPolicyDataSource enum.
+func (e PaperBacktestPolicyDataSource) Valid() bool {
+	switch e {
+	case DailyBars:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperBacktestRunDocumentDataType.
+const (
+	PaperBacktestRunDocumentDataTypePaperBacktests PaperBacktestRunDocumentDataType = "paper-backtests"
+)
+
+// Valid indicates whether the value is a known member of the PaperBacktestRunDocumentDataType enum.
+func (e PaperBacktestRunDocumentDataType) Valid() bool {
+	switch e {
+	case PaperBacktestRunDocumentDataTypePaperBacktests:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperCorporateActionAttributesActionType.
+const (
+	PaperCorporateActionAttributesActionTypeBonusShare   PaperCorporateActionAttributesActionType = "bonus_share"
+	PaperCorporateActionAttributesActionTypeCashDividend PaperCorporateActionAttributesActionType = "cash_dividend"
+	PaperCorporateActionAttributesActionTypeSplit        PaperCorporateActionAttributesActionType = "split"
+)
+
+// Valid indicates whether the value is a known member of the PaperCorporateActionAttributesActionType enum.
+func (e PaperCorporateActionAttributesActionType) Valid() bool {
+	switch e {
+	case PaperCorporateActionAttributesActionTypeBonusShare:
+		return true
+	case PaperCorporateActionAttributesActionTypeCashDividend:
+		return true
+	case PaperCorporateActionAttributesActionTypeSplit:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperCorporateActionAttributesStatus.
+const (
+	Applied PaperCorporateActionAttributesStatus = "applied"
+)
+
+// Valid indicates whether the value is a known member of the PaperCorporateActionAttributesStatus enum.
+func (e PaperCorporateActionAttributesStatus) Valid() bool {
+	switch e {
+	case Applied:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperCorporateActionCreateDocumentDataAttributesActionType.
+const (
+	PaperCorporateActionCreateDocumentDataAttributesActionTypeBonusShare   PaperCorporateActionCreateDocumentDataAttributesActionType = "bonus_share"
+	PaperCorporateActionCreateDocumentDataAttributesActionTypeCashDividend PaperCorporateActionCreateDocumentDataAttributesActionType = "cash_dividend"
+	PaperCorporateActionCreateDocumentDataAttributesActionTypeSplit        PaperCorporateActionCreateDocumentDataAttributesActionType = "split"
+)
+
+// Valid indicates whether the value is a known member of the PaperCorporateActionCreateDocumentDataAttributesActionType enum.
+func (e PaperCorporateActionCreateDocumentDataAttributesActionType) Valid() bool {
+	switch e {
+	case PaperCorporateActionCreateDocumentDataAttributesActionTypeBonusShare:
+		return true
+	case PaperCorporateActionCreateDocumentDataAttributesActionTypeCashDividend:
+		return true
+	case PaperCorporateActionCreateDocumentDataAttributesActionTypeSplit:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperCorporateActionCreateDocumentDataType.
+const (
+	PaperCorporateActionCreateDocumentDataTypePaperCorporateActions PaperCorporateActionCreateDocumentDataType = "paper-corporate-actions"
+)
+
+// Valid indicates whether the value is a known member of the PaperCorporateActionCreateDocumentDataType enum.
+func (e PaperCorporateActionCreateDocumentDataType) Valid() bool {
+	switch e {
+	case PaperCorporateActionCreateDocumentDataTypePaperCorporateActions:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperCorporateActionResourceType.
+const (
+	PaperCorporateActionResourceTypePaperCorporateActions PaperCorporateActionResourceType = "paper-corporate-actions"
+)
+
+// Valid indicates whether the value is a known member of the PaperCorporateActionResourceType enum.
+func (e PaperCorporateActionResourceType) Valid() bool {
+	switch e {
+	case PaperCorporateActionResourceTypePaperCorporateActions:
 		return true
 	default:
 		return false
@@ -1108,6 +3112,69 @@ func (e PaperFillResourceType) Valid() bool {
 	}
 }
 
+// Defines values for PaperOrderApproveDocumentDataType.
+const (
+	PaperOrderApprovals PaperOrderApproveDocumentDataType = "paper-order-approvals"
+)
+
+// Valid indicates whether the value is a known member of the PaperOrderApproveDocumentDataType enum.
+func (e PaperOrderApproveDocumentDataType) Valid() bool {
+	switch e {
+	case PaperOrderApprovals:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperOrderAttributesApprovalRiskLevel.
+const (
+	PaperOrderAttributesApprovalRiskLevelHigh   PaperOrderAttributesApprovalRiskLevel = "high"
+	PaperOrderAttributesApprovalRiskLevelLow    PaperOrderAttributesApprovalRiskLevel = "low"
+	PaperOrderAttributesApprovalRiskLevelMedium PaperOrderAttributesApprovalRiskLevel = "medium"
+)
+
+// Valid indicates whether the value is a known member of the PaperOrderAttributesApprovalRiskLevel enum.
+func (e PaperOrderAttributesApprovalRiskLevel) Valid() bool {
+	switch e {
+	case PaperOrderAttributesApprovalRiskLevelHigh:
+		return true
+	case PaperOrderAttributesApprovalRiskLevelLow:
+		return true
+	case PaperOrderAttributesApprovalRiskLevelMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperOrderAttributesApprovalStatus.
+const (
+	PaperOrderAttributesApprovalStatusApproved PaperOrderAttributesApprovalStatus = "approved"
+	PaperOrderAttributesApprovalStatusClosed   PaperOrderAttributesApprovalStatus = "closed"
+	PaperOrderAttributesApprovalStatusRejected PaperOrderAttributesApprovalStatus = "rejected"
+	PaperOrderAttributesApprovalStatusUnknown  PaperOrderAttributesApprovalStatus = "unknown"
+	PaperOrderAttributesApprovalStatusWaiting  PaperOrderAttributesApprovalStatus = "waiting"
+)
+
+// Valid indicates whether the value is a known member of the PaperOrderAttributesApprovalStatus enum.
+func (e PaperOrderAttributesApprovalStatus) Valid() bool {
+	switch e {
+	case PaperOrderAttributesApprovalStatusApproved:
+		return true
+	case PaperOrderAttributesApprovalStatusClosed:
+		return true
+	case PaperOrderAttributesApprovalStatusRejected:
+		return true
+	case PaperOrderAttributesApprovalStatusUnknown:
+		return true
+	case PaperOrderAttributesApprovalStatusWaiting:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PaperOrderAttributesSide.
 const (
 	PaperOrderAttributesSideBuy  PaperOrderAttributesSide = "buy"
@@ -1128,16 +3195,16 @@ func (e PaperOrderAttributesSide) Valid() bool {
 
 // Defines values for PaperOrderCreateDocumentDataAttributesSide.
 const (
-	Buy  PaperOrderCreateDocumentDataAttributesSide = "buy"
-	Sell PaperOrderCreateDocumentDataAttributesSide = "sell"
+	PaperOrderCreateDocumentDataAttributesSideBuy  PaperOrderCreateDocumentDataAttributesSide = "buy"
+	PaperOrderCreateDocumentDataAttributesSideSell PaperOrderCreateDocumentDataAttributesSide = "sell"
 )
 
 // Valid indicates whether the value is a known member of the PaperOrderCreateDocumentDataAttributesSide enum.
 func (e PaperOrderCreateDocumentDataAttributesSide) Valid() bool {
 	switch e {
-	case Buy:
+	case PaperOrderCreateDocumentDataAttributesSideBuy:
 		return true
-	case Sell:
+	case PaperOrderCreateDocumentDataAttributesSideSell:
 		return true
 	default:
 		return false
@@ -1168,6 +3235,21 @@ const (
 func (e PaperOrderFillDocumentDataType) Valid() bool {
 	switch e {
 	case PaperOrderFills:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperOrderRejectDocumentDataType.
+const (
+	PaperOrderRejections PaperOrderRejectDocumentDataType = "paper-order-rejections"
+)
+
+// Valid indicates whether the value is a known member of the PaperOrderRejectDocumentDataType enum.
+func (e PaperOrderRejectDocumentDataType) Valid() bool {
+	switch e {
+	case PaperOrderRejections:
 		return true
 	default:
 		return false
@@ -1249,6 +3331,63 @@ func (e PaperPositionResourceType) Valid() bool {
 	}
 }
 
+// Defines values for PaperReplayDocumentDataType.
+const (
+	PaperReplays PaperReplayDocumentDataType = "paper-replays"
+)
+
+// Valid indicates whether the value is a known member of the PaperReplayDocumentDataType enum.
+func (e PaperReplayDocumentDataType) Valid() bool {
+	switch e {
+	case PaperReplays:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperReplayEventType.
+const (
+	CorporateAction PaperReplayEventType = "corporate_action"
+	Fill            PaperReplayEventType = "fill"
+	Order           PaperReplayEventType = "order"
+)
+
+// Valid indicates whether the value is a known member of the PaperReplayEventType enum.
+func (e PaperReplayEventType) Valid() bool {
+	switch e {
+	case CorporateAction:
+		return true
+	case Fill:
+		return true
+	case Order:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperRiskAlertSeverity.
+const (
+	PaperRiskAlertSeverityCritical PaperRiskAlertSeverity = "critical"
+	PaperRiskAlertSeverityInfo     PaperRiskAlertSeverity = "info"
+	PaperRiskAlertSeverityWarning  PaperRiskAlertSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the PaperRiskAlertSeverity enum.
+func (e PaperRiskAlertSeverity) Valid() bool {
+	switch e {
+	case PaperRiskAlertSeverityCritical:
+		return true
+	case PaperRiskAlertSeverityInfo:
+		return true
+	case PaperRiskAlertSeverityWarning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PaperRiskConfigResourceType.
 const (
 	PaperRiskConfigResourceTypePaperRiskConfigs PaperRiskConfigResourceType = "paper-risk-configs"
@@ -1273,6 +3412,51 @@ const (
 func (e PaperRiskConfigUpsertDocumentDataType) Valid() bool {
 	switch e {
 	case PaperRiskConfigUpsertDocumentDataTypePaperRiskConfigs:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperRiskSummaryMaxSeverity.
+const (
+	PaperRiskSummaryMaxSeverityCritical PaperRiskSummaryMaxSeverity = "critical"
+	PaperRiskSummaryMaxSeverityInfo     PaperRiskSummaryMaxSeverity = "info"
+	PaperRiskSummaryMaxSeverityOk       PaperRiskSummaryMaxSeverity = "ok"
+	PaperRiskSummaryMaxSeverityWarning  PaperRiskSummaryMaxSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the PaperRiskSummaryMaxSeverity enum.
+func (e PaperRiskSummaryMaxSeverity) Valid() bool {
+	switch e {
+	case PaperRiskSummaryMaxSeverityCritical:
+		return true
+	case PaperRiskSummaryMaxSeverityInfo:
+		return true
+	case PaperRiskSummaryMaxSeverityOk:
+		return true
+	case PaperRiskSummaryMaxSeverityWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaperRiskSummaryStatus.
+const (
+	PaperRiskSummaryStatusCritical PaperRiskSummaryStatus = "critical"
+	PaperRiskSummaryStatusOk       PaperRiskSummaryStatus = "ok"
+	PaperRiskSummaryStatusWatch    PaperRiskSummaryStatus = "watch"
+)
+
+// Valid indicates whether the value is a known member of the PaperRiskSummaryStatus enum.
+func (e PaperRiskSummaryStatus) Valid() bool {
+	switch e {
+	case PaperRiskSummaryStatusCritical:
+		return true
+	case PaperRiskSummaryStatusOk:
+		return true
+	case PaperRiskSummaryStatusWatch:
 		return true
 	default:
 		return false
@@ -1519,16 +3703,130 @@ func (e SecretUpsertResourceType) Valid() bool {
 	}
 }
 
+// Defines values for SetupActionResultAttributesStatus.
+const (
+	SetupActionResultAttributesStatusError   SetupActionResultAttributesStatus = "error"
+	SetupActionResultAttributesStatusOk      SetupActionResultAttributesStatus = "ok"
+	SetupActionResultAttributesStatusWarning SetupActionResultAttributesStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the SetupActionResultAttributesStatus enum.
+func (e SetupActionResultAttributesStatus) Valid() bool {
+	switch e {
+	case SetupActionResultAttributesStatusError:
+		return true
+	case SetupActionResultAttributesStatusOk:
+		return true
+	case SetupActionResultAttributesStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetupActionResultResourceType.
+const (
+	SetupActionResults SetupActionResultResourceType = "setup-action-results"
+)
+
+// Valid indicates whether the value is a known member of the SetupActionResultResourceType enum.
+func (e SetupActionResultResourceType) Valid() bool {
+	switch e {
+	case SetupActionResults:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetupReadinessResourceId.
+const (
+	Current SetupReadinessResourceId = "current"
+)
+
+// Valid indicates whether the value is a known member of the SetupReadinessResourceId enum.
+func (e SetupReadinessResourceId) Valid() bool {
+	switch e {
+	case Current:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetupReadinessResourceType.
+const (
+	SetupReadinesses SetupReadinessResourceType = "setup-readinesses"
+)
+
+// Valid indicates whether the value is a known member of the SetupReadinessResourceType enum.
+func (e SetupReadinessResourceType) Valid() bool {
+	switch e {
+	case SetupReadinesses:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetupStepStatus.
+const (
+	SetupStepStatusError   SetupStepStatus = "error"
+	SetupStepStatusMissing SetupStepStatus = "missing"
+	SetupStepStatusReady   SetupStepStatus = "ready"
+	SetupStepStatusWarning SetupStepStatus = "warning"
+)
+
+// Valid indicates whether the value is a known member of the SetupStepStatus enum.
+func (e SetupStepStatus) Valid() bool {
+	switch e {
+	case SetupStepStatusError:
+		return true
+	case SetupStepStatusMissing:
+		return true
+	case SetupStepStatusReady:
+		return true
+	case SetupStepStatusWarning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WakePlanAttributesStatus.
 const (
-	Active    WakePlanAttributesStatus = "active"
-	Cancelled WakePlanAttributesStatus = "cancelled"
-	Fired     WakePlanAttributesStatus = "fired"
-	Paused    WakePlanAttributesStatus = "paused"
+	WakePlanAttributesStatusActive    WakePlanAttributesStatus = "active"
+	WakePlanAttributesStatusCancelled WakePlanAttributesStatus = "cancelled"
+	WakePlanAttributesStatusFired     WakePlanAttributesStatus = "fired"
+	WakePlanAttributesStatusPaused    WakePlanAttributesStatus = "paused"
 )
 
 // Valid indicates whether the value is a known member of the WakePlanAttributesStatus enum.
 func (e WakePlanAttributesStatus) Valid() bool {
+	switch e {
+	case WakePlanAttributesStatusActive:
+		return true
+	case WakePlanAttributesStatusCancelled:
+		return true
+	case WakePlanAttributesStatusFired:
+		return true
+	case WakePlanAttributesStatusPaused:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WakePlanInputAttributesStatus.
+const (
+	Active    WakePlanInputAttributesStatus = "active"
+	Cancelled WakePlanInputAttributesStatus = "cancelled"
+	Fired     WakePlanInputAttributesStatus = "fired"
+	Paused    WakePlanInputAttributesStatus = "paused"
+)
+
+// Valid indicates whether the value is a known member of the WakePlanInputAttributesStatus enum.
+func (e WakePlanInputAttributesStatus) Valid() bool {
 	switch e {
 	case Active:
 		return true
@@ -1537,6 +3835,27 @@ func (e WakePlanAttributesStatus) Valid() bool {
 	case Fired:
 		return true
 	case Paused:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WakePlanInputAttributesTriggerType.
+const (
+	Event     WakePlanInputAttributesTriggerType = "event"
+	Indicator WakePlanInputAttributesTriggerType = "indicator"
+	Time      WakePlanInputAttributesTriggerType = "time"
+)
+
+// Valid indicates whether the value is a known member of the WakePlanInputAttributesTriggerType enum.
+func (e WakePlanInputAttributesTriggerType) Valid() bool {
+	switch e {
+	case Event:
+		return true
+	case Indicator:
+		return true
+	case Time:
 		return true
 	default:
 		return false
@@ -1573,6 +3892,30 @@ func (e WakePlanUpsertDocumentDataType) Valid() bool {
 	}
 }
 
+// Defines values for FeedbackLabelQuery.
+const (
+	FeedbackLabelQueryHelpful       FeedbackLabelQuery = "helpful"
+	FeedbackLabelQueryMisclassified FeedbackLabelQuery = "misclassified"
+	FeedbackLabelQueryNeutral       FeedbackLabelQuery = "neutral"
+	FeedbackLabelQueryNoise         FeedbackLabelQuery = "noise"
+)
+
+// Valid indicates whether the value is a known member of the FeedbackLabelQuery enum.
+func (e FeedbackLabelQuery) Valid() bool {
+	switch e {
+	case FeedbackLabelQueryHelpful:
+		return true
+	case FeedbackLabelQueryMisclassified:
+		return true
+	case FeedbackLabelQueryNeutral:
+		return true
+	case FeedbackLabelQueryNoise:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for LogLevel.
 const (
 	LogLevelDebug LogLevel = "debug"
@@ -1591,6 +3934,24 @@ func (e LogLevel) Valid() bool {
 	case LogLevelInfo:
 		return true
 	case LogLevelWarn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpsTaskState.
+const (
+	OpsTaskStateArchived OpsTaskState = "archived"
+	OpsTaskStateRetry    OpsTaskState = "retry"
+)
+
+// Valid indicates whether the value is a known member of the OpsTaskState enum.
+func (e OpsTaskState) Valid() bool {
+	switch e {
+	case OpsTaskStateArchived:
+		return true
+	case OpsTaskStateRetry:
 		return true
 	default:
 		return false
@@ -1620,6 +3981,256 @@ func (e GetLogsParamsLevel) Valid() bool {
 		return false
 	}
 }
+
+// Defines values for GetMessageFeedbackEvaluationParamsFeedbackLabel.
+const (
+	GetMessageFeedbackEvaluationParamsFeedbackLabelHelpful       GetMessageFeedbackEvaluationParamsFeedbackLabel = "helpful"
+	GetMessageFeedbackEvaluationParamsFeedbackLabelMisclassified GetMessageFeedbackEvaluationParamsFeedbackLabel = "misclassified"
+	GetMessageFeedbackEvaluationParamsFeedbackLabelNeutral       GetMessageFeedbackEvaluationParamsFeedbackLabel = "neutral"
+	GetMessageFeedbackEvaluationParamsFeedbackLabelNoise         GetMessageFeedbackEvaluationParamsFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the GetMessageFeedbackEvaluationParamsFeedbackLabel enum.
+func (e GetMessageFeedbackEvaluationParamsFeedbackLabel) Valid() bool {
+	switch e {
+	case GetMessageFeedbackEvaluationParamsFeedbackLabelHelpful:
+		return true
+	case GetMessageFeedbackEvaluationParamsFeedbackLabelMisclassified:
+		return true
+	case GetMessageFeedbackEvaluationParamsFeedbackLabelNeutral:
+		return true
+	case GetMessageFeedbackEvaluationParamsFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetMessageFeedbackTrainingExportsParamsFeedbackLabel.
+const (
+	GetMessageFeedbackTrainingExportsParamsFeedbackLabelHelpful       GetMessageFeedbackTrainingExportsParamsFeedbackLabel = "helpful"
+	GetMessageFeedbackTrainingExportsParamsFeedbackLabelMisclassified GetMessageFeedbackTrainingExportsParamsFeedbackLabel = "misclassified"
+	GetMessageFeedbackTrainingExportsParamsFeedbackLabelNeutral       GetMessageFeedbackTrainingExportsParamsFeedbackLabel = "neutral"
+	GetMessageFeedbackTrainingExportsParamsFeedbackLabelNoise         GetMessageFeedbackTrainingExportsParamsFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the GetMessageFeedbackTrainingExportsParamsFeedbackLabel enum.
+func (e GetMessageFeedbackTrainingExportsParamsFeedbackLabel) Valid() bool {
+	switch e {
+	case GetMessageFeedbackTrainingExportsParamsFeedbackLabelHelpful:
+		return true
+	case GetMessageFeedbackTrainingExportsParamsFeedbackLabelMisclassified:
+		return true
+	case GetMessageFeedbackTrainingExportsParamsFeedbackLabelNeutral:
+		return true
+	case GetMessageFeedbackTrainingExportsParamsFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PostMessageFeedbackTrainingExportParamsFeedbackLabel.
+const (
+	PostMessageFeedbackTrainingExportParamsFeedbackLabelHelpful       PostMessageFeedbackTrainingExportParamsFeedbackLabel = "helpful"
+	PostMessageFeedbackTrainingExportParamsFeedbackLabelMisclassified PostMessageFeedbackTrainingExportParamsFeedbackLabel = "misclassified"
+	PostMessageFeedbackTrainingExportParamsFeedbackLabelNeutral       PostMessageFeedbackTrainingExportParamsFeedbackLabel = "neutral"
+	PostMessageFeedbackTrainingExportParamsFeedbackLabelNoise         PostMessageFeedbackTrainingExportParamsFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the PostMessageFeedbackTrainingExportParamsFeedbackLabel enum.
+func (e PostMessageFeedbackTrainingExportParamsFeedbackLabel) Valid() bool {
+	switch e {
+	case PostMessageFeedbackTrainingExportParamsFeedbackLabelHelpful:
+		return true
+	case PostMessageFeedbackTrainingExportParamsFeedbackLabelMisclassified:
+		return true
+	case PostMessageFeedbackTrainingExportParamsFeedbackLabelNeutral:
+		return true
+	case PostMessageFeedbackTrainingExportParamsFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetMessageFeedbackTrainingSamplesParamsFeedbackLabel.
+const (
+	GetMessageFeedbackTrainingSamplesParamsFeedbackLabelHelpful       GetMessageFeedbackTrainingSamplesParamsFeedbackLabel = "helpful"
+	GetMessageFeedbackTrainingSamplesParamsFeedbackLabelMisclassified GetMessageFeedbackTrainingSamplesParamsFeedbackLabel = "misclassified"
+	GetMessageFeedbackTrainingSamplesParamsFeedbackLabelNeutral       GetMessageFeedbackTrainingSamplesParamsFeedbackLabel = "neutral"
+	GetMessageFeedbackTrainingSamplesParamsFeedbackLabelNoise         GetMessageFeedbackTrainingSamplesParamsFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the GetMessageFeedbackTrainingSamplesParamsFeedbackLabel enum.
+func (e GetMessageFeedbackTrainingSamplesParamsFeedbackLabel) Valid() bool {
+	switch e {
+	case GetMessageFeedbackTrainingSamplesParamsFeedbackLabelHelpful:
+		return true
+	case GetMessageFeedbackTrainingSamplesParamsFeedbackLabelMisclassified:
+		return true
+	case GetMessageFeedbackTrainingSamplesParamsFeedbackLabelNeutral:
+		return true
+	case GetMessageFeedbackTrainingSamplesParamsFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel.
+const (
+	GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelHelpful       GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel = "helpful"
+	GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelMisclassified GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel = "misclassified"
+	GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelNeutral       GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel = "neutral"
+	GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelNoise         GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel enum.
+func (e GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel) Valid() bool {
+	switch e {
+	case GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelHelpful:
+		return true
+	case GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelMisclassified:
+		return true
+	case GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelNeutral:
+		return true
+	case GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel.
+const (
+	PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelHelpful       PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel = "helpful"
+	PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelMisclassified PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel = "misclassified"
+	PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelNeutral       PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel = "neutral"
+	PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelNoise         PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel = "noise"
+)
+
+// Valid indicates whether the value is a known member of the PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel enum.
+func (e PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel) Valid() bool {
+	switch e {
+	case PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelHelpful:
+		return true
+	case PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelMisclassified:
+		return true
+	case PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelNeutral:
+		return true
+	case PostMessageFeedbackTrainingSnapshotParamsFeedbackLabelNoise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOpsJobsParamsState.
+const (
+	Archived GetOpsJobsParamsState = "archived"
+	Retry    GetOpsJobsParamsState = "retry"
+)
+
+// Valid indicates whether the value is a known member of the GetOpsJobsParamsState enum.
+func (e GetOpsJobsParamsState) Valid() bool {
+	switch e {
+	case Archived:
+		return true
+	case Retry:
+		return true
+	default:
+		return false
+	}
+}
+
+// AdminUserAttributes defines model for AdminUserAttributes.
+type AdminUserAttributes struct {
+	Active      *bool                    `json:"active,omitempty"`
+	CreatedAt   *time.Time               `json:"createdAt,omitempty"`
+	DisplayName *string                  `json:"displayName,omitempty"`
+	LastLoginAt *time.Time               `json:"lastLoginAt,omitempty"`
+	Role        *AdminUserAttributesRole `json:"role,omitempty"`
+	UpdatedAt   *time.Time               `json:"updatedAt,omitempty"`
+	Username    *string                  `json:"username,omitempty"`
+}
+
+// AdminUserAttributesRole defines model for AdminUserAttributes.Role.
+type AdminUserAttributesRole string
+
+// AdminUserCollectionDocument defines model for AdminUserCollectionDocument.
+type AdminUserCollectionDocument struct {
+	Data  []AdminUserResource     `json:"data"`
+	Links *Links                  `json:"links,omitempty"`
+	Meta  *map[string]interface{} `json:"meta,omitempty"`
+}
+
+// AdminUserCreateDocument defines model for AdminUserCreateDocument.
+type AdminUserCreateDocument struct {
+	Data struct {
+		Attributes struct {
+			Active      *bool                                      `json:"active,omitempty"`
+			DisplayName *string                                    `json:"displayName,omitempty"`
+			Password    string                                     `json:"password"`
+			Role        *AdminUserCreateDocumentDataAttributesRole `json:"role,omitempty"`
+			Username    string                                     `json:"username"`
+		} `json:"attributes"`
+		Type AdminUserCreateDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// AdminUserCreateDocumentDataAttributesRole defines model for AdminUserCreateDocument.Data.Attributes.Role.
+type AdminUserCreateDocumentDataAttributesRole string
+
+// AdminUserCreateDocumentDataType defines model for AdminUserCreateDocument.Data.Type.
+type AdminUserCreateDocumentDataType string
+
+// AdminUserDocument defines model for AdminUserDocument.
+type AdminUserDocument struct {
+	Data AdminUserResource `json:"data"`
+}
+
+// AdminUserPasswordResetDocument defines model for AdminUserPasswordResetDocument.
+type AdminUserPasswordResetDocument struct {
+	Data struct {
+		Attributes struct {
+			Confirm  bool   `json:"confirm"`
+			Password string `json:"password"`
+		} `json:"attributes"`
+		Type AdminUserPasswordResetDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// AdminUserPasswordResetDocumentDataType defines model for AdminUserPasswordResetDocument.Data.Type.
+type AdminUserPasswordResetDocumentDataType string
+
+// AdminUserResource defines model for AdminUserResource.
+type AdminUserResource struct {
+	Attributes AdminUserAttributes   `json:"attributes"`
+	Id         string                `json:"id"`
+	Type       AdminUserResourceType `json:"type"`
+}
+
+// AdminUserResourceType defines model for AdminUserResource.Type.
+type AdminUserResourceType string
+
+// AdminUserUpdateDocument defines model for AdminUserUpdateDocument.
+type AdminUserUpdateDocument struct {
+	Data struct {
+		Attributes struct {
+			Active      *bool                                      `json:"active,omitempty"`
+			DisplayName *string                                    `json:"displayName,omitempty"`
+			Role        *AdminUserUpdateDocumentDataAttributesRole `json:"role,omitempty"`
+		} `json:"attributes"`
+		Type AdminUserUpdateDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// AdminUserUpdateDocumentDataAttributesRole defines model for AdminUserUpdateDocument.Data.Attributes.Role.
+type AdminUserUpdateDocumentDataAttributesRole string
+
+// AdminUserUpdateDocumentDataType defines model for AdminUserUpdateDocument.Data.Type.
+type AdminUserUpdateDocumentDataType string
 
 // AiCapabilityDefinitionAttributes defines model for AiCapabilityDefinitionAttributes.
 type AiCapabilityDefinitionAttributes struct {
@@ -1869,6 +4480,36 @@ type AppSettingUpsertResource struct {
 // AppSettingUpsertResourceType defines model for AppSettingUpsertResource.Type.
 type AppSettingUpsertResourceType string
 
+// AuditEventAttributes defines model for AuditEventAttributes.
+type AuditEventAttributes struct {
+	Action       *string    `json:"action,omitempty"`
+	Actor        *string    `json:"actor,omitempty"`
+	CreatedAt    *time.Time `json:"createdAt,omitempty"`
+	Detail       *string    `json:"detail,omitempty"`
+	Ip           *string    `json:"ip,omitempty"`
+	Outcome      *string    `json:"outcome,omitempty"`
+	ResourceId   *string    `json:"resourceId,omitempty"`
+	ResourceType *string    `json:"resourceType,omitempty"`
+	UserAgent    *string    `json:"userAgent,omitempty"`
+}
+
+// AuditEventCollectionDocument defines model for AuditEventCollectionDocument.
+type AuditEventCollectionDocument struct {
+	Data  []AuditEventResource    `json:"data"`
+	Links *Links                  `json:"links,omitempty"`
+	Meta  *map[string]interface{} `json:"meta,omitempty"`
+}
+
+// AuditEventResource defines model for AuditEventResource.
+type AuditEventResource struct {
+	Attributes AuditEventAttributes   `json:"attributes"`
+	Id         string                 `json:"id"`
+	Type       AuditEventResourceType `json:"type"`
+}
+
+// AuditEventResourceType defines model for AuditEventResource.Type.
+type AuditEventResourceType string
+
 // AuthBootstrapStateAttributes defines model for AuthBootstrapStateAttributes.
 type AuthBootstrapStateAttributes struct {
 	BootstrapRequired bool `json:"bootstrapRequired"`
@@ -1912,6 +4553,61 @@ type AuthCredentialsResource struct {
 // AuthCredentialsResourceType defines model for AuthCredentialsResource.Type.
 type AuthCredentialsResourceType string
 
+// AuthSessionAttributes defines model for AuthSessionAttributes.
+type AuthSessionAttributes struct {
+	CreatedAt    *time.Time                   `json:"createdAt,omitempty"`
+	ExpiresAt    *time.Time                   `json:"expiresAt,omitempty"`
+	Ip           *string                      `json:"ip,omitempty"`
+	RevokeReason *string                      `json:"revokeReason,omitempty"`
+	RevokedAt    *time.Time                   `json:"revokedAt,omitempty"`
+	RevokedBy    *string                      `json:"revokedBy,omitempty"`
+	Role         *string                      `json:"role,omitempty"`
+	Status       *AuthSessionAttributesStatus `json:"status,omitempty"`
+	UpdatedAt    *time.Time                   `json:"updatedAt,omitempty"`
+	UserAgent    *string                      `json:"userAgent,omitempty"`
+	UserId       *int                         `json:"userId,omitempty"`
+	Username     *string                      `json:"username,omitempty"`
+}
+
+// AuthSessionAttributesStatus defines model for AuthSessionAttributes.Status.
+type AuthSessionAttributesStatus string
+
+// AuthSessionCollectionDocument defines model for AuthSessionCollectionDocument.
+type AuthSessionCollectionDocument struct {
+	Data  []AuthSessionResource   `json:"data"`
+	Links *Links                  `json:"links,omitempty"`
+	Meta  *map[string]interface{} `json:"meta,omitempty"`
+}
+
+// AuthSessionDocument defines model for AuthSessionDocument.
+type AuthSessionDocument struct {
+	Data AuthSessionResource `json:"data"`
+}
+
+// AuthSessionResource defines model for AuthSessionResource.
+type AuthSessionResource struct {
+	Attributes AuthSessionAttributes   `json:"attributes"`
+	Id         string                  `json:"id"`
+	Type       AuthSessionResourceType `json:"type"`
+}
+
+// AuthSessionResourceType defines model for AuthSessionResource.Type.
+type AuthSessionResourceType string
+
+// AuthSessionRevokeDocument defines model for AuthSessionRevokeDocument.
+type AuthSessionRevokeDocument struct {
+	Data struct {
+		Attributes struct {
+			Confirm bool    `json:"confirm"`
+			Reason  *string `json:"reason,omitempty"`
+		} `json:"attributes"`
+		Type AuthSessionRevokeDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// AuthSessionRevokeDocumentDataType defines model for AuthSessionRevokeDocument.Data.Type.
+type AuthSessionRevokeDocumentDataType string
+
 // AuthTokenAttributes defines model for AuthTokenAttributes.
 type AuthTokenAttributes struct {
 	AccessToken string                       `json:"accessToken"`
@@ -1939,19 +4635,105 @@ type AuthTokenResourceId string
 // AuthTokenResourceType defines model for AuthTokenResource.Type.
 type AuthTokenResourceType string
 
+// DashboardAlert defines model for DashboardAlert.
+type DashboardAlert struct {
+	Detail               string                 `json:"detail"`
+	Level                DashboardAlertLevel    `json:"level"`
+	Link                 string                 `json:"link"`
+	Title                string                 `json:"title"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// DashboardAlertLevel defines model for DashboardAlert.Level.
+type DashboardAlertLevel string
+
 // DashboardAttributes defines model for DashboardAttributes.
 type DashboardAttributes struct {
-	Alerts                []map[string]interface{} `json:"alerts"`
-	BusinessMetrics       map[string]interface{}   `json:"businessMetrics"`
+	Alerts                []DashboardAlert         `json:"alerts"`
+	BusinessMetrics       DashboardBusinessMetrics `json:"businessMetrics"`
 	DependencyDiagnostics *map[string]interface{}  `json:"dependencyDiagnostics,omitempty"`
-	RecentActivity        map[string]interface{}   `json:"recentActivity"`
-	Summary               map[string]interface{}   `json:"summary"`
-	SystemStatus          map[string]interface{}   `json:"systemStatus"`
+	RecentActivity        DashboardRecentActivity  `json:"recentActivity"`
+	Summary               DashboardSummary         `json:"summary"`
+	SystemStatus          DashboardSystemStatus    `json:"systemStatus"`
+}
+
+// DashboardBusinessMetrics defines model for DashboardBusinessMetrics.
+type DashboardBusinessMetrics struct {
+	AiCompletionTokens24h           *int                   `json:"aiCompletionTokens24h,omitempty"`
+	AiCostAmount24h                 interface{}            `json:"aiCostAmount24h,omitempty"`
+	AiCostBudgetStatus              *string                `json:"aiCostBudgetStatus,omitempty"`
+	AiEnabledProviderCount          int                    `json:"aiEnabledProviderCount"`
+	AiModelCalls24h                 *int                   `json:"aiModelCalls24h,omitempty"`
+	AiPromptTokens24h               *int                   `json:"aiPromptTokens24h,omitempty"`
+	AiReadyProviderCount            int                    `json:"aiReadyProviderCount"`
+	AiTotalTokens24h                *int                   `json:"aiTotalTokens24h,omitempty"`
+	AiTotalTokensTotal              *int                   `json:"aiTotalTokensTotal,omitempty"`
+	IngestedMessages24h             int                    `json:"ingestedMessages24h"`
+	IngestedUnfilteredCount         int                    `json:"ingestedUnfilteredCount"`
+	MarketActiveWatchlistCount      int                    `json:"marketActiveWatchlistCount"`
+	MarketSymbolCount               int                    `json:"marketSymbolCount"`
+	MarketWatchlistCount            int                    `json:"marketWatchlistCount"`
+	MeetingQueueWaitAvgSeconds24h   *float32               `json:"meetingQueueWaitAvgSeconds24h,omitempty"`
+	MeetingRunAvgSeconds24h         *float32               `json:"meetingRunAvgSeconds24h,omitempty"`
+	MeetingRunP95Seconds24h         *float32               `json:"meetingRunP95Seconds24h,omitempty"`
+	MeetingsFailed24h               int                    `json:"meetingsFailed24h"`
+	MeetingsRunning                 int                    `json:"meetingsRunning"`
+	MeetingsTotal                   int                    `json:"meetingsTotal"`
+	MessageSubscriptionEnabledCount int                    `json:"messageSubscriptionEnabledCount"`
+	NewsFilterReady                 bool                   `json:"newsFilterReady"`
+	PaperAccountCount               int                    `json:"paperAccountCount"`
+	PaperActiveAccountCount         int                    `json:"paperActiveAccountCount"`
+	PaperIsTradingTime              bool                   `json:"paperIsTradingTime"`
+	PaperPendingOrderCount          int                    `json:"paperPendingOrderCount"`
+	PaperTotalEquity                interface{}            `json:"paperTotalEquity"`
+	PlatformAdapterEnabledCount     int                    `json:"platformAdapterEnabledCount"`
+	WakeActiveCount                 int                    `json:"wakeActiveCount"`
+	WakeOverdueCount                int                    `json:"wakeOverdueCount"`
+	AdditionalProperties            map[string]interface{} `json:"-"`
 }
 
 // DashboardDocument defines model for DashboardDocument.
 type DashboardDocument struct {
 	Data DashboardResource `json:"data"`
+}
+
+// DashboardRecentActivity defines model for DashboardRecentActivity.
+type DashboardRecentActivity struct {
+	RecentIngestedMessages []DashboardRecentIngestedMessage `json:"recentIngestedMessages"`
+	RecentMeetings         []DashboardRecentMeeting         `json:"recentMeetings"`
+}
+
+// DashboardRecentIngestedMessage defines model for DashboardRecentIngestedMessage.
+type DashboardRecentIngestedMessage struct {
+	FilterDecision       *string                `json:"filterDecision,omitempty"`
+	FilterStatus         *string                `json:"filterStatus,omitempty"`
+	Id                   int                    `json:"id"`
+	MessageTime          time.Time              `json:"messageTime"`
+	SourceRef            *string                `json:"sourceRef,omitempty"`
+	SubscriptionId       int                    `json:"subscriptionId"`
+	SubscriptionTitle    *string                `json:"subscriptionTitle,omitempty"`
+	Text                 string                 `json:"text"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// DashboardRecentMeeting defines model for DashboardRecentMeeting.
+type DashboardRecentMeeting struct {
+	AutoRequeueCount     *int                   `json:"autoRequeueCount,omitempty"`
+	CompletedAt          *time.Time             `json:"completedAt,omitempty"`
+	Conclusion           *string                `json:"conclusion,omitempty"`
+	CreatedAt            time.Time              `json:"createdAt"`
+	HeartbeatAt          *time.Time             `json:"heartbeatAt,omitempty"`
+	Id                   int                    `json:"id"`
+	RecapStatus          *string                `json:"recapStatus,omitempty"`
+	RecapUpdatedAt       *time.Time             `json:"recapUpdatedAt,omitempty"`
+	RunAttempt           *int                   `json:"runAttempt,omitempty"`
+	StartedAt            *time.Time             `json:"startedAt,omitempty"`
+	Status               string                 `json:"status"`
+	Summary              *string                `json:"summary,omitempty"`
+	Tags                 []string               `json:"tags"`
+	Topic                string                 `json:"topic"`
+	TriggerSource        string                 `json:"triggerSource"`
+	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // DashboardResource defines model for DashboardResource.
@@ -1966,6 +4748,44 @@ type DashboardResourceId string
 
 // DashboardResourceType defines model for DashboardResource.Type.
 type DashboardResourceType string
+
+// DashboardStatusItem defines model for DashboardStatusItem.
+type DashboardStatusItem struct {
+	CheckedAt            time.Time                 `json:"checkedAt"`
+	Detail               string                    `json:"detail"`
+	Key                  string                    `json:"key"`
+	Status               DashboardStatusItemStatus `json:"status"`
+	Summary              string                    `json:"summary"`
+	Title                string                    `json:"title"`
+	AdditionalProperties map[string]interface{}    `json:"-"`
+}
+
+// DashboardStatusItemStatus defines model for DashboardStatusItem.Status.
+type DashboardStatusItemStatus string
+
+// DashboardSummary defines model for DashboardSummary.
+type DashboardSummary struct {
+	AppEnv               string                 `json:"appEnv"`
+	AppName              string                 `json:"appName"`
+	DatabaseBackend      string                 `json:"databaseBackend"`
+	DatabaseTarget       *string                `json:"databaseTarget,omitempty"`
+	DeploymentModeLabel  string                 `json:"deploymentModeLabel"`
+	MeetingDispatchMode  string                 `json:"meetingDispatchMode"`
+	PaperExecutionMode   string                 `json:"paperExecutionMode"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// DashboardSystemStatus defines model for DashboardSystemStatus.
+type DashboardSystemStatus struct {
+	Database                    DashboardStatusItem            `json:"database"`
+	MessageSubscriptionListener DashboardStatusItem            `json:"messageSubscriptionListener"`
+	PaperEngine                 DashboardStatusItem            `json:"paperEngine"`
+	PlatformAdapter             DashboardStatusItem            `json:"platformAdapter"`
+	Redis                       DashboardStatusItem            `json:"redis"`
+	Scheduler                   DashboardStatusItem            `json:"scheduler"`
+	Worker                      DashboardStatusItem            `json:"worker"`
+	AdditionalProperties        map[string]DashboardStatusItem `json:"-"`
+}
 
 // DeletionDocument defines model for DeletionDocument.
 type DeletionDocument struct {
@@ -2027,22 +4847,28 @@ type HealthResourceType string
 
 // IngestedMessageAttributes defines model for IngestedMessageAttributes.
 type IngestedMessageAttributes struct {
-	CreatedAt         *time.Time                             `json:"createdAt,omitempty"`
-	FilterDecision    *string                                `json:"filterDecision,omitempty"`
-	FilterId          *int                                   `json:"filterId,omitempty"`
-	FilterReason      *string                                `json:"filterReason,omitempty"`
-	FilterStatus      *IngestedMessageAttributesFilterStatus `json:"filterStatus,omitempty"`
-	FilteredAt        *time.Time                             `json:"filteredAt,omitempty"`
-	MessageTime       *time.Time                             `json:"messageTime,omitempty"`
-	Provider          *string                                `json:"provider,omitempty"`
-	RelatedSymbols    *[]string                              `json:"relatedSymbols,omitempty"`
-	SourceMessageId   *string                                `json:"sourceMessageId,omitempty"`
-	SourceRef         *string                                `json:"sourceRef,omitempty"`
-	SubscriptionId    *int                                   `json:"subscriptionId,omitempty"`
-	SubscriptionTitle *string                                `json:"subscriptionTitle,omitempty"`
-	Text              *string                                `json:"text,omitempty"`
-	UpdatedAt         *time.Time                             `json:"updatedAt,omitempty"`
+	CreatedAt         *time.Time                              `json:"createdAt,omitempty"`
+	FeedbackAt        *time.Time                              `json:"feedbackAt,omitempty"`
+	FeedbackComment   *string                                 `json:"feedbackComment,omitempty"`
+	FeedbackLabel     *IngestedMessageAttributesFeedbackLabel `json:"feedbackLabel,omitempty"`
+	FilterDecision    *string                                 `json:"filterDecision,omitempty"`
+	FilterId          *int                                    `json:"filterId,omitempty"`
+	FilterReason      *string                                 `json:"filterReason,omitempty"`
+	FilterStatus      *IngestedMessageAttributesFilterStatus  `json:"filterStatus,omitempty"`
+	FilteredAt        *time.Time                              `json:"filteredAt,omitempty"`
+	MessageTime       *time.Time                              `json:"messageTime,omitempty"`
+	Provider          *string                                 `json:"provider,omitempty"`
+	RelatedSymbols    *[]string                               `json:"relatedSymbols,omitempty"`
+	SourceMessageId   *string                                 `json:"sourceMessageId,omitempty"`
+	SourceRef         *string                                 `json:"sourceRef,omitempty"`
+	SubscriptionId    *int                                    `json:"subscriptionId,omitempty"`
+	SubscriptionTitle *string                                 `json:"subscriptionTitle,omitempty"`
+	Text              *string                                 `json:"text,omitempty"`
+	UpdatedAt         *time.Time                              `json:"updatedAt,omitempty"`
 }
+
+// IngestedMessageAttributesFeedbackLabel defines model for IngestedMessageAttributes.FeedbackLabel.
+type IngestedMessageAttributesFeedbackLabel string
 
 // IngestedMessageAttributesFilterStatus defines model for IngestedMessageAttributes.FilterStatus.
 type IngestedMessageAttributesFilterStatus string
@@ -2058,6 +4884,66 @@ type IngestedMessageCollectionDocument struct {
 type IngestedMessageDocument struct {
 	Data IngestedMessageResource `json:"data"`
 }
+
+// IngestedMessageFeedbackBatchDocument defines model for IngestedMessageFeedbackBatchDocument.
+type IngestedMessageFeedbackBatchDocument struct {
+	Data struct {
+		Attributes struct {
+			Comment        *string                                                  `json:"comment,omitempty"`
+			Label          *IngestedMessageFeedbackBatchDocumentDataAttributesLabel `json:"label,omitempty"`
+			MissingIds     *[]int                                                   `json:"missingIds,omitempty"`
+			RequestedCount *int                                                     `json:"requestedCount,omitempty"`
+			UpdatedCount   *int                                                     `json:"updatedCount,omitempty"`
+			UpdatedIds     *[]int                                                   `json:"updatedIds,omitempty"`
+		} `json:"attributes"`
+		Id   IngestedMessageFeedbackBatchDocumentDataId   `json:"id"`
+		Type IngestedMessageFeedbackBatchDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// IngestedMessageFeedbackBatchDocumentDataAttributesLabel defines model for IngestedMessageFeedbackBatchDocument.Data.Attributes.Label.
+type IngestedMessageFeedbackBatchDocumentDataAttributesLabel string
+
+// IngestedMessageFeedbackBatchDocumentDataId defines model for IngestedMessageFeedbackBatchDocument.Data.Id.
+type IngestedMessageFeedbackBatchDocumentDataId string
+
+// IngestedMessageFeedbackBatchDocumentDataType defines model for IngestedMessageFeedbackBatchDocument.Data.Type.
+type IngestedMessageFeedbackBatchDocumentDataType string
+
+// IngestedMessageFeedbackBatchRequestDocument defines model for IngestedMessageFeedbackBatchRequestDocument.
+type IngestedMessageFeedbackBatchRequestDocument struct {
+	Data struct {
+		Attributes struct {
+			Comment    *string                                                        `json:"comment,omitempty"`
+			Label      IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel `json:"label"`
+			MessageIds []int                                                          `json:"messageIds"`
+		} `json:"attributes"`
+		Type IngestedMessageFeedbackBatchRequestDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel defines model for IngestedMessageFeedbackBatchRequestDocument.Data.Attributes.Label.
+type IngestedMessageFeedbackBatchRequestDocumentDataAttributesLabel string
+
+// IngestedMessageFeedbackBatchRequestDocumentDataType defines model for IngestedMessageFeedbackBatchRequestDocument.Data.Type.
+type IngestedMessageFeedbackBatchRequestDocumentDataType string
+
+// IngestedMessageFeedbackDocument defines model for IngestedMessageFeedbackDocument.
+type IngestedMessageFeedbackDocument struct {
+	Data struct {
+		Attributes struct {
+			Comment *string                                            `json:"comment,omitempty"`
+			Label   IngestedMessageFeedbackDocumentDataAttributesLabel `json:"label"`
+		} `json:"attributes"`
+		Type IngestedMessageFeedbackDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// IngestedMessageFeedbackDocumentDataAttributesLabel defines model for IngestedMessageFeedbackDocument.Data.Attributes.Label.
+type IngestedMessageFeedbackDocumentDataAttributesLabel string
+
+// IngestedMessageFeedbackDocumentDataType defines model for IngestedMessageFeedbackDocument.Data.Type.
+type IngestedMessageFeedbackDocumentDataType string
 
 // IngestedMessageRefilterDocument defines model for IngestedMessageRefilterDocument.
 type IngestedMessageRefilterDocument struct {
@@ -2342,6 +5228,61 @@ type MarketSymbolUpsertResource struct {
 // MarketSymbolUpsertResourceType defines model for MarketSymbolUpsertResource.Type.
 type MarketSymbolUpsertResourceType string
 
+// MarketTaskAttributes defines model for MarketTaskAttributes.
+type MarketTaskAttributes struct {
+	Action   MarketTaskAttributesAction `json:"action"`
+	Code     *string                    `json:"code,omitempty"`
+	Count    int                        `json:"count"`
+	Provider *string                    `json:"provider,omitempty"`
+	Status   MarketTaskAttributesStatus `json:"status"`
+	TaskId   *string                    `json:"taskId,omitempty"`
+}
+
+// MarketTaskAttributesAction defines model for MarketTaskAttributes.Action.
+type MarketTaskAttributesAction string
+
+// MarketTaskAttributesStatus defines model for MarketTaskAttributes.Status.
+type MarketTaskAttributesStatus string
+
+// MarketTaskDocument defines model for MarketTaskDocument.
+type MarketTaskDocument struct {
+	Data MarketTaskResource `json:"data"`
+}
+
+// MarketTaskRequestAttributes defines model for MarketTaskRequestAttributes.
+type MarketTaskRequestAttributes struct {
+	Action MarketTaskRequestAttributesAction `json:"action"`
+	Code   *string                           `json:"code,omitempty"`
+}
+
+// MarketTaskRequestAttributesAction defines model for MarketTaskRequestAttributes.Action.
+type MarketTaskRequestAttributesAction string
+
+// MarketTaskRequestDocument defines model for MarketTaskRequestDocument.
+type MarketTaskRequestDocument struct {
+	Data MarketTaskRequestResource `json:"data"`
+}
+
+// MarketTaskRequestResource defines model for MarketTaskRequestResource.
+type MarketTaskRequestResource struct {
+	Attributes MarketTaskRequestAttributes   `json:"attributes"`
+	Id         *string                       `json:"id,omitempty"`
+	Type       MarketTaskRequestResourceType `json:"type"`
+}
+
+// MarketTaskRequestResourceType defines model for MarketTaskRequestResource.Type.
+type MarketTaskRequestResourceType string
+
+// MarketTaskResource defines model for MarketTaskResource.
+type MarketTaskResource struct {
+	Attributes MarketTaskAttributes   `json:"attributes"`
+	Id         string                 `json:"id"`
+	Type       MarketTaskResourceType `json:"type"`
+}
+
+// MarketTaskResourceType defines model for MarketTaskResource.Type.
+type MarketTaskResourceType string
+
 // MarketToolQueryDocument defines model for MarketToolQueryDocument.
 type MarketToolQueryDocument struct {
 	Data struct {
@@ -2429,23 +5370,24 @@ type MarketWatchlistUpsertResourceType string
 
 // MeetingAttributes defines model for MeetingAttributes.
 type MeetingAttributes struct {
-	AutoRequeueCount *int       `json:"autoRequeueCount,omitempty"`
-	CompletedAt      *time.Time `json:"completedAt,omitempty"`
-	Conclusion       *string    `json:"conclusion,omitempty"`
-	CreatedAt        *time.Time `json:"createdAt,omitempty"`
-	HeartbeatAt      *time.Time `json:"heartbeatAt,omitempty"`
-	RecapStatus      *string    `json:"recapStatus,omitempty"`
-	RecapUpdatedAt   *time.Time `json:"recapUpdatedAt,omitempty"`
-	ResearchTeamId   *int       `json:"researchTeamId,omitempty"`
-	RunAttempt       *int       `json:"runAttempt,omitempty"`
-	RunId            *string    `json:"runId,omitempty"`
-	StartedAt        *time.Time `json:"startedAt,omitempty"`
-	Status           *string    `json:"status,omitempty"`
-	Summary          *string    `json:"summary,omitempty"`
-	Tags             *[]string  `json:"tags,omitempty"`
-	TokenBudget      *int       `json:"tokenBudget,omitempty"`
-	Topic            *string    `json:"topic,omitempty"`
-	TriggerSource    *string    `json:"triggerSource,omitempty"`
+	AutoRequeueCount *int                `json:"autoRequeueCount,omitempty"`
+	CompletedAt      *time.Time          `json:"completedAt,omitempty"`
+	Conclusion       *string             `json:"conclusion,omitempty"`
+	CreatedAt        *time.Time          `json:"createdAt,omitempty"`
+	HeartbeatAt      *time.Time          `json:"heartbeatAt,omitempty"`
+	RecapStatus      *string             `json:"recapStatus,omitempty"`
+	RecapUpdatedAt   *time.Time          `json:"recapUpdatedAt,omitempty"`
+	ResearchTeamId   *int                `json:"researchTeamId,omitempty"`
+	RunAttempt       *int                `json:"runAttempt,omitempty"`
+	RunId            *string             `json:"runId,omitempty"`
+	StartedAt        *time.Time          `json:"startedAt,omitempty"`
+	Status           *string             `json:"status,omitempty"`
+	Summary          *string             `json:"summary,omitempty"`
+	Tags             *[]string           `json:"tags,omitempty"`
+	TokenBudget      *int                `json:"tokenBudget,omitempty"`
+	Topic            *string             `json:"topic,omitempty"`
+	TriggerSource    *string             `json:"triggerSource,omitempty"`
+	TrustReport      *MeetingTrustReport `json:"trustReport,omitempty"`
 }
 
 // MeetingCollectionDocument defines model for MeetingCollectionDocument.
@@ -2485,6 +5427,98 @@ type MeetingEventResource struct {
 
 // MeetingEventResourceType defines model for MeetingEventResource.Type.
 type MeetingEventResourceType string
+
+// MeetingRecapActionReviewAttributes defines model for MeetingRecapActionReviewAttributes.
+type MeetingRecapActionReviewAttributes struct {
+	ActionIndex          *int                                        `json:"actionIndex,omitempty"`
+	ActionSpec           *map[string]interface{}                     `json:"actionSpec,omitempty"`
+	ActionType           *string                                     `json:"actionType,omitempty"`
+	CitationIds          *[]string                                   `json:"citationIds,omitempty"`
+	Comment              *string                                     `json:"comment,omitempty"`
+	CreatedAt            *time.Time                                  `json:"createdAt,omitempty"`
+	Decision             *MeetingRecapActionReviewAttributesDecision `json:"decision,omitempty"`
+	EventId              *int                                        `json:"eventId,omitempty"`
+	EvidenceEventIds     *[]int                                      `json:"evidenceEventIds,omitempty"`
+	ExecutionDisposition *string                                     `json:"executionDisposition,omitempty"`
+	MeetingId            *int                                        `json:"meetingId,omitempty"`
+	OriginalDisposition  *string                                     `json:"originalDisposition,omitempty"`
+	OriginalPolicy       *string                                     `json:"originalPolicy,omitempty"`
+	OriginalReason       *string                                     `json:"originalReason,omitempty"`
+	OriginalStatus       *string                                     `json:"originalStatus,omitempty"`
+	ReviewedAt           *time.Time                                  `json:"reviewedAt,omitempty"`
+	Reviewer             *string                                     `json:"reviewer,omitempty"`
+	Sequence             *int                                        `json:"sequence,omitempty"`
+	SourceEventId        *int                                        `json:"sourceEventId,omitempty"`
+	SourceSequence       *int                                        `json:"sourceSequence,omitempty"`
+	SuggestionId         *string                                     `json:"suggestionId,omitempty"`
+}
+
+// MeetingRecapActionReviewAttributesDecision defines model for MeetingRecapActionReviewAttributes.Decision.
+type MeetingRecapActionReviewAttributesDecision string
+
+// MeetingRecapActionReviewCreateAttributes defines model for MeetingRecapActionReviewCreateAttributes.
+type MeetingRecapActionReviewCreateAttributes struct {
+	ActionIndex      *int                                             `json:"actionIndex,omitempty"`
+	ActionType       *string                                          `json:"actionType,omitempty"`
+	CitationIds      *[]string                                        `json:"citationIds,omitempty"`
+	Comment          *string                                          `json:"comment,omitempty"`
+	Confirm          *bool                                            `json:"confirm,omitempty"`
+	Decision         MeetingRecapActionReviewCreateAttributesDecision `json:"decision"`
+	EvidenceEventIds *[]int                                           `json:"evidenceEventIds,omitempty"`
+	SourceEventId    *int                                             `json:"sourceEventId,omitempty"`
+	SuggestionId     string                                           `json:"suggestionId"`
+}
+
+// MeetingRecapActionReviewCreateAttributesDecision defines model for MeetingRecapActionReviewCreateAttributes.Decision.
+type MeetingRecapActionReviewCreateAttributesDecision string
+
+// MeetingRecapActionReviewCreateDocument defines model for MeetingRecapActionReviewCreateDocument.
+type MeetingRecapActionReviewCreateDocument struct {
+	Data struct {
+		Attributes MeetingRecapActionReviewCreateAttributes       `json:"attributes"`
+		Type       MeetingRecapActionReviewCreateDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// MeetingRecapActionReviewCreateDocumentDataType defines model for MeetingRecapActionReviewCreateDocument.Data.Type.
+type MeetingRecapActionReviewCreateDocumentDataType string
+
+// MeetingRecapActionReviewDocument defines model for MeetingRecapActionReviewDocument.
+type MeetingRecapActionReviewDocument struct {
+	Data MeetingRecapActionReviewResource `json:"data"`
+}
+
+// MeetingRecapActionReviewResource defines model for MeetingRecapActionReviewResource.
+type MeetingRecapActionReviewResource struct {
+	Attributes    MeetingRecapActionReviewAttributes `json:"attributes"`
+	Id            string                             `json:"id"`
+	Relationships *struct {
+		Event   *Relationship `json:"event,omitempty"`
+		Meeting *Relationship `json:"meeting,omitempty"`
+	} `json:"relationships,omitempty"`
+	Type MeetingRecapActionReviewResourceType `json:"type"`
+}
+
+// MeetingRecapActionReviewResourceType defines model for MeetingRecapActionReviewResource.Type.
+type MeetingRecapActionReviewResourceType string
+
+// MeetingRecapActionSuggestion defines model for MeetingRecapActionSuggestion.
+type MeetingRecapActionSuggestion struct {
+	ActionIndex     *int                                `json:"actionIndex,omitempty"`
+	ActionType      *string                             `json:"actionType,omitempty"`
+	CreatedAt       *time.Time                          `json:"createdAt,omitempty"`
+	Disposition     *string                             `json:"disposition,omitempty"`
+	EventId         *int                                `json:"eventId,omitempty"`
+	EvidenceSummary *map[string]interface{}             `json:"evidenceSummary,omitempty"`
+	Id              *string                             `json:"id,omitempty"`
+	LatestReview    *MeetingRecapActionReviewAttributes `json:"latestReview,omitempty"`
+	Policy          *string                             `json:"policy,omitempty"`
+	Reason          *string                             `json:"reason,omitempty"`
+	RoleKey         *string                             `json:"roleKey,omitempty"`
+	Sequence        *int                                `json:"sequence,omitempty"`
+	Spec            *map[string]interface{}             `json:"spec,omitempty"`
+	Status          *string                             `json:"status,omitempty"`
+}
 
 // MeetingReferenceCollectionDocument defines model for MeetingReferenceCollectionDocument.
 type MeetingReferenceCollectionDocument struct {
@@ -2557,6 +5591,140 @@ type MeetingStartDocument struct {
 // MeetingStartDocumentDataType defines model for MeetingStartDocument.Data.Type.
 type MeetingStartDocumentDataType string
 
+// MeetingTrustEvidenceGate defines model for MeetingTrustEvidenceGate.
+type MeetingTrustEvidenceGate struct {
+	BlockingClaimTypes    *[]string                       `json:"blockingClaimTypes,omitempty"`
+	CheckedClaimCount     *int                            `json:"checkedClaimCount,omitempty"`
+	Policy                *string                         `json:"policy,omitempty"`
+	Status                *MeetingTrustEvidenceGateStatus `json:"status,omitempty"`
+	SupportedClaimCount   *int                            `json:"supportedClaimCount,omitempty"`
+	UnsupportedClaimCount *int                            `json:"unsupportedClaimCount,omitempty"`
+	UnsupportedClaims     *[]MeetingTrustUnsupportedClaim `json:"unsupportedClaims,omitempty"`
+}
+
+// MeetingTrustEvidenceGateStatus defines model for MeetingTrustEvidenceGate.Status.
+type MeetingTrustEvidenceGateStatus string
+
+// MeetingTrustReport defines model for MeetingTrustReport.
+type MeetingTrustReport struct {
+	CitationCount  *int                      `json:"citationCount,omitempty"`
+	Citations      *[]map[string]interface{} `json:"citations,omitempty"`
+	ClaimBreakdown *struct {
+		Assumptions *[]string `json:"assumptions,omitempty"`
+		Facts       *[]string `json:"facts,omitempty"`
+		Inferences  *[]string `json:"inferences,omitempty"`
+	} `json:"claimBreakdown,omitempty"`
+	ClaimEvidenceBindings      *[]map[string]interface{}                  `json:"claimEvidenceBindings,omitempty"`
+	ConclusionDiffs            *[]map[string]interface{}                  `json:"conclusionDiffs,omitempty"`
+	ConclusionHistory          *[]map[string]interface{}                  `json:"conclusionHistory,omitempty"`
+	Confidence                 *MeetingTrustReportConfidence              `json:"confidence,omitempty"`
+	EventCount                 *int                                       `json:"eventCount,omitempty"`
+	Evidence                   *[]map[string]interface{}                  `json:"evidence,omitempty"`
+	EvidenceCount              *int                                       `json:"evidenceCount,omitempty"`
+	EvidenceGaps               *[]string                                  `json:"evidenceGaps,omitempty"`
+	EvidenceGate               *MeetingTrustEvidenceGate                  `json:"evidenceGate,omitempty"`
+	EvidenceGateStatus         *MeetingTrustReportEvidenceGateStatus      `json:"evidenceGateStatus,omitempty"`
+	Gaps                       *[]string                                  `json:"gaps,omitempty"`
+	GeneratedAt                *time.Time                                 `json:"generatedAt,omitempty"`
+	ModelSnapshotCount         *int                                       `json:"modelSnapshotCount,omitempty"`
+	ModelSnapshots             *[]map[string]interface{}                  `json:"modelSnapshots,omitempty"`
+	PromptSnapshotCount        *int                                       `json:"promptSnapshotCount,omitempty"`
+	PromptSnapshots            *[]map[string]interface{}                  `json:"promptSnapshots,omitempty"`
+	RecapActionReviewCount     *int                                       `json:"recapActionReviewCount,omitempty"`
+	RecapActionReviewStatus    *MeetingTrustReportRecapActionReviewStatus `json:"recapActionReviewStatus,omitempty"`
+	RecapActionReviews         *[]MeetingRecapActionReviewAttributes      `json:"recapActionReviews,omitempty"`
+	RecapActionSuggestionCount *int                                       `json:"recapActionSuggestionCount,omitempty"`
+	RecapActionSuggestions     *[]MeetingRecapActionSuggestion            `json:"recapActionSuggestions,omitempty"`
+	SentenceReviews            *[]MeetingTrustReviewAttributes            `json:"sentenceReviews,omitempty"`
+	UnsupportedClaimCount      *int                                       `json:"unsupportedClaimCount,omitempty"`
+	UnsupportedClaims          *[]MeetingTrustUnsupportedClaim            `json:"unsupportedClaims,omitempty"`
+}
+
+// MeetingTrustReportConfidence defines model for MeetingTrustReport.Confidence.
+type MeetingTrustReportConfidence string
+
+// MeetingTrustReportEvidenceGateStatus defines model for MeetingTrustReport.EvidenceGateStatus.
+type MeetingTrustReportEvidenceGateStatus string
+
+// MeetingTrustReportRecapActionReviewStatus defines model for MeetingTrustReport.RecapActionReviewStatus.
+type MeetingTrustReportRecapActionReviewStatus string
+
+// MeetingTrustReviewAttributes defines model for MeetingTrustReviewAttributes.
+type MeetingTrustReviewAttributes struct {
+	CitationIds      *[]string                            `json:"citationIds,omitempty"`
+	Comment          *string                              `json:"comment,omitempty"`
+	CreatedAt        *time.Time                           `json:"createdAt,omitempty"`
+	EventId          *int                                 `json:"eventId,omitempty"`
+	EvidenceEventIds *[]int                               `json:"evidenceEventIds,omitempty"`
+	MeetingId        *int                                 `json:"meetingId,omitempty"`
+	ReviewedAt       *time.Time                           `json:"reviewedAt,omitempty"`
+	Reviewer         *string                              `json:"reviewer,omitempty"`
+	Sentence         *string                              `json:"sentence,omitempty"`
+	SentenceId       *string                              `json:"sentenceId,omitempty"`
+	Sequence         *int                                 `json:"sequence,omitempty"`
+	Verdict          *MeetingTrustReviewAttributesVerdict `json:"verdict,omitempty"`
+}
+
+// MeetingTrustReviewAttributesVerdict defines model for MeetingTrustReviewAttributes.Verdict.
+type MeetingTrustReviewAttributesVerdict string
+
+// MeetingTrustReviewCreateAttributes defines model for MeetingTrustReviewCreateAttributes.
+type MeetingTrustReviewCreateAttributes struct {
+	CitationIds      *[]string                                 `json:"citationIds,omitempty"`
+	Comment          *string                                   `json:"comment,omitempty"`
+	EvidenceEventIds *[]int                                    `json:"evidenceEventIds,omitempty"`
+	Sentence         string                                    `json:"sentence"`
+	SentenceId       *string                                   `json:"sentenceId,omitempty"`
+	Verdict          MeetingTrustReviewCreateAttributesVerdict `json:"verdict"`
+}
+
+// MeetingTrustReviewCreateAttributesVerdict defines model for MeetingTrustReviewCreateAttributes.Verdict.
+type MeetingTrustReviewCreateAttributesVerdict string
+
+// MeetingTrustReviewCreateDocument defines model for MeetingTrustReviewCreateDocument.
+type MeetingTrustReviewCreateDocument struct {
+	Data struct {
+		Attributes MeetingTrustReviewCreateAttributes       `json:"attributes"`
+		Type       MeetingTrustReviewCreateDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// MeetingTrustReviewCreateDocumentDataType defines model for MeetingTrustReviewCreateDocument.Data.Type.
+type MeetingTrustReviewCreateDocumentDataType string
+
+// MeetingTrustReviewDocument defines model for MeetingTrustReviewDocument.
+type MeetingTrustReviewDocument struct {
+	Data MeetingTrustReviewResource `json:"data"`
+}
+
+// MeetingTrustReviewResource defines model for MeetingTrustReviewResource.
+type MeetingTrustReviewResource struct {
+	Attributes    MeetingTrustReviewAttributes `json:"attributes"`
+	Id            string                       `json:"id"`
+	Relationships *struct {
+		Event   *Relationship `json:"event,omitempty"`
+		Meeting *Relationship `json:"meeting,omitempty"`
+	} `json:"relationships,omitempty"`
+	Type MeetingTrustReviewResourceType `json:"type"`
+}
+
+// MeetingTrustReviewResourceType defines model for MeetingTrustReviewResource.Type.
+type MeetingTrustReviewResourceType string
+
+// MeetingTrustUnsupportedClaim defines model for MeetingTrustUnsupportedClaim.
+type MeetingTrustUnsupportedClaim struct {
+	CitationIds      *[]string  `json:"citationIds,omitempty"`
+	Claim            *string    `json:"claim,omitempty"`
+	ClaimType        *string    `json:"claimType,omitempty"`
+	CreatedAt        *time.Time `json:"createdAt,omitempty"`
+	EventId          *int       `json:"eventId,omitempty"`
+	EvidenceEventIds *[]int     `json:"evidenceEventIds,omitempty"`
+	Id               *string    `json:"id,omitempty"`
+	Reason           *string    `json:"reason,omitempty"`
+	RoleKey          *string    `json:"roleKey,omitempty"`
+	Sequence         *int       `json:"sequence,omitempty"`
+}
+
 // MeetingUpdateDocument defines model for MeetingUpdateDocument.
 type MeetingUpdateDocument struct {
 	Data struct {
@@ -2572,6 +5740,300 @@ type MeetingUpdateDocument struct {
 
 // MeetingUpdateDocumentDataType defines model for MeetingUpdateDocument.Data.Type.
 type MeetingUpdateDocumentDataType string
+
+// MessageFeedbackEvaluationAttributes defines model for MessageFeedbackEvaluationAttributes.
+type MessageFeedbackEvaluationAttributes struct {
+	AgreementCount               *int                                       `json:"agreementCount,omitempty"`
+	AgreementEligibleCount       *int                                       `json:"agreementEligibleCount,omitempty"`
+	AgreementRate                *float64                                   `json:"agreementRate,omitempty"`
+	DecisionBreakdown            *map[string]int                            `json:"decisionBreakdown,omitempty"`
+	FalseMeetingFromNoiseCount   *int                                       `json:"falseMeetingFromNoiseCount,omitempty"`
+	GeneratedAt                  *time.Time                                 `json:"generatedAt,omitempty"`
+	HelpfulCount                 *int                                       `json:"helpfulCount,omitempty"`
+	LabelBreakdown               *map[string]int                            `json:"labelBreakdown,omitempty"`
+	MisclassificationRate        *float64                                   `json:"misclassificationRate,omitempty"`
+	MisclassifiedCount           *int                                       `json:"misclassifiedCount,omitempty"`
+	NeedsDecisionCorrectionCount *int                                       `json:"needsDecisionCorrectionCount,omitempty"`
+	NeutralCount                 *int                                       `json:"neutralCount,omitempty"`
+	NoiseCount                   *int                                       `json:"noiseCount,omitempty"`
+	NoiseRate                    *float64                                   `json:"noiseRate,omitempty"`
+	NoiseSuppressionCount        *int                                       `json:"noiseSuppressionCount,omitempty"`
+	PositiveSignalCount          *int                                       `json:"positiveSignalCount,omitempty"`
+	Recommendations              *[]string                                  `json:"recommendations,omitempty"`
+	SampleCount                  *int                                       `json:"sampleCount,omitempty"`
+	SampleLimit                  *int                                       `json:"sampleLimit,omitempty"`
+	Status                       *MessageFeedbackEvaluationAttributesStatus `json:"status,omitempty"`
+	TrainCount                   *int                                       `json:"trainCount,omitempty"`
+	Truncated                    *bool                                      `json:"truncated,omitempty"`
+	ValidationCount              *int                                       `json:"validationCount,omitempty"`
+}
+
+// MessageFeedbackEvaluationAttributesStatus defines model for MessageFeedbackEvaluationAttributes.Status.
+type MessageFeedbackEvaluationAttributesStatus string
+
+// MessageFeedbackEvaluationDocument defines model for MessageFeedbackEvaluationDocument.
+type MessageFeedbackEvaluationDocument struct {
+	Data MessageFeedbackEvaluationResource `json:"data"`
+}
+
+// MessageFeedbackEvaluationResource defines model for MessageFeedbackEvaluationResource.
+type MessageFeedbackEvaluationResource struct {
+	Attributes MessageFeedbackEvaluationAttributes   `json:"attributes"`
+	Id         MessageFeedbackEvaluationResourceId   `json:"id"`
+	Type       MessageFeedbackEvaluationResourceType `json:"type"`
+}
+
+// MessageFeedbackEvaluationResourceId defines model for MessageFeedbackEvaluationResource.Id.
+type MessageFeedbackEvaluationResourceId string
+
+// MessageFeedbackEvaluationResourceType defines model for MessageFeedbackEvaluationResource.Type.
+type MessageFeedbackEvaluationResourceType string
+
+// MessageFeedbackTrainingExportAttributes defines model for MessageFeedbackTrainingExportAttributes.
+type MessageFeedbackTrainingExportAttributes struct {
+	ByteCount             *int                                               `json:"byteCount,omitempty"`
+	Content               *string                                            `json:"content,omitempty"`
+	ContentSha256         *string                                            `json:"contentSha256,omitempty"`
+	ContentType           *string                                            `json:"contentType,omitempty"`
+	CreatedAt             *time.Time                                         `json:"createdAt,omitempty"`
+	DecisionBreakdown     *map[string]int                                    `json:"decisionBreakdown,omitempty"`
+	Evaluation            *MessageFeedbackEvaluationAttributes               `json:"evaluation,omitempty"`
+	Filter                *MessageFeedbackTrainingSnapshotFilter             `json:"filter,omitempty"`
+	Fingerprint           *string                                            `json:"fingerprint,omitempty"`
+	Format                *MessageFeedbackTrainingExportAttributesFormat     `json:"format,omitempty"`
+	LabelBreakdown        *map[string]int                                    `json:"labelBreakdown,omitempty"`
+	LineCount             *int                                               `json:"lineCount,omitempty"`
+	SampleCount           *int                                               `json:"sampleCount,omitempty"`
+	SampleLimit           *int                                               `json:"sampleLimit,omitempty"`
+	SourceCount           *int                                               `json:"sourceCount,omitempty"`
+	SourceStatusBreakdown *map[string]int                                    `json:"sourceStatusBreakdown,omitempty"`
+	SourceTrustSummary    *MessageFeedbackTrainingSnapshotSourceTrustSummary `json:"sourceTrustSummary,omitempty"`
+	TrainCount            *int                                               `json:"trainCount,omitempty"`
+	Truncated             *bool                                              `json:"truncated,omitempty"`
+	ValidationCount       *int                                               `json:"validationCount,omitempty"`
+	Version               *string                                            `json:"version,omitempty"`
+}
+
+// MessageFeedbackTrainingExportAttributesFormat defines model for MessageFeedbackTrainingExportAttributes.Format.
+type MessageFeedbackTrainingExportAttributesFormat string
+
+// MessageFeedbackTrainingExportCollectionDocument defines model for MessageFeedbackTrainingExportCollectionDocument.
+type MessageFeedbackTrainingExportCollectionDocument struct {
+	Data  []MessageFeedbackTrainingExportResource `json:"data"`
+	Links *Links                                  `json:"links,omitempty"`
+	Meta  *map[string]interface{}                 `json:"meta,omitempty"`
+}
+
+// MessageFeedbackTrainingExportDocument defines model for MessageFeedbackTrainingExportDocument.
+type MessageFeedbackTrainingExportDocument struct {
+	Data MessageFeedbackTrainingExportResource `json:"data"`
+}
+
+// MessageFeedbackTrainingExportResource defines model for MessageFeedbackTrainingExportResource.
+type MessageFeedbackTrainingExportResource struct {
+	Attributes MessageFeedbackTrainingExportAttributes   `json:"attributes"`
+	Id         string                                    `json:"id"`
+	Type       MessageFeedbackTrainingExportResourceType `json:"type"`
+}
+
+// MessageFeedbackTrainingExportResourceType defines model for MessageFeedbackTrainingExportResource.Type.
+type MessageFeedbackTrainingExportResourceType string
+
+// MessageFeedbackTrainingSampleAttributes defines model for MessageFeedbackTrainingSampleAttributes.
+type MessageFeedbackTrainingSampleAttributes struct {
+	DedupeKey         *string                                               `json:"dedupeKey,omitempty"`
+	FeedbackAt        *time.Time                                            `json:"feedbackAt,omitempty"`
+	FeedbackComment   *string                                               `json:"feedbackComment,omitempty"`
+	FeedbackLabel     *MessageFeedbackTrainingSampleAttributesFeedbackLabel `json:"feedbackLabel,omitempty"`
+	FilterDecision    *string                                               `json:"filterDecision,omitempty"`
+	FilterReason      *string                                               `json:"filterReason,omitempty"`
+	FilterStatus      *MessageFeedbackTrainingSampleAttributesFilterStatus  `json:"filterStatus,omitempty"`
+	MessageId         *int                                                  `json:"messageId,omitempty"`
+	MessageTime       *time.Time                                            `json:"messageTime,omitempty"`
+	Provider          *string                                               `json:"provider,omitempty"`
+	RelatedSymbols    *[]string                                             `json:"relatedSymbols,omitempty"`
+	SampleWeight      *float64                                              `json:"sampleWeight,omitempty"`
+	SourceMessageId   *string                                               `json:"sourceMessageId,omitempty"`
+	SourceRef         *string                                               `json:"sourceRef,omitempty"`
+	Split             *MessageFeedbackTrainingSampleAttributesSplit         `json:"split,omitempty"`
+	SubscriptionId    *int                                                  `json:"subscriptionId,omitempty"`
+	SubscriptionTitle *string                                               `json:"subscriptionTitle,omitempty"`
+	Text              *string                                               `json:"text,omitempty"`
+	TrainingUse       *string                                               `json:"trainingUse,omitempty"`
+}
+
+// MessageFeedbackTrainingSampleAttributesFeedbackLabel defines model for MessageFeedbackTrainingSampleAttributes.FeedbackLabel.
+type MessageFeedbackTrainingSampleAttributesFeedbackLabel string
+
+// MessageFeedbackTrainingSampleAttributesFilterStatus defines model for MessageFeedbackTrainingSampleAttributes.FilterStatus.
+type MessageFeedbackTrainingSampleAttributesFilterStatus string
+
+// MessageFeedbackTrainingSampleAttributesSplit defines model for MessageFeedbackTrainingSampleAttributes.Split.
+type MessageFeedbackTrainingSampleAttributesSplit string
+
+// MessageFeedbackTrainingSampleCollectionDocument defines model for MessageFeedbackTrainingSampleCollectionDocument.
+type MessageFeedbackTrainingSampleCollectionDocument struct {
+	Data  []MessageFeedbackTrainingSampleResource `json:"data"`
+	Links *Links                                  `json:"links,omitempty"`
+	Meta  *map[string]interface{}                 `json:"meta,omitempty"`
+}
+
+// MessageFeedbackTrainingSampleResource defines model for MessageFeedbackTrainingSampleResource.
+type MessageFeedbackTrainingSampleResource struct {
+	Attributes MessageFeedbackTrainingSampleAttributes   `json:"attributes"`
+	Id         string                                    `json:"id"`
+	Type       MessageFeedbackTrainingSampleResourceType `json:"type"`
+}
+
+// MessageFeedbackTrainingSampleResourceType defines model for MessageFeedbackTrainingSampleResource.Type.
+type MessageFeedbackTrainingSampleResourceType string
+
+// MessageFeedbackTrainingSnapshotAttributes defines model for MessageFeedbackTrainingSnapshotAttributes.
+type MessageFeedbackTrainingSnapshotAttributes struct {
+	CreatedAt             *time.Time                                         `json:"createdAt,omitempty"`
+	DecisionBreakdown     *map[string]int                                    `json:"decisionBreakdown,omitempty"`
+	Evaluation            *MessageFeedbackEvaluationAttributes               `json:"evaluation,omitempty"`
+	Filter                *MessageFeedbackTrainingSnapshotFilter             `json:"filter,omitempty"`
+	Fingerprint           *string                                            `json:"fingerprint,omitempty"`
+	LabelBreakdown        *map[string]int                                    `json:"labelBreakdown,omitempty"`
+	SampleCount           *int                                               `json:"sampleCount,omitempty"`
+	SampleRefCount        *int                                               `json:"sampleRefCount,omitempty"`
+	SampleRefs            *[]MessageFeedbackTrainingSnapshotSampleRef        `json:"sampleRefs,omitempty"`
+	SampleRefsTruncated   *bool                                              `json:"sampleRefsTruncated,omitempty"`
+	SourceCount           *int                                               `json:"sourceCount,omitempty"`
+	SourceStatusBreakdown *map[string]int                                    `json:"sourceStatusBreakdown,omitempty"`
+	SourceTrustSummary    *MessageFeedbackTrainingSnapshotSourceTrustSummary `json:"sourceTrustSummary,omitempty"`
+	TrainCount            *int                                               `json:"trainCount,omitempty"`
+	ValidationCount       *int                                               `json:"validationCount,omitempty"`
+	Version               *string                                            `json:"version,omitempty"`
+}
+
+// MessageFeedbackTrainingSnapshotCollectionDocument defines model for MessageFeedbackTrainingSnapshotCollectionDocument.
+type MessageFeedbackTrainingSnapshotCollectionDocument struct {
+	Data  []MessageFeedbackTrainingSnapshotResource `json:"data"`
+	Links *Links                                    `json:"links,omitempty"`
+	Meta  *map[string]interface{}                   `json:"meta,omitempty"`
+}
+
+// MessageFeedbackTrainingSnapshotDocument defines model for MessageFeedbackTrainingSnapshotDocument.
+type MessageFeedbackTrainingSnapshotDocument struct {
+	Data MessageFeedbackTrainingSnapshotResource `json:"data"`
+}
+
+// MessageFeedbackTrainingSnapshotFilter defines model for MessageFeedbackTrainingSnapshotFilter.
+type MessageFeedbackTrainingSnapshotFilter struct {
+	FeedbackLabel  *MessageFeedbackTrainingSnapshotFilterFeedbackLabel `json:"feedbackLabel,omitempty"`
+	Provider       *string                                             `json:"provider,omitempty"`
+	SubscriptionId *string                                             `json:"subscriptionId,omitempty"`
+}
+
+// MessageFeedbackTrainingSnapshotFilterFeedbackLabel defines model for MessageFeedbackTrainingSnapshotFilter.FeedbackLabel.
+type MessageFeedbackTrainingSnapshotFilterFeedbackLabel string
+
+// MessageFeedbackTrainingSnapshotResource defines model for MessageFeedbackTrainingSnapshotResource.
+type MessageFeedbackTrainingSnapshotResource struct {
+	Attributes MessageFeedbackTrainingSnapshotAttributes   `json:"attributes"`
+	Id         string                                      `json:"id"`
+	Type       MessageFeedbackTrainingSnapshotResourceType `json:"type"`
+}
+
+// MessageFeedbackTrainingSnapshotResourceType defines model for MessageFeedbackTrainingSnapshotResource.Type.
+type MessageFeedbackTrainingSnapshotResourceType string
+
+// MessageFeedbackTrainingSnapshotSampleRef defines model for MessageFeedbackTrainingSnapshotSampleRef.
+type MessageFeedbackTrainingSnapshotSampleRef struct {
+	DedupeKey     *string                                                `json:"dedupeKey,omitempty"`
+	FeedbackLabel *MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel `json:"feedbackLabel,omitempty"`
+	MessageId     *int                                                   `json:"messageId,omitempty"`
+	SampleWeight  *float64                                               `json:"sampleWeight,omitempty"`
+	Split         *MessageFeedbackTrainingSnapshotSampleRefSplit         `json:"split,omitempty"`
+}
+
+// MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel defines model for MessageFeedbackTrainingSnapshotSampleRef.FeedbackLabel.
+type MessageFeedbackTrainingSnapshotSampleRefFeedbackLabel string
+
+// MessageFeedbackTrainingSnapshotSampleRefSplit defines model for MessageFeedbackTrainingSnapshotSampleRef.Split.
+type MessageFeedbackTrainingSnapshotSampleRefSplit string
+
+// MessageFeedbackTrainingSnapshotSourceTrustSummary defines model for MessageFeedbackTrainingSnapshotSourceTrustSummary.
+type MessageFeedbackTrainingSnapshotSourceTrustSummary struct {
+	InsufficientFeedback *int `json:"insufficientFeedback,omitempty"`
+	LowConfidence        *int `json:"lowConfidence,omitempty"`
+	Trusted              *int `json:"trusted,omitempty"`
+	Watch                *int `json:"watch,omitempty"`
+}
+
+// MessageSourceTrustAttributes defines model for MessageSourceTrustAttributes.
+type MessageSourceTrustAttributes struct {
+	AutoAction         *string                             `json:"autoAction,omitempty"`
+	AutoActionReason   *string                             `json:"autoActionReason,omitempty"`
+	Explanation        *string                             `json:"explanation,omitempty"`
+	FeedbackCount      *int                                `json:"feedbackCount,omitempty"`
+	HelpfulCount       *int                                `json:"helpfulCount,omitempty"`
+	LastFeedbackAt     *time.Time                          `json:"lastFeedbackAt,omitempty"`
+	MisclassifiedCount *int                                `json:"misclassifiedCount,omitempty"`
+	NegativeRate       *float64                            `json:"negativeRate,omitempty"`
+	NeutralCount       *int                                `json:"neutralCount,omitempty"`
+	NoiseCount         *int                                `json:"noiseCount,omitempty"`
+	PositiveRate       *float64                            `json:"positiveRate,omitempty"`
+	Provider           *string                             `json:"provider,omitempty"`
+	RecommendedActions *[]string                           `json:"recommendedActions,omitempty"`
+	SampleWeight       *float64                            `json:"sampleWeight,omitempty"`
+	SourceRef          *string                             `json:"sourceRef,omitempty"`
+	Status             *MessageSourceTrustAttributesStatus `json:"status,omitempty"`
+	SubscriptionId     *int                                `json:"subscriptionId,omitempty"`
+	SubscriptionTitle  *string                             `json:"subscriptionTitle,omitempty"`
+	TrustScore         *int                                `json:"trustScore,omitempty"`
+}
+
+// MessageSourceTrustAttributesStatus defines model for MessageSourceTrustAttributes.Status.
+type MessageSourceTrustAttributesStatus string
+
+// MessageSourceTrustCollectionDocument defines model for MessageSourceTrustCollectionDocument.
+type MessageSourceTrustCollectionDocument struct {
+	Data  []MessageSourceTrustResource `json:"data"`
+	Links *Links                       `json:"links,omitempty"`
+	Meta  *map[string]interface{}      `json:"meta,omitempty"`
+}
+
+// MessageSourceTrustReportAttributes defines model for MessageSourceTrustReportAttributes.
+type MessageSourceTrustReportAttributes struct {
+	GeneratedAt *time.Time                    `json:"generatedAt,omitempty"`
+	Items       *[]MessageSourceTrustResource `json:"items,omitempty"`
+	SampleCount *int                          `json:"sampleCount,omitempty"`
+	SampleLimit *int                          `json:"sampleLimit,omitempty"`
+	SourceCount *int                          `json:"sourceCount,omitempty"`
+	Status      *string                       `json:"status,omitempty"`
+	Truncated   *bool                         `json:"truncated,omitempty"`
+}
+
+// MessageSourceTrustReportDocument defines model for MessageSourceTrustReportDocument.
+type MessageSourceTrustReportDocument struct {
+	Data MessageSourceTrustReportResource `json:"data"`
+}
+
+// MessageSourceTrustReportResource defines model for MessageSourceTrustReportResource.
+type MessageSourceTrustReportResource struct {
+	Attributes MessageSourceTrustReportAttributes   `json:"attributes"`
+	Id         MessageSourceTrustReportResourceId   `json:"id"`
+	Type       MessageSourceTrustReportResourceType `json:"type"`
+}
+
+// MessageSourceTrustReportResourceId defines model for MessageSourceTrustReportResource.Id.
+type MessageSourceTrustReportResourceId string
+
+// MessageSourceTrustReportResourceType defines model for MessageSourceTrustReportResource.Type.
+type MessageSourceTrustReportResourceType string
+
+// MessageSourceTrustResource defines model for MessageSourceTrustResource.
+type MessageSourceTrustResource struct {
+	Attributes MessageSourceTrustAttributes   `json:"attributes"`
+	Id         string                         `json:"id"`
+	Type       MessageSourceTrustResourceType `json:"type"`
+}
+
+// MessageSourceTrustResourceType defines model for MessageSourceTrustResource.Type.
+type MessageSourceTrustResourceType string
 
 // MessageSubscriptionAppConfigDocument defines model for MessageSubscriptionAppConfigDocument.
 type MessageSubscriptionAppConfigDocument struct {
@@ -2636,6 +6098,68 @@ type MessageSubscriptionCollectDocumentDataType string
 type MessageSubscriptionCollectionDocument struct {
 	Data []MessageSubscriptionResource `json:"data"`
 }
+
+// MessageSubscriptionDiagnosticAttributes defines model for MessageSubscriptionDiagnosticAttributes.
+type MessageSubscriptionDiagnosticAttributes struct {
+	Checks           *[]MessageSubscriptionDiagnosticCheck            `json:"checks,omitempty"`
+	Enabled          *bool                                            `json:"enabled,omitempty"`
+	LastCollectError *string                                          `json:"lastCollectError,omitempty"`
+	LastCollectedAt  *time.Time                                       `json:"lastCollectedAt,omitempty"`
+	NextCollectAt    *time.Time                                       `json:"nextCollectAt,omitempty"`
+	PrivateCapable   *bool                                            `json:"privateCapable,omitempty"`
+	Provider         *MessageSubscriptionDiagnosticAttributesProvider `json:"provider,omitempty"`
+
+	// ProxyRoute direct, proxy:telegram, proxy:web, or proxy_configured_but_not_enabled.
+	ProxyRoute         *string                                          `json:"proxyRoute,omitempty"`
+	Ready              *bool                                            `json:"ready,omitempty"`
+	RecommendedActions *[]string                                        `json:"recommendedActions,omitempty"`
+	Severity           *MessageSubscriptionDiagnosticAttributesSeverity `json:"severity,omitempty"`
+
+	// SourceKind Normalized source type, for example telegram_private_numeric, telegram_public_handle, rss_public_feed, rss_private_auth, or rss_url_credentials.
+	SourceKind     *string                                        `json:"sourceKind,omitempty"`
+	SourceRef      *string                                        `json:"sourceRef,omitempty"`
+	Status         *MessageSubscriptionDiagnosticAttributesStatus `json:"status,omitempty"`
+	SubscriptionId *int                                           `json:"subscriptionId,omitempty"`
+	Title          *string                                        `json:"title,omitempty"`
+}
+
+// MessageSubscriptionDiagnosticAttributesProvider defines model for MessageSubscriptionDiagnosticAttributes.Provider.
+type MessageSubscriptionDiagnosticAttributesProvider string
+
+// MessageSubscriptionDiagnosticAttributesSeverity defines model for MessageSubscriptionDiagnosticAttributes.Severity.
+type MessageSubscriptionDiagnosticAttributesSeverity string
+
+// MessageSubscriptionDiagnosticAttributesStatus defines model for MessageSubscriptionDiagnosticAttributes.Status.
+type MessageSubscriptionDiagnosticAttributesStatus string
+
+// MessageSubscriptionDiagnosticCheck defines model for MessageSubscriptionDiagnosticCheck.
+type MessageSubscriptionDiagnosticCheck struct {
+	Action  *string                                   `json:"action,omitempty"`
+	Depends *string                                   `json:"depends,omitempty"`
+	Detail  *string                                   `json:"detail,omitempty"`
+	Key     *string                                   `json:"key,omitempty"`
+	Route   *string                                   `json:"route,omitempty"`
+	Status  *MessageSubscriptionDiagnosticCheckStatus `json:"status,omitempty"`
+	Title   *string                                   `json:"title,omitempty"`
+}
+
+// MessageSubscriptionDiagnosticCheckStatus defines model for MessageSubscriptionDiagnosticCheck.Status.
+type MessageSubscriptionDiagnosticCheckStatus string
+
+// MessageSubscriptionDiagnosticCollectionDocument defines model for MessageSubscriptionDiagnosticCollectionDocument.
+type MessageSubscriptionDiagnosticCollectionDocument struct {
+	Data []MessageSubscriptionDiagnosticResource `json:"data"`
+}
+
+// MessageSubscriptionDiagnosticResource defines model for MessageSubscriptionDiagnosticResource.
+type MessageSubscriptionDiagnosticResource struct {
+	Attributes MessageSubscriptionDiagnosticAttributes   `json:"attributes"`
+	Id         string                                    `json:"id"`
+	Type       MessageSubscriptionDiagnosticResourceType `json:"type"`
+}
+
+// MessageSubscriptionDiagnosticResourceType defines model for MessageSubscriptionDiagnosticResource.Type.
+type MessageSubscriptionDiagnosticResourceType string
 
 // MessageSubscriptionDocument defines model for MessageSubscriptionDocument.
 type MessageSubscriptionDocument struct {
@@ -2744,23 +6268,98 @@ type MessageSubscriptionLoginVerifyDocument struct {
 // MessageSubscriptionLoginVerifyDocumentDataType defines model for MessageSubscriptionLoginVerifyDocument.Data.Type.
 type MessageSubscriptionLoginVerifyDocumentDataType string
 
+// MessageSubscriptionMaintenanceAttributes defines model for MessageSubscriptionMaintenanceAttributes.
+type MessageSubscriptionMaintenanceAttributes struct {
+	Action  *string                               `json:"action,omitempty"`
+	Checked *int                                  `json:"checked,omitempty"`
+	Failed  *int                                  `json:"failed,omitempty"`
+	Matched *int                                  `json:"matched,omitempty"`
+	Passed  *int                                  `json:"passed,omitempty"`
+	Paused  *int                                  `json:"paused,omitempty"`
+	Queued  *int                                  `json:"queued,omitempty"`
+	Skipped *[]MessageSubscriptionMaintenanceSkip `json:"skipped,omitempty"`
+	Updated *int                                  `json:"updated,omitempty"`
+}
+
+// MessageSubscriptionMaintenanceDocument defines model for MessageSubscriptionMaintenanceDocument.
+type MessageSubscriptionMaintenanceDocument struct {
+	Data struct {
+		Attributes MessageSubscriptionMaintenanceAttributes       `json:"attributes"`
+		Id         MessageSubscriptionMaintenanceDocumentDataId   `json:"id"`
+		Type       MessageSubscriptionMaintenanceDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// MessageSubscriptionMaintenanceDocumentDataId defines model for MessageSubscriptionMaintenanceDocument.Data.Id.
+type MessageSubscriptionMaintenanceDocumentDataId string
+
+// MessageSubscriptionMaintenanceDocumentDataType defines model for MessageSubscriptionMaintenanceDocument.Data.Type.
+type MessageSubscriptionMaintenanceDocumentDataType string
+
+// MessageSubscriptionMaintenanceRequestDocument defines model for MessageSubscriptionMaintenanceRequestDocument.
+type MessageSubscriptionMaintenanceRequestDocument struct {
+	Data struct {
+		Attributes struct {
+			Action       MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction       `json:"action"`
+			OnlyBlocked  *bool                                                                   `json:"onlyBlocked,omitempty"`
+			OnlyWarnings *bool                                                                   `json:"onlyWarnings,omitempty"`
+			Provider     *MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider    `json:"provider,omitempty"`
+			RssAuthType  *MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType `json:"rssAuthType,omitempty"`
+
+			// RssPassword RSS Basic password or Bearer token to rotate into selected RSS subscriptions; stored as encrypted secrets and never returned.
+			RssPassword *string `json:"rssPassword,omitempty"`
+
+			// RssUsername Username to apply when rotating RSS Basic auth credentials.
+			RssUsername     *string `json:"rssUsername,omitempty"`
+			SubscriptionIds *[]int  `json:"subscriptionIds,omitempty"`
+		} `json:"attributes"`
+		Id   *MessageSubscriptionMaintenanceRequestDocumentDataId  `json:"id,omitempty"`
+		Type MessageSubscriptionMaintenanceRequestDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction defines model for MessageSubscriptionMaintenanceRequestDocument.Data.Attributes.Action.
+type MessageSubscriptionMaintenanceRequestDocumentDataAttributesAction string
+
+// MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider defines model for MessageSubscriptionMaintenanceRequestDocument.Data.Attributes.Provider.
+type MessageSubscriptionMaintenanceRequestDocumentDataAttributesProvider string
+
+// MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType defines model for MessageSubscriptionMaintenanceRequestDocument.Data.Attributes.RssAuthType.
+type MessageSubscriptionMaintenanceRequestDocumentDataAttributesRssAuthType string
+
+// MessageSubscriptionMaintenanceRequestDocumentDataId defines model for MessageSubscriptionMaintenanceRequestDocument.Data.Id.
+type MessageSubscriptionMaintenanceRequestDocumentDataId string
+
+// MessageSubscriptionMaintenanceRequestDocumentDataType defines model for MessageSubscriptionMaintenanceRequestDocument.Data.Type.
+type MessageSubscriptionMaintenanceRequestDocumentDataType string
+
+// MessageSubscriptionMaintenanceSkip defines model for MessageSubscriptionMaintenanceSkip.
+type MessageSubscriptionMaintenanceSkip struct {
+	Reason         *string `json:"reason,omitempty"`
+	SubscriptionId *int    `json:"subscriptionId,omitempty"`
+	Title          *string `json:"title,omitempty"`
+}
+
 // MessageSubscriptionResource defines model for MessageSubscriptionResource.
 type MessageSubscriptionResource struct {
 	Attributes struct {
-		BackfillLimit       *int                                           `json:"backfillLimit,omitempty"`
-		CollectFrom         *time.Time                                     `json:"collectFrom,omitempty"`
-		Config              *map[string]interface{}                        `json:"config,omitempty"`
-		CreatedAt           *time.Time                                     `json:"createdAt,omitempty"`
-		Enabled             *bool                                          `json:"enabled,omitempty"`
-		FilterId            *int                                           `json:"filterId,omitempty"`
-		FilterName          *string                                        `json:"filterName,omitempty"`
-		LastCollectError    *string                                        `json:"lastCollectError,omitempty"`
-		LastCollectedAt     *time.Time                                     `json:"lastCollectedAt,omitempty"`
-		NextCollectAt       *time.Time                                     `json:"nextCollectAt,omitempty"`
-		PollIntervalSeconds *int                                           `json:"pollIntervalSeconds,omitempty"`
-		Provider            *MessageSubscriptionResourceAttributesProvider `json:"provider,omitempty"`
+		BackfillLimit       *int                                              `json:"backfillLimit,omitempty"`
+		CollectFrom         *time.Time                                        `json:"collectFrom,omitempty"`
+		Config              *map[string]interface{}                           `json:"config,omitempty"`
+		CreatedAt           *time.Time                                        `json:"createdAt,omitempty"`
+		Enabled             *bool                                             `json:"enabled,omitempty"`
+		FilterId            *int                                              `json:"filterId,omitempty"`
+		FilterName          *string                                           `json:"filterName,omitempty"`
+		HasRssPassword      *bool                                             `json:"hasRssPassword,omitempty"`
+		LastCollectError    *string                                           `json:"lastCollectError,omitempty"`
+		LastCollectedAt     *time.Time                                        `json:"lastCollectedAt,omitempty"`
+		NextCollectAt       *time.Time                                        `json:"nextCollectAt,omitempty"`
+		PollIntervalSeconds *int                                              `json:"pollIntervalSeconds,omitempty"`
+		Provider            *MessageSubscriptionResourceAttributesProvider    `json:"provider,omitempty"`
+		RssAuthType         *MessageSubscriptionResourceAttributesRssAuthType `json:"rssAuthType,omitempty"`
+		RssUsername         *string                                           `json:"rssUsername,omitempty"`
 
-		// SourceRef RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+		// SourceRef RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds.
 		SourceRef *string    `json:"sourceRef,omitempty"`
 		TeamIds   *[]int     `json:"teamIds,omitempty"`
 		Title     *string    `json:"title,omitempty"`
@@ -2772,6 +6371,9 @@ type MessageSubscriptionResource struct {
 
 // MessageSubscriptionResourceAttributesProvider defines model for MessageSubscriptionResource.Attributes.Provider.
 type MessageSubscriptionResourceAttributesProvider string
+
+// MessageSubscriptionResourceAttributesRssAuthType defines model for MessageSubscriptionResource.Attributes.RssAuthType.
+type MessageSubscriptionResourceAttributesRssAuthType string
 
 // MessageSubscriptionResourceType defines model for MessageSubscriptionResource.Type.
 type MessageSubscriptionResourceType string
@@ -2795,9 +6397,16 @@ type MessageSubscriptionTestDocumentDataType string
 type MessageSubscriptionTestRequestDocument struct {
 	Data struct {
 		Attributes struct {
-			Provider *MessageSubscriptionTestRequestDocumentDataAttributesProvider `json:"provider,omitempty"`
+			Provider    *MessageSubscriptionTestRequestDocumentDataAttributesProvider    `json:"provider,omitempty"`
+			RssAuthType *MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType `json:"rssAuthType,omitempty"`
 
-			// SourceRef RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+			// RssPassword RSS Basic password or Bearer token used only for this draft test.
+			RssPassword *string `json:"rssPassword,omitempty"`
+
+			// RssUsername Username for RSS Basic auth draft tests.
+			RssUsername *string `json:"rssUsername,omitempty"`
+
+			// SourceRef RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds.
 			SourceRef string `json:"sourceRef"`
 		} `json:"attributes"`
 		Type MessageSubscriptionTestRequestDocumentDataType `json:"type"`
@@ -2807,6 +6416,9 @@ type MessageSubscriptionTestRequestDocument struct {
 // MessageSubscriptionTestRequestDocumentDataAttributesProvider defines model for MessageSubscriptionTestRequestDocument.Data.Attributes.Provider.
 type MessageSubscriptionTestRequestDocumentDataAttributesProvider string
 
+// MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType defines model for MessageSubscriptionTestRequestDocument.Data.Attributes.RssAuthType.
+type MessageSubscriptionTestRequestDocumentDataAttributesRssAuthType string
+
 // MessageSubscriptionTestRequestDocumentDataType defines model for MessageSubscriptionTestRequestDocument.Data.Type.
 type MessageSubscriptionTestRequestDocumentDataType string
 
@@ -2814,14 +6426,21 @@ type MessageSubscriptionTestRequestDocumentDataType string
 type MessageSubscriptionUpsertDocument struct {
 	Data struct {
 		Attributes struct {
-			BackfillLimit       *int                                                     `json:"backfillLimit,omitempty"`
-			Config              *map[string]interface{}                                  `json:"config,omitempty"`
-			Enabled             *bool                                                    `json:"enabled,omitempty"`
-			FilterId            *int                                                     `json:"filterId,omitempty"`
-			PollIntervalSeconds *int                                                     `json:"pollIntervalSeconds,omitempty"`
-			Provider            *MessageSubscriptionUpsertDocumentDataAttributesProvider `json:"provider,omitempty"`
+			BackfillLimit       *int                                                        `json:"backfillLimit,omitempty"`
+			Config              *map[string]interface{}                                     `json:"config,omitempty"`
+			Enabled             *bool                                                       `json:"enabled,omitempty"`
+			FilterId            *int                                                        `json:"filterId,omitempty"`
+			PollIntervalSeconds *int                                                        `json:"pollIntervalSeconds,omitempty"`
+			Provider            *MessageSubscriptionUpsertDocumentDataAttributesProvider    `json:"provider,omitempty"`
+			RssAuthType         *MessageSubscriptionUpsertDocumentDataAttributesRssAuthType `json:"rssAuthType,omitempty"`
 
-			// SourceRef RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+			// RssPassword RSS Basic password or Bearer token. Stored as an encrypted secret and never returned.
+			RssPassword *string `json:"rssPassword,omitempty"`
+
+			// RssUsername Username for RSS Basic auth. Ignored for Bearer unless a provider needs a label.
+			RssUsername *string `json:"rssUsername,omitempty"`
+
+			// SourceRef RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds.
 			SourceRef string `json:"sourceRef"`
 			TeamIds   *[]int `json:"teamIds,omitempty"`
 			Title     string `json:"title"`
@@ -2834,8 +6453,537 @@ type MessageSubscriptionUpsertDocument struct {
 // MessageSubscriptionUpsertDocumentDataAttributesProvider defines model for MessageSubscriptionUpsertDocument.Data.Attributes.Provider.
 type MessageSubscriptionUpsertDocumentDataAttributesProvider string
 
+// MessageSubscriptionUpsertDocumentDataAttributesRssAuthType defines model for MessageSubscriptionUpsertDocument.Data.Attributes.RssAuthType.
+type MessageSubscriptionUpsertDocumentDataAttributesRssAuthType string
+
 // MessageSubscriptionUpsertDocumentDataType defines model for MessageSubscriptionUpsertDocument.Data.Type.
 type MessageSubscriptionUpsertDocumentDataType string
+
+// OpsAICostRateCoverage defines model for OpsAICostRateCoverage.
+type OpsAICostRateCoverage struct {
+	CoveragePct          *float32                     `json:"coveragePct,omitempty"`
+	CoveredModelCount    *int                         `json:"coveredModelCount,omitempty"`
+	Currency             *string                      `json:"currency,omitempty"`
+	MissingModelCount    *int                         `json:"missingModelCount,omitempty"`
+	MissingModels        *[]OpsAICostRateMissingModel `json:"missingModels,omitempty"`
+	ModelCount           *int                         `json:"modelCount,omitempty"`
+	RatesConfigured      *bool                        `json:"ratesConfigured,omitempty"`
+	Status               *OpsAICostRateCoverageStatus `json:"status,omitempty"`
+	AdditionalProperties map[string]interface{}       `json:"-"`
+}
+
+// OpsAICostRateCoverageStatus defines model for OpsAICostRateCoverage.Status.
+type OpsAICostRateCoverageStatus string
+
+// OpsAICostRateMissingModel defines model for OpsAICostRateMissingModel.
+type OpsAICostRateMissingModel struct {
+	Model                *string                `json:"model,omitempty"`
+	ProviderId           *int64                 `json:"providerId,omitempty"`
+	ProviderName         *string                `json:"providerName,omitempty"`
+	Source               *string                `json:"source,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// OpsAIProviderDiagnostics defines model for OpsAIProviderDiagnostics.
+type OpsAIProviderDiagnostics struct {
+	DefaultModel         *string                         `json:"defaultModel,omitempty"`
+	Enabled              *bool                           `json:"enabled,omitempty"`
+	EnabledModelCount    *int                            `json:"enabledModelCount,omitempty"`
+	HasApiKey            *bool                           `json:"hasApiKey,omitempty"`
+	Id                   *int64                          `json:"id,omitempty"`
+	ModelCount           *int                            `json:"modelCount,omitempty"`
+	Name                 *string                         `json:"name,omitempty"`
+	Ready                *bool                           `json:"ready,omitempty"`
+	RoleCount            *int                            `json:"roleCount,omitempty"`
+	Status               *OpsAIProviderDiagnosticsStatus `json:"status,omitempty"`
+	Summary              *string                         `json:"summary,omitempty"`
+	AdditionalProperties map[string]interface{}          `json:"-"`
+}
+
+// OpsAIProviderDiagnosticsStatus defines model for OpsAIProviderDiagnostics.Status.
+type OpsAIProviderDiagnosticsStatus string
+
+// OpsAIProviderHealth defines model for OpsAIProviderHealth.
+type OpsAIProviderHealth struct {
+	EnabledProviders     *int                        `json:"enabledProviders,omitempty"`
+	NewsFilterReady      *bool                       `json:"newsFilterReady,omitempty"`
+	Providers            *[]OpsAIProviderDiagnostics `json:"providers,omitempty"`
+	ReadyProviders       *int                        `json:"readyProviders,omitempty"`
+	Usage                *OpsAIUsageDiagnostics      `json:"usage,omitempty"`
+	AdditionalProperties map[string]interface{}      `json:"-"`
+}
+
+// OpsAIUsageDiagnostics defines model for OpsAIUsageDiagnostics.
+type OpsAIUsageDiagnostics struct {
+	ByProviderModel           *[]OpsAIUsageProviderModel             `json:"byProviderModel,omitempty"`
+	CompletionTokens24h       *int64                                 `json:"completionTokens24h,omitempty"`
+	CompletionTokensTotal     *int64                                 `json:"completionTokensTotal,omitempty"`
+	CostAmount24h             *float32                               `json:"costAmount24h,omitempty"`
+	CostAmountSource          *OpsAIUsageDiagnosticsCostAmountSource `json:"costAmountSource,omitempty"`
+	CostAmountTotal           *float32                               `json:"costAmountTotal,omitempty"`
+	CostBudgetAmount          *float32                               `json:"costBudgetAmount,omitempty"`
+	CostBudgetStatus          *OpsAIUsageDiagnosticsCostBudgetStatus `json:"costBudgetStatus,omitempty"`
+	CostBudgetUsedPct         *float32                               `json:"costBudgetUsedPct,omitempty"`
+	CostCurrency              *string                                `json:"costCurrency,omitempty"`
+	CostEstimatedCalls24h     *int64                                 `json:"costEstimatedCalls24h,omitempty"`
+	CostEstimatedCallsTotal   *int64                                 `json:"costEstimatedCallsTotal,omitempty"`
+	CostMissingCalls24h       *int64                                 `json:"costMissingCalls24h,omitempty"`
+	CostMissingCallsTotal     *int64                                 `json:"costMissingCallsTotal,omitempty"`
+	CostRateCoverage          *OpsAICostRateCoverage                 `json:"costRateCoverage,omitempty"`
+	CostRatesConfigured       *bool                                  `json:"costRatesConfigured,omitempty"`
+	LatencyAvgMs24h           *float32                               `json:"latencyAvgMs24h,omitempty"`
+	LatencyAvgMsTotal         *float32                               `json:"latencyAvgMsTotal,omitempty"`
+	LatencyObservedCalls24h   *int64                                 `json:"latencyObservedCalls24h,omitempty"`
+	LatencyObservedCallsTotal *int64                                 `json:"latencyObservedCallsTotal,omitempty"`
+	LatencyP95Ms24h           *float32                               `json:"latencyP95Ms24h,omitempty"`
+	ModelCalls24h             *int64                                 `json:"modelCalls24h,omitempty"`
+	ModelCallsTotal           *int64                                 `json:"modelCallsTotal,omitempty"`
+	PromptTokens24h           *int64                                 `json:"promptTokens24h,omitempty"`
+	PromptTokensTotal         *int64                                 `json:"promptTokensTotal,omitempty"`
+	Status                    *OpsAIUsageDiagnosticsStatus           `json:"status,omitempty"`
+	Summary                   *string                                `json:"summary,omitempty"`
+	TotalTokens24h            *int64                                 `json:"totalTokens24h,omitempty"`
+	TotalTokensTotal          *int64                                 `json:"totalTokensTotal,omitempty"`
+	WindowSeconds             *int64                                 `json:"windowSeconds,omitempty"`
+	AdditionalProperties      map[string]interface{}                 `json:"-"`
+}
+
+// OpsAIUsageDiagnosticsCostAmountSource defines model for OpsAIUsageDiagnostics.CostAmountSource.
+type OpsAIUsageDiagnosticsCostAmountSource string
+
+// OpsAIUsageDiagnosticsCostBudgetStatus defines model for OpsAIUsageDiagnostics.CostBudgetStatus.
+type OpsAIUsageDiagnosticsCostBudgetStatus string
+
+// OpsAIUsageDiagnosticsStatus defines model for OpsAIUsageDiagnostics.Status.
+type OpsAIUsageDiagnosticsStatus string
+
+// OpsAIUsageProviderModel defines model for OpsAIUsageProviderModel.
+type OpsAIUsageProviderModel struct {
+	CompletionTokens24h       *int64                                   `json:"completionTokens24h,omitempty"`
+	CompletionTokensTotal     *int64                                   `json:"completionTokensTotal,omitempty"`
+	CostAmount24h             *float32                                 `json:"costAmount24h,omitempty"`
+	CostAmountSource          *OpsAIUsageProviderModelCostAmountSource `json:"costAmountSource,omitempty"`
+	CostAmountTotal           *float32                                 `json:"costAmountTotal,omitempty"`
+	CostEstimatedCalls24h     *int64                                   `json:"costEstimatedCalls24h,omitempty"`
+	CostEstimatedCallsTotal   *int64                                   `json:"costEstimatedCallsTotal,omitempty"`
+	CostMissingCalls24h       *int64                                   `json:"costMissingCalls24h,omitempty"`
+	CostMissingCallsTotal     *int64                                   `json:"costMissingCallsTotal,omitempty"`
+	LatencyAvgMs24h           *float32                                 `json:"latencyAvgMs24h,omitempty"`
+	LatencyAvgMsTotal         *float32                                 `json:"latencyAvgMsTotal,omitempty"`
+	LatencyObservedCalls24h   *int64                                   `json:"latencyObservedCalls24h,omitempty"`
+	LatencyObservedCallsTotal *int64                                   `json:"latencyObservedCallsTotal,omitempty"`
+	LatencyP95Ms24h           *float32                                 `json:"latencyP95Ms24h,omitempty"`
+	Model                     *string                                  `json:"model,omitempty"`
+	ModelCalls24h             *int64                                   `json:"modelCalls24h,omitempty"`
+	ModelCallsTotal           *int64                                   `json:"modelCallsTotal,omitempty"`
+	PromptTokens24h           *int64                                   `json:"promptTokens24h,omitempty"`
+	PromptTokensTotal         *int64                                   `json:"promptTokensTotal,omitempty"`
+	ProviderId                *int64                                   `json:"providerId,omitempty"`
+	ProviderName              *string                                  `json:"providerName,omitempty"`
+	TotalTokens24h            *int64                                   `json:"totalTokens24h,omitempty"`
+	TotalTokensTotal          *int64                                   `json:"totalTokensTotal,omitempty"`
+	AdditionalProperties      map[string]interface{}                   `json:"-"`
+}
+
+// OpsAIUsageProviderModelCostAmountSource defines model for OpsAIUsageProviderModel.CostAmountSource.
+type OpsAIUsageProviderModelCostAmountSource string
+
+// OpsBackupArchive defines model for OpsBackupArchive.
+type OpsBackupArchive struct {
+	CreatedAt time.Time `json:"createdAt"`
+	Name      string    `json:"name"`
+	Path      string    `json:"path"`
+	SizeBytes int64     `json:"sizeBytes"`
+}
+
+// OpsBackupArchiveProvider defines model for OpsBackupArchiveProvider.
+type OpsBackupArchiveProvider struct {
+	ConfiguredExternalProvider string                 `json:"configuredExternalProvider"`
+	ConfiguredProvider         string                 `json:"configuredProvider"`
+	External                   bool                   `json:"external"`
+	ExternalReady              bool                   `json:"externalReady"`
+	Key                        string                 `json:"key"`
+	Kind                       string                 `json:"kind"`
+	MissingExternalConfig      []string               `json:"missingExternalConfig"`
+	Root                       string                 `json:"root"`
+	SetupHint                  string                 `json:"setupHint"`
+	Status                     string                 `json:"status"`
+	SupportsDelete             bool                   `json:"supportsDelete"`
+	SupportsList               bool                   `json:"supportsList"`
+	SupportsRead               bool                   `json:"supportsRead"`
+	SupportsWrite              bool                   `json:"supportsWrite"`
+	AdditionalProperties       map[string]interface{} `json:"-"`
+}
+
+// OpsBackupRestoreDryRunAttributes defines model for OpsBackupRestoreDryRunAttributes.
+type OpsBackupRestoreDryRunAttributes struct {
+	ArchiveProvider       string                                            `json:"archiveProvider"`
+	ArchiveProviderDetail OpsBackupArchiveProvider                          `json:"archiveProviderDetail"`
+	BackupDir             string                                            `json:"backupDir"`
+	BackupMetadataDir     string                                            `json:"backupMetadataDir"`
+	BackupName            string                                            `json:"backupName"`
+	BackupPath            string                                            `json:"backupPath"`
+	CheckedAt             time.Time                                         `json:"checkedAt"`
+	DatabaseEntryCount    int                                               `json:"databaseEntryCount"`
+	Destructive           OpsBackupRestoreDryRunAttributesDestructive       `json:"destructive"`
+	Entries               []map[string]interface{}                          `json:"entries"`
+	EntryCount            int                                               `json:"entryCount"`
+	LogEntryCount         int                                               `json:"logEntryCount"`
+	Manifest              *map[string]interface{}                           `json:"manifest,omitempty"`
+	ManifestVersion       *OpsBackupRestoreDryRunAttributes_ManifestVersion `json:"manifestVersion,omitempty"`
+	Notes                 []string                                          `json:"notes"`
+	OperatorAction        string                                            `json:"operatorAction"`
+	RestorePlan           []string                                          `json:"restorePlan"`
+	RetentionPolicyHint   *string                                           `json:"retentionPolicyHint,omitempty"`
+	SandboxChecks         []OpsBackupSandboxCheck                           `json:"sandboxChecks"`
+	SandboxDatabaseFiles  *[]string                                         `json:"sandboxDatabaseFiles,omitempty"`
+
+	// SandboxDir Directory under the backup directory where the archive was safely extracted for operator inspection.
+	SandboxDir           string                                        `json:"sandboxDir"`
+	SandboxFileCount     int                                           `json:"sandboxFileCount"`
+	SandboxLogFiles      *[]string                                     `json:"sandboxLogFiles,omitempty"`
+	SandboxRuntimeFiles  *[]string                                     `json:"sandboxRuntimeFiles,omitempty"`
+	SandboxSizeBytes     int64                                         `json:"sandboxSizeBytes"`
+	SandboxStatus        OpsBackupRestoreDryRunAttributesSandboxStatus `json:"sandboxStatus"`
+	Status               OpsBackupRestoreDryRunAttributesStatus        `json:"status"`
+	AdditionalProperties map[string]interface{}                        `json:"-"`
+}
+
+// OpsBackupRestoreDryRunAttributesDestructive defines model for OpsBackupRestoreDryRunAttributes.Destructive.
+type OpsBackupRestoreDryRunAttributesDestructive bool
+
+// OpsBackupRestoreDryRunAttributesManifestVersion0 defines model for .
+type OpsBackupRestoreDryRunAttributesManifestVersion0 = string
+
+// OpsBackupRestoreDryRunAttributesManifestVersion1 defines model for .
+type OpsBackupRestoreDryRunAttributesManifestVersion1 = int64
+
+// OpsBackupRestoreDryRunAttributes_ManifestVersion defines model for OpsBackupRestoreDryRunAttributes.ManifestVersion.
+type OpsBackupRestoreDryRunAttributes_ManifestVersion struct {
+	union json.RawMessage
+}
+
+// OpsBackupRestoreDryRunAttributesSandboxStatus defines model for OpsBackupRestoreDryRunAttributes.SandboxStatus.
+type OpsBackupRestoreDryRunAttributesSandboxStatus string
+
+// OpsBackupRestoreDryRunAttributesStatus defines model for OpsBackupRestoreDryRunAttributes.Status.
+type OpsBackupRestoreDryRunAttributesStatus string
+
+// OpsBackupRestoreDryRunDocument defines model for OpsBackupRestoreDryRunDocument.
+type OpsBackupRestoreDryRunDocument struct {
+	Data OpsBackupRestoreDryRunResource `json:"data"`
+}
+
+// OpsBackupRestoreDryRunResource defines model for OpsBackupRestoreDryRunResource.
+type OpsBackupRestoreDryRunResource struct {
+	Attributes OpsBackupRestoreDryRunAttributes   `json:"attributes"`
+	Id         string                             `json:"id"`
+	Type       OpsBackupRestoreDryRunResourceType `json:"type"`
+}
+
+// OpsBackupRestoreDryRunResourceType defines model for OpsBackupRestoreDryRunResource.Type.
+type OpsBackupRestoreDryRunResourceType string
+
+// OpsBackupRunAttributes defines model for OpsBackupRunAttributes.
+type OpsBackupRunAttributes struct {
+	ArchiveProvider       string                       `json:"archiveProvider"`
+	ArchiveProviderDetail OpsBackupArchiveProvider     `json:"archiveProviderDetail"`
+	BackupDir             string                       `json:"backupDir"`
+	BackupMetadataDir     string                       `json:"backupMetadataDir"`
+	BackupName            string                       `json:"backupName"`
+	BackupPath            string                       `json:"backupPath"`
+	CreatedAt             time.Time                    `json:"createdAt"`
+	DatabaseBackend       interface{}                  `json:"databaseBackend,omitempty"`
+	DatabaseTarget        interface{}                  `json:"databaseTarget,omitempty"`
+	Included              []map[string]interface{}     `json:"included"`
+	Notes                 []string                     `json:"notes"`
+	RetentionRun          *map[string]interface{}      `json:"retentionRun,omitempty"`
+	SizeBytes             int64                        `json:"sizeBytes"`
+	Status                OpsBackupRunAttributesStatus `json:"status"`
+	AdditionalProperties  map[string]interface{}       `json:"-"`
+}
+
+// OpsBackupRunAttributesStatus defines model for OpsBackupRunAttributes.Status.
+type OpsBackupRunAttributesStatus string
+
+// OpsBackupRunDocument defines model for OpsBackupRunDocument.
+type OpsBackupRunDocument struct {
+	Data OpsBackupRunResource `json:"data"`
+}
+
+// OpsBackupRunResource defines model for OpsBackupRunResource.
+type OpsBackupRunResource struct {
+	Attributes OpsBackupRunAttributes   `json:"attributes"`
+	Id         string                   `json:"id"`
+	Type       OpsBackupRunResourceType `json:"type"`
+}
+
+// OpsBackupRunResourceType defines model for OpsBackupRunResource.Type.
+type OpsBackupRunResourceType string
+
+// OpsBackupSandboxCheck defines model for OpsBackupSandboxCheck.
+type OpsBackupSandboxCheck struct {
+	Detail               string                      `json:"detail"`
+	Name                 string                      `json:"name"`
+	Status               OpsBackupSandboxCheckStatus `json:"status"`
+	AdditionalProperties map[string]interface{}      `json:"-"`
+}
+
+// OpsBackupSandboxCheckStatus defines model for OpsBackupSandboxCheck.Status.
+type OpsBackupSandboxCheckStatus string
+
+// OpsBackupsAttributes defines model for OpsBackupsAttributes.
+type OpsBackupsAttributes struct {
+	ArchiveProvider          string                   `json:"archiveProvider"`
+	ArchiveProviderDetail    OpsBackupArchiveProvider `json:"archiveProviderDetail"`
+	BackupDir                string                   `json:"backupDir"`
+	BackupMetadataDir        string                   `json:"backupMetadataDir"`
+	Backups                  []OpsBackupArchive       `json:"backups"`
+	DatabaseBackend          interface{}              `json:"databaseBackend,omitempty"`
+	DatabaseTarget           interface{}              `json:"databaseTarget,omitempty"`
+	GeneratedAt              time.Time                `json:"generatedAt"`
+	LatestBackup             *OpsBackupArchive        `json:"latestBackup,omitempty"`
+	RestoreDrill             string                   `json:"restoreDrill"`
+	RestoreDrillDetail       *map[string]interface{}  `json:"restoreDrillDetail,omitempty"`
+	RestoreDrillSchedule     *map[string]interface{}  `json:"restoreDrillSchedule,omitempty"`
+	RestoreDrillScheduleHint *string                  `json:"restoreDrillScheduleHint,omitempty"`
+	RetentionLastRun         *map[string]interface{}  `json:"retentionLastRun,omitempty"`
+	RetentionPolicy          string                   `json:"retentionPolicy"`
+	RetentionPolicyDetail    *map[string]interface{}  `json:"retentionPolicyDetail,omitempty"`
+	Status                   string                   `json:"status"`
+	SupportedActions         []string                 `json:"supportedActions"`
+	AdditionalProperties     map[string]interface{}   `json:"-"`
+}
+
+// OpsBackupsDocument defines model for OpsBackupsDocument.
+type OpsBackupsDocument struct {
+	Data OpsBackupsResource `json:"data"`
+}
+
+// OpsBackupsResource defines model for OpsBackupsResource.
+type OpsBackupsResource struct {
+	Attributes OpsBackupsAttributes   `json:"attributes"`
+	Id         OpsBackupsResourceId   `json:"id"`
+	Type       OpsBackupsResourceType `json:"type"`
+}
+
+// OpsBackupsResourceId defines model for OpsBackupsResource.Id.
+type OpsBackupsResourceId string
+
+// OpsBackupsResourceType defines model for OpsBackupsResource.Type.
+type OpsBackupsResourceType string
+
+// OpsJobActionDocument defines model for OpsJobActionDocument.
+type OpsJobActionDocument struct {
+	Data OpsJobActionResource `json:"data"`
+}
+
+// OpsJobActionResource defines model for OpsJobActionResource.
+type OpsJobActionResource struct {
+	Attributes OpsJobActionResource_Attributes `json:"attributes"`
+	Id         OpsJobActionResourceId          `json:"id"`
+	Type       OpsJobActionResourceType        `json:"type"`
+}
+
+// OpsJobActionResource_Attributes defines model for OpsJobActionResource.Attributes.
+type OpsJobActionResource_Attributes struct {
+	Action               *string                   `json:"action,omitempty"`
+	Destructive          *bool                     `json:"destructive,omitempty"`
+	Detail               *string                   `json:"detail,omitempty"`
+	Queues               *[]map[string]interface{} `json:"queues,omitempty"`
+	RanAt                *time.Time                `json:"ranAt,omitempty"`
+	RetriedArchiveCount  *int                      `json:"retriedArchiveCount,omitempty"`
+	RetriedRetryCount    *int                      `json:"retriedRetryCount,omitempty"`
+	Status               *string                   `json:"status,omitempty"`
+	TotalSubmitted       *int                      `json:"totalSubmitted,omitempty"`
+	AdditionalProperties map[string]interface{}    `json:"-"`
+}
+
+// OpsJobActionResourceId defines model for OpsJobActionResource.Id.
+type OpsJobActionResourceId string
+
+// OpsJobActionResourceType defines model for OpsJobActionResource.Type.
+type OpsJobActionResourceType string
+
+// OpsJobsDocument defines model for OpsJobsDocument.
+type OpsJobsDocument struct {
+	Data OpsJobsResource `json:"data"`
+}
+
+// OpsJobsResource defines model for OpsJobsResource.
+type OpsJobsResource struct {
+	Attributes OpsJobsResource_Attributes `json:"attributes"`
+	Id         OpsJobsResourceId          `json:"id"`
+	Type       OpsJobsResourceType        `json:"type"`
+}
+
+// OpsJobsResource_Attributes defines model for OpsJobsResource.Attributes.
+type OpsJobsResource_Attributes struct {
+	GeneratedAt          *time.Time              `json:"generatedAt,omitempty"`
+	MeetingDispatchMode  *string                 `json:"meetingDispatchMode,omitempty"`
+	MessageListener      *map[string]interface{} `json:"messageListener,omitempty"`
+	PaperEngine          *map[string]interface{} `json:"paperEngine,omitempty"`
+	PaperExecutionMode   *string                 `json:"paperExecutionMode,omitempty"`
+	Queue                *OpsQueueDiagnostics    `json:"queue,omitempty"`
+	RecentErrors         *OpsRecentErrors        `json:"recentErrors,omitempty"`
+	Redis                *map[string]interface{} `json:"redis,omitempty"`
+	Scheduler            *map[string]interface{} `json:"scheduler,omitempty"`
+	Worker               *map[string]interface{} `json:"worker,omitempty"`
+	AdditionalProperties map[string]interface{}  `json:"-"`
+}
+
+// OpsJobsResourceId defines model for OpsJobsResource.Id.
+type OpsJobsResourceId string
+
+// OpsJobsResourceType defines model for OpsJobsResource.Type.
+type OpsJobsResourceType string
+
+// OpsProviderHealthDocument defines model for OpsProviderHealthDocument.
+type OpsProviderHealthDocument struct {
+	Data OpsProviderHealthResource `json:"data"`
+}
+
+// OpsProviderHealthResource defines model for OpsProviderHealthResource.
+type OpsProviderHealthResource struct {
+	Attributes struct {
+		Ai          *OpsAIProviderHealth    `json:"ai,omitempty"`
+		GeneratedAt *time.Time              `json:"generatedAt,omitempty"`
+		Market      *map[string]interface{} `json:"market,omitempty"`
+		Meeting     *map[string]interface{} `json:"meeting,omitempty"`
+		Messaging   *map[string]interface{} `json:"messaging,omitempty"`
+	} `json:"attributes"`
+	Id   OpsProviderHealthResourceId   `json:"id"`
+	Type OpsProviderHealthResourceType `json:"type"`
+}
+
+// OpsProviderHealthResourceId defines model for OpsProviderHealthResource.Id.
+type OpsProviderHealthResourceId string
+
+// OpsProviderHealthResourceType defines model for OpsProviderHealthResource.Type.
+type OpsProviderHealthResourceType string
+
+// OpsQueueBacklogRisk defines model for OpsQueueBacklogRisk.
+type OpsQueueBacklogRisk struct {
+	ArchivedCount  *int                      `json:"archivedCount,omitempty"`
+	BacklogCount   *int                      `json:"backlogCount,omitempty"`
+	Level          *OpsQueueBacklogRiskLevel `json:"level,omitempty"`
+	PendingCount   *int                      `json:"pendingCount,omitempty"`
+	Reason         *string                   `json:"reason,omitempty"`
+	RetryCount     *int                      `json:"retryCount,omitempty"`
+	ScheduledCount *int                      `json:"scheduledCount,omitempty"`
+}
+
+// OpsQueueBacklogRiskLevel defines model for OpsQueueBacklogRisk.Level.
+type OpsQueueBacklogRiskLevel string
+
+// OpsQueueDiagnostics defines model for OpsQueueDiagnostics.
+type OpsQueueDiagnostics struct {
+	Actions     *map[string]interface{}    `json:"actions,omitempty"`
+	BacklogRisk *OpsQueueBacklogRisk       `json:"backlogRisk,omitempty"`
+	Detail      *string                    `json:"detail,omitempty"`
+	FailedTasks *[]OpsQueueFailedTask      `json:"failedTasks,omitempty"`
+	GeneratedAt *time.Time                 `json:"generatedAt,omitempty"`
+	QueueCount  *int                       `json:"queueCount,omitempty"`
+	Queues      *[]OpsQueueInfo            `json:"queues,omitempty"`
+	Status      *OpsQueueDiagnosticsStatus `json:"status,omitempty"`
+	Summary     *string                    `json:"summary,omitempty"`
+	Totals      *OpsQueueTotals            `json:"totals,omitempty"`
+}
+
+// OpsQueueDiagnosticsStatus defines model for OpsQueueDiagnostics.Status.
+type OpsQueueDiagnosticsStatus string
+
+// OpsQueueFailedTask defines model for OpsQueueFailedTask.
+type OpsQueueFailedTask struct {
+	Id                   *string                  `json:"id,omitempty"`
+	LastError            *string                  `json:"lastError,omitempty"`
+	LastFailedAt         *time.Time               `json:"lastFailedAt,omitempty"`
+	MaxRetry             *int                     `json:"maxRetry,omitempty"`
+	NextProcessAt        *time.Time               `json:"nextProcessAt,omitempty"`
+	PayloadPreview       *string                  `json:"payloadPreview,omitempty"`
+	Queue                *string                  `json:"queue,omitempty"`
+	Retried              *int                     `json:"retried,omitempty"`
+	State                *OpsQueueFailedTaskState `json:"state,omitempty"`
+	Status               *string                  `json:"status,omitempty"`
+	TimeoutSeconds       *int                     `json:"timeoutSeconds,omitempty"`
+	Type                 *string                  `json:"type,omitempty"`
+	AdditionalProperties map[string]interface{}   `json:"-"`
+}
+
+// OpsQueueFailedTaskState defines model for OpsQueueFailedTask.State.
+type OpsQueueFailedTaskState string
+
+// OpsQueueInfo defines model for OpsQueueInfo.
+type OpsQueueInfo struct {
+	Active            *int       `json:"active,omitempty"`
+	Aggregating       *int       `json:"aggregating,omitempty"`
+	Archived          *int       `json:"archived,omitempty"`
+	Completed         *int       `json:"completed,omitempty"`
+	Detail            *string    `json:"detail,omitempty"`
+	FailedToday       *int       `json:"failedToday,omitempty"`
+	FailedTotal       *int       `json:"failedTotal,omitempty"`
+	LatencySeconds    *int       `json:"latencySeconds,omitempty"`
+	MemoryUsageBytes  *int64     `json:"memoryUsageBytes,omitempty"`
+	Name              *string    `json:"name,omitempty"`
+	Paused            *bool      `json:"paused,omitempty"`
+	Pending           *int       `json:"pending,omitempty"`
+	ProcessedToday    *int       `json:"processedToday,omitempty"`
+	ProcessedTotal    *int       `json:"processedTotal,omitempty"`
+	Retry             *int       `json:"retry,omitempty"`
+	Scheduled         *int       `json:"scheduled,omitempty"`
+	Size              *int       `json:"size,omitempty"`
+	SnapshotTimestamp *time.Time `json:"snapshotTimestamp,omitempty"`
+	Status            *string    `json:"status,omitempty"`
+}
+
+// OpsQueueTotals defines model for OpsQueueTotals.
+type OpsQueueTotals struct {
+	Active           *int   `json:"active,omitempty"`
+	Aggregating      *int   `json:"aggregating,omitempty"`
+	Archived         *int   `json:"archived,omitempty"`
+	Completed        *int   `json:"completed,omitempty"`
+	FailedToday      *int   `json:"failedToday,omitempty"`
+	FailedTotal      *int   `json:"failedTotal,omitempty"`
+	MemoryUsageBytes *int64 `json:"memoryUsageBytes,omitempty"`
+	Pending          *int   `json:"pending,omitempty"`
+	ProcessedToday   *int   `json:"processedToday,omitempty"`
+	ProcessedTotal   *int   `json:"processedTotal,omitempty"`
+	Retry            *int   `json:"retry,omitempty"`
+	Scheduled        *int   `json:"scheduled,omitempty"`
+	Size             *int   `json:"size,omitempty"`
+}
+
+// OpsRecentErrorEntry defines model for OpsRecentErrorEntry.
+type OpsRecentErrorEntry struct {
+	Caller               *string                `json:"caller,omitempty"`
+	DurationMs           *int                   `json:"durationMs,omitempty"`
+	Event                *string                `json:"event,omitempty"`
+	File                 *string                `json:"file,omitempty"`
+	Group                *string                `json:"group,omitempty"`
+	Id                   *string                `json:"id,omitempty"`
+	Level                *string                `json:"level,omitempty"`
+	Message              *string                `json:"message,omitempty"`
+	Method               *string                `json:"method,omitempty"`
+	Path                 *string                `json:"path,omitempty"`
+	Role                 *string                `json:"role,omitempty"`
+	Source               *string                `json:"source,omitempty"`
+	Status               *string                `json:"status,omitempty"`
+	Time                 *time.Time             `json:"time,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// OpsRecentErrors defines model for OpsRecentErrors.
+type OpsRecentErrors struct {
+	Count       *int                   `json:"count,omitempty"`
+	Detail      *string                `json:"detail,omitempty"`
+	Entries     *[]OpsRecentErrorEntry `json:"entries,omitempty"`
+	Status      *OpsRecentErrorsStatus `json:"status,omitempty"`
+	Summary     *string                `json:"summary,omitempty"`
+	WindowHours *int                   `json:"windowHours,omitempty"`
+}
+
+// OpsRecentErrorsStatus defines model for OpsRecentErrors.Status.
+type OpsRecentErrorsStatus string
 
 // PaperAccountAttributes defines model for PaperAccountAttributes.
 type PaperAccountAttributes struct {
@@ -2895,6 +7043,236 @@ type PaperAccountUpsertDocument struct {
 // PaperAccountUpsertDocumentDataType defines model for PaperAccountUpsertDocument.Data.Type.
 type PaperAccountUpsertDocumentDataType string
 
+// PaperAttributionItem defines model for PaperAttributionItem.
+type PaperAttributionItem struct {
+	Code            *string                     `json:"code,omitempty"`
+	ContributionPct interface{}                 `json:"contributionPct,omitempty"`
+	CostAmount      interface{}                 `json:"costAmount,omitempty"`
+	MarketValue     interface{}                 `json:"marketValue,omitempty"`
+	Quantity        *int                        `json:"quantity,omitempty"`
+	RealizedPnl     interface{}                 `json:"realizedPnl,omitempty"`
+	ReturnPct       interface{}                 `json:"returnPct,omitempty"`
+	Source          *PaperAttributionItemSource `json:"source,omitempty"`
+	SymbolName      *string                     `json:"symbolName,omitempty"`
+	TotalPnl        interface{}                 `json:"totalPnl,omitempty"`
+	UnrealizedPnl   interface{}                 `json:"unrealizedPnl,omitempty"`
+	UpdatedAt       *time.Time                  `json:"updatedAt,omitempty"`
+	WeightPct       interface{}                 `json:"weightPct,omitempty"`
+}
+
+// PaperAttributionItemSource defines model for PaperAttributionItem.Source.
+type PaperAttributionItemSource string
+
+// PaperBacktestAttributes defines model for PaperBacktestAttributes.
+type PaperBacktestAttributes struct {
+	AccountId   *int                  `json:"accountId,omitempty"`
+	GeneratedAt *time.Time            `json:"generatedAt,omitempty"`
+	Input       *PaperBacktestInput   `json:"input,omitempty"`
+	Orders      *[]PaperBacktestOrder `json:"orders,omitempty"`
+	Policy      *PaperBacktestPolicy  `json:"policy,omitempty"`
+	Series      *[]PaperBacktestPoint `json:"series,omitempty"`
+	Summary     *PaperBacktestSummary `json:"summary,omitempty"`
+}
+
+// PaperBacktestDocument defines model for PaperBacktestDocument.
+type PaperBacktestDocument struct {
+	Data struct {
+		Attributes    PaperBacktestAttributes `json:"attributes"`
+		Id            string                  `json:"id"`
+		Relationships *struct {
+			Account *Relationship `json:"account,omitempty"`
+		} `json:"relationships,omitempty"`
+		Type PaperBacktestDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// PaperBacktestDocumentDataType defines model for PaperBacktestDocument.Data.Type.
+type PaperBacktestDocumentDataType string
+
+// PaperBacktestInput defines model for PaperBacktestInput.
+type PaperBacktestInput struct {
+	AccountId        *int        `json:"accountId,omitempty"`
+	BuyThresholdPct  interface{} `json:"buyThresholdPct,omitempty"`
+	Code             *string     `json:"code,omitempty"`
+	EndDate          *time.Time  `json:"endDate,omitempty"`
+	InitialCash      interface{} `json:"initialCash,omitempty"`
+	OrderPct         interface{} `json:"orderPct,omitempty"`
+	SellThresholdPct interface{} `json:"sellThresholdPct,omitempty"`
+	SlippageBps      interface{} `json:"slippageBps,omitempty"`
+	StartDate        *time.Time  `json:"startDate,omitempty"`
+}
+
+// PaperBacktestOrder defines model for PaperBacktestOrder.
+type PaperBacktestOrder struct {
+	CashAfter      interface{}               `json:"cashAfter,omitempty"`
+	Code           *string                   `json:"code,omitempty"`
+	Fees           interface{}               `json:"fees,omitempty"`
+	FilledPrice    interface{}               `json:"filledPrice,omitempty"`
+	GrossAmount    interface{}               `json:"grossAmount,omitempty"`
+	Id             *string                   `json:"id,omitempty"`
+	PositionAfter  *int                      `json:"positionAfter,omitempty"`
+	Quantity       *int                      `json:"quantity,omitempty"`
+	Reason         *string                   `json:"reason,omitempty"`
+	ReferencePrice interface{}               `json:"referencePrice,omitempty"`
+	Side           *PaperBacktestOrderSide   `json:"side,omitempty"`
+	SignalPct      interface{}               `json:"signalPct,omitempty"`
+	Status         *PaperBacktestOrderStatus `json:"status,omitempty"`
+	TradeDate      *time.Time                `json:"tradeDate,omitempty"`
+}
+
+// PaperBacktestOrderSide defines model for PaperBacktestOrder.Side.
+type PaperBacktestOrderSide string
+
+// PaperBacktestOrderStatus defines model for PaperBacktestOrder.Status.
+type PaperBacktestOrderStatus string
+
+// PaperBacktestPoint defines model for PaperBacktestPoint.
+type PaperBacktestPoint struct {
+	Cash           interface{} `json:"cash,omitempty"`
+	Close          interface{} `json:"close,omitempty"`
+	DailyReturnPct interface{} `json:"dailyReturnPct,omitempty"`
+	DrawdownPct    interface{} `json:"drawdownPct,omitempty"`
+	MarketValue    interface{} `json:"marketValue,omitempty"`
+	Quantity       *int        `json:"quantity,omitempty"`
+	SignalPct      interface{} `json:"signalPct,omitempty"`
+	TotalEquity    interface{} `json:"totalEquity,omitempty"`
+	TradeDate      *time.Time  `json:"tradeDate,omitempty"`
+}
+
+// PaperBacktestPolicy defines model for PaperBacktestPolicy.
+type PaperBacktestPolicy struct {
+	BrokerIntegration *PaperBacktestPolicyBrokerIntegration `json:"brokerIntegration,omitempty"`
+	DataSource        *PaperBacktestPolicyDataSource        `json:"dataSource,omitempty"`
+	ExecutionModel    *string                               `json:"executionModel,omitempty"`
+	LimitBandPct      interface{}                           `json:"limitBandPct,omitempty"`
+	LotSize           *int                                  `json:"lotSize,omitempty"`
+	RiskModel         *string                               `json:"riskModel,omitempty"`
+	Rules             *[]string                             `json:"rules,omitempty"`
+	SlippageBps       interface{}                           `json:"slippageBps,omitempty"`
+}
+
+// PaperBacktestPolicyBrokerIntegration defines model for PaperBacktestPolicy.BrokerIntegration.
+type PaperBacktestPolicyBrokerIntegration string
+
+// PaperBacktestPolicyDataSource defines model for PaperBacktestPolicy.DataSource.
+type PaperBacktestPolicyDataSource string
+
+// PaperBacktestRunDocument defines model for PaperBacktestRunDocument.
+type PaperBacktestRunDocument struct {
+	Data struct {
+		Attributes struct {
+			// BuyThresholdPct Close-to-previous-close percentage threshold for buys. Defaults to -3.
+			BuyThresholdPct interface{} `json:"buyThresholdPct,omitempty"`
+			Code            string      `json:"code"`
+			EndDate         *time.Time  `json:"endDate,omitempty"`
+
+			// InitialCash Optional simulated starting cash. Defaults to the account cash/initial cash.
+			InitialCash interface{} `json:"initialCash,omitempty"`
+
+			// OrderPct Fraction of equity per buy order, for example 0.1 for 10%. Defaults to 0.1.
+			OrderPct interface{} `json:"orderPct,omitempty"`
+
+			// SellThresholdPct Close-to-previous-close percentage threshold for sells. Defaults to 3.
+			SellThresholdPct interface{} `json:"sellThresholdPct,omitempty"`
+
+			// SlippageBps Simulated one-way slippage in basis points. Defaults to 5.
+			SlippageBps interface{} `json:"slippageBps,omitempty"`
+			StartDate   *time.Time  `json:"startDate,omitempty"`
+		} `json:"attributes"`
+		Type PaperBacktestRunDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// PaperBacktestRunDocumentDataType defines model for PaperBacktestRunDocument.Data.Type.
+type PaperBacktestRunDocumentDataType string
+
+// PaperBacktestSummary defines model for PaperBacktestSummary.
+type PaperBacktestSummary struct {
+	BarCount         *int        `json:"barCount,omitempty"`
+	FinalCash        interface{} `json:"finalCash,omitempty"`
+	FinalEquity      interface{} `json:"finalEquity,omitempty"`
+	FinalMarketValue interface{} `json:"finalMarketValue,omitempty"`
+	InitialCash      interface{} `json:"initialCash,omitempty"`
+	MaxDrawdownPct   interface{} `json:"maxDrawdownPct,omitempty"`
+	RejectedCount    *int        `json:"rejectedCount,omitempty"`
+	TotalReturnPct   interface{} `json:"totalReturnPct,omitempty"`
+	TradeCount       *int        `json:"tradeCount,omitempty"`
+}
+
+// PaperCorporateActionAttributes defines model for PaperCorporateActionAttributes.
+type PaperCorporateActionAttributes struct {
+	AccountId      *int                                      `json:"accountId,omitempty"`
+	ActionType     *PaperCorporateActionAttributesActionType `json:"actionType,omitempty"`
+	AffectedShares *int                                      `json:"affectedShares,omitempty"`
+	AppliedAt      *time.Time                                `json:"appliedAt,omitempty"`
+	CashAmount     interface{}                               `json:"cashAmount,omitempty"`
+
+	// CashPerShare Cash dividend per held share. Required for cash_dividend.
+	CashPerShare interface{} `json:"cashPerShare,omitempty"`
+	Code         *string     `json:"code,omitempty"`
+	CreatedAt    *time.Time  `json:"createdAt,omitempty"`
+	ExDate       *time.Time  `json:"exDate,omitempty"`
+	Note         *string     `json:"note,omitempty"`
+
+	// ShareRatio For bonus_share, additional shares per held share. For split, final split multiplier, e.g. 2 means 1-for-2.
+	ShareRatio interface{}                           `json:"shareRatio,omitempty"`
+	Status     *PaperCorporateActionAttributesStatus `json:"status,omitempty"`
+}
+
+// PaperCorporateActionAttributesActionType defines model for PaperCorporateActionAttributes.ActionType.
+type PaperCorporateActionAttributesActionType string
+
+// PaperCorporateActionAttributesStatus defines model for PaperCorporateActionAttributes.Status.
+type PaperCorporateActionAttributesStatus string
+
+// PaperCorporateActionCollectionDocument defines model for PaperCorporateActionCollectionDocument.
+type PaperCorporateActionCollectionDocument struct {
+	Data []PaperCorporateActionResource `json:"data"`
+}
+
+// PaperCorporateActionCreateDocument defines model for PaperCorporateActionCreateDocument.
+type PaperCorporateActionCreateDocument struct {
+	Data struct {
+		Attributes struct {
+			ActionType PaperCorporateActionCreateDocumentDataAttributesActionType `json:"actionType"`
+
+			// CashPerShare Required for cash_dividend.
+			CashPerShare interface{} `json:"cashPerShare,omitempty"`
+			Code         string      `json:"code"`
+			ExDate       *time.Time  `json:"exDate,omitempty"`
+			Note         *string     `json:"note,omitempty"`
+
+			// ShareRatio Required for bonus_share and split. For split, use the final multiplier, e.g. 2.
+			ShareRatio interface{} `json:"shareRatio,omitempty"`
+		} `json:"attributes"`
+		Type PaperCorporateActionCreateDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// PaperCorporateActionCreateDocumentDataAttributesActionType defines model for PaperCorporateActionCreateDocument.Data.Attributes.ActionType.
+type PaperCorporateActionCreateDocumentDataAttributesActionType string
+
+// PaperCorporateActionCreateDocumentDataType defines model for PaperCorporateActionCreateDocument.Data.Type.
+type PaperCorporateActionCreateDocumentDataType string
+
+// PaperCorporateActionDocument defines model for PaperCorporateActionDocument.
+type PaperCorporateActionDocument struct {
+	Data PaperCorporateActionResource `json:"data"`
+}
+
+// PaperCorporateActionResource defines model for PaperCorporateActionResource.
+type PaperCorporateActionResource struct {
+	Attributes    PaperCorporateActionAttributes `json:"attributes"`
+	Id            string                         `json:"id"`
+	Relationships *struct {
+		Account *Relationship `json:"account,omitempty"`
+	} `json:"relationships,omitempty"`
+	Type PaperCorporateActionResourceType `json:"type"`
+}
+
+// PaperCorporateActionResourceType defines model for PaperCorporateActionResource.Type.
+type PaperCorporateActionResourceType string
+
 // PaperFillAttributes defines model for PaperFillAttributes.
 type PaperFillAttributes struct {
 	AccountId   *int                     `json:"accountId,omitempty"`
@@ -2932,30 +7310,59 @@ type PaperFillResource struct {
 // PaperFillResourceType defines model for PaperFillResource.Type.
 type PaperFillResourceType string
 
+// PaperOrderApproveDocument defines model for PaperOrderApproveDocument.
+type PaperOrderApproveDocument struct {
+	Data struct {
+		Attributes struct {
+			ConfirmHighRisk *bool `json:"confirmHighRisk,omitempty"`
+		} `json:"attributes"`
+		Type PaperOrderApproveDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// PaperOrderApproveDocumentDataType defines model for PaperOrderApproveDocument.Data.Type.
+type PaperOrderApproveDocumentDataType string
+
 // PaperOrderAttributes defines model for PaperOrderAttributes.
 type PaperOrderAttributes struct {
-	AccountId            *int                      `json:"accountId,omitempty"`
-	Code                 *string                   `json:"code,omitempty"`
-	Commission           interface{}               `json:"commission,omitempty"`
-	CreatedAt            *time.Time                `json:"createdAt,omitempty"`
-	ExecuteAfter         *time.Time                `json:"executeAfter,omitempty"`
-	ExecutionNote        *string                   `json:"executionNote,omitempty"`
-	ExpireAt             *time.Time                `json:"expireAt,omitempty"`
-	FilledAt             *time.Time                `json:"filledAt,omitempty"`
-	FilledPrice          interface{}               `json:"filledPrice,omitempty"`
-	MeetingId            *int                      `json:"meetingId,omitempty"`
-	NetAmount            interface{}               `json:"netAmount,omitempty"`
-	Quantity             *int                      `json:"quantity,omitempty"`
-	Reason               *string                   `json:"reason,omitempty"`
-	Side                 *PaperOrderAttributesSide `json:"side,omitempty"`
-	SourceMeetingEventId *int                      `json:"sourceMeetingEventId,omitempty"`
-	StampDuty            interface{}               `json:"stampDuty,omitempty"`
-	Status               *string                   `json:"status,omitempty"`
-	SubmittedAt          *time.Time                `json:"submittedAt,omitempty"`
-	SuggestedPrice       interface{}               `json:"suggestedPrice,omitempty"`
-	SymbolName           *string                   `json:"symbolName,omitempty"`
-	TransferFee          interface{}               `json:"transferFee,omitempty"`
+	AccountId               *int                                   `json:"accountId,omitempty"`
+	ApprovalConfirmRequired *bool                                  `json:"approvalConfirmRequired,omitempty"`
+	ApprovalRequired        *bool                                  `json:"approvalRequired,omitempty"`
+	ApprovalReviewRequired  *bool                                  `json:"approvalReviewRequired,omitempty"`
+	ApprovalRiskLevel       *PaperOrderAttributesApprovalRiskLevel `json:"approvalRiskLevel,omitempty"`
+	ApprovalRiskMetrics     *map[string]interface{}                `json:"approvalRiskMetrics,omitempty"`
+	ApprovalRiskReasons     *[]string                              `json:"approvalRiskReasons,omitempty"`
+	ApprovalStatus          *PaperOrderAttributesApprovalStatus    `json:"approvalStatus,omitempty"`
+	Code                    *string                                `json:"code,omitempty"`
+	Commission              interface{}                            `json:"commission,omitempty"`
+	CreatedAt               *time.Time                             `json:"createdAt,omitempty"`
+	ExecuteAfter            *time.Time                             `json:"executeAfter,omitempty"`
+	ExecutionNote           *string                                `json:"executionNote,omitempty"`
+	ExpireAt                *time.Time                             `json:"expireAt,omitempty"`
+	FilledAt                *time.Time                             `json:"filledAt,omitempty"`
+	FilledPrice             interface{}                            `json:"filledPrice,omitempty"`
+	FilledQuantity          *int                                   `json:"filledQuantity,omitempty"`
+	MeetingId               *int                                   `json:"meetingId,omitempty"`
+	NetAmount               interface{}                            `json:"netAmount,omitempty"`
+	PartialFillCount        *int                                   `json:"partialFillCount,omitempty"`
+	Quantity                *int                                   `json:"quantity,omitempty"`
+	Reason                  *string                                `json:"reason,omitempty"`
+	RemainingQuantity       *int                                   `json:"remainingQuantity,omitempty"`
+	Side                    *PaperOrderAttributesSide              `json:"side,omitempty"`
+	SourceMeetingEventId    *int                                   `json:"sourceMeetingEventId,omitempty"`
+	StampDuty               interface{}                            `json:"stampDuty,omitempty"`
+	Status                  *string                                `json:"status,omitempty"`
+	SubmittedAt             *time.Time                             `json:"submittedAt,omitempty"`
+	SuggestedPrice          interface{}                            `json:"suggestedPrice,omitempty"`
+	SymbolName              *string                                `json:"symbolName,omitempty"`
+	TransferFee             interface{}                            `json:"transferFee,omitempty"`
 }
+
+// PaperOrderAttributesApprovalRiskLevel defines model for PaperOrderAttributes.ApprovalRiskLevel.
+type PaperOrderAttributesApprovalRiskLevel string
+
+// PaperOrderAttributesApprovalStatus defines model for PaperOrderAttributes.ApprovalStatus.
+type PaperOrderAttributesApprovalStatus string
 
 // PaperOrderAttributesSide defines model for PaperOrderAttributes.Side.
 type PaperOrderAttributesSide string
@@ -3000,6 +7407,9 @@ type PaperOrderFillDocument struct {
 	Data struct {
 		Attributes struct {
 			Price interface{} `json:"price"`
+
+			// Quantity Optional fill quantity. Omit or set to 0 to fill the remaining order quantity.
+			Quantity *int `json:"quantity,omitempty"`
 		} `json:"attributes"`
 		Type PaperOrderFillDocumentDataType `json:"type"`
 	} `json:"data"`
@@ -3007,6 +7417,19 @@ type PaperOrderFillDocument struct {
 
 // PaperOrderFillDocumentDataType defines model for PaperOrderFillDocument.Data.Type.
 type PaperOrderFillDocumentDataType string
+
+// PaperOrderRejectDocument defines model for PaperOrderRejectDocument.
+type PaperOrderRejectDocument struct {
+	Data struct {
+		Attributes struct {
+			Reason *string `json:"reason,omitempty"`
+		} `json:"attributes"`
+		Type PaperOrderRejectDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// PaperOrderRejectDocumentDataType defines model for PaperOrderRejectDocument.Data.Type.
+type PaperOrderRejectDocumentDataType string
 
 // PaperOrderResource defines model for PaperOrderResource.
 type PaperOrderResource struct {
@@ -3055,18 +7478,21 @@ type PaperOverviewDocumentDataType string
 
 // PaperPerformanceAttributes defines model for PaperPerformanceAttributes.
 type PaperPerformanceAttributes struct {
-	AccountId         *int                      `json:"accountId,omitempty"`
-	FillsCount        *int                      `json:"fillsCount,omitempty"`
-	InitialCash       interface{}               `json:"initialCash,omitempty"`
-	LatestCash        interface{}               `json:"latestCash,omitempty"`
-	LatestEquity      interface{}               `json:"latestEquity,omitempty"`
-	LatestMarketValue interface{}               `json:"latestMarketValue,omitempty"`
-	MaxDrawdownPct    interface{}               `json:"maxDrawdownPct,omitempty"`
-	RealizedPnl       interface{}               `json:"realizedPnl,omitempty"`
-	Series            *[]map[string]interface{} `json:"series,omitempty"`
-	TotalReturnPct    interface{}               `json:"totalReturnPct,omitempty"`
-	UnrealizedPnl     interface{}               `json:"unrealizedPnl,omitempty"`
-	WinRatePct        interface{}               `json:"winRatePct,omitempty"`
+	AccountId         *int                     `json:"accountId,omitempty"`
+	Attribution       *[]PaperAttributionItem  `json:"attribution,omitempty"`
+	FillsCount        *int                     `json:"fillsCount,omitempty"`
+	InitialCash       interface{}              `json:"initialCash,omitempty"`
+	LatestCash        interface{}              `json:"latestCash,omitempty"`
+	LatestEquity      interface{}              `json:"latestEquity,omitempty"`
+	LatestMarketValue interface{}              `json:"latestMarketValue,omitempty"`
+	MaxDrawdownPct    interface{}              `json:"maxDrawdownPct,omitempty"`
+	RealizedPnl       interface{}              `json:"realizedPnl,omitempty"`
+	RiskAlerts        *[]PaperRiskAlert        `json:"riskAlerts,omitempty"`
+	RiskSummary       *PaperRiskSummary        `json:"riskSummary,omitempty"`
+	Series            *[]PaperPerformancePoint `json:"series,omitempty"`
+	TotalReturnPct    interface{}              `json:"totalReturnPct,omitempty"`
+	UnrealizedPnl     interface{}              `json:"unrealizedPnl,omitempty"`
+	WinRatePct        interface{}              `json:"winRatePct,omitempty"`
 }
 
 // PaperPerformanceDocument defines model for PaperPerformanceDocument.
@@ -3080,6 +7506,19 @@ type PaperPerformanceDocument struct {
 
 // PaperPerformanceDocumentDataType defines model for PaperPerformanceDocument.Data.Type.
 type PaperPerformanceDocumentDataType string
+
+// PaperPerformancePoint defines model for PaperPerformancePoint.
+type PaperPerformancePoint struct {
+	AccountId     int         `json:"accountId"`
+	Cash          interface{} `json:"cash"`
+	DailyPnl      interface{} `json:"dailyPnl"`
+	Id            int         `json:"id"`
+	MarketValue   interface{} `json:"marketValue"`
+	RealizedPnl   interface{} `json:"realizedPnl"`
+	SnapshotTime  time.Time   `json:"snapshotTime"`
+	TotalEquity   interface{} `json:"totalEquity"`
+	UnrealizedPnl interface{} `json:"unrealizedPnl"`
+}
 
 // PaperPositionAttributes defines model for PaperPositionAttributes.
 type PaperPositionAttributes struct {
@@ -3113,6 +7552,57 @@ type PaperPositionResource struct {
 
 // PaperPositionResourceType defines model for PaperPositionResource.Type.
 type PaperPositionResourceType string
+
+// PaperReplayAttributes defines model for PaperReplayAttributes.
+type PaperReplayAttributes struct {
+	AccountId   *int                    `json:"accountId,omitempty"`
+	Events      *[]PaperReplayEvent     `json:"events,omitempty"`
+	GeneratedAt *time.Time              `json:"generatedAt,omitempty"`
+	ModelPolicy *map[string]interface{} `json:"modelPolicy,omitempty"`
+	Summary     *map[string]interface{} `json:"summary,omitempty"`
+}
+
+// PaperReplayDocument defines model for PaperReplayDocument.
+type PaperReplayDocument struct {
+	Data struct {
+		Attributes    PaperReplayAttributes `json:"attributes"`
+		Id            string                `json:"id"`
+		Relationships *struct {
+			Account *Relationship `json:"account,omitempty"`
+		} `json:"relationships,omitempty"`
+		Type PaperReplayDocumentDataType `json:"type"`
+	} `json:"data"`
+}
+
+// PaperReplayDocumentDataType defines model for PaperReplayDocument.Data.Type.
+type PaperReplayDocumentDataType string
+
+// PaperReplayEvent defines model for PaperReplayEvent.
+type PaperReplayEvent struct {
+	Attributes *map[string]interface{} `json:"attributes,omitempty"`
+	Code       *string                 `json:"code,omitempty"`
+	Id         *string                 `json:"id,omitempty"`
+	Summary    *string                 `json:"summary,omitempty"`
+	Time       *time.Time              `json:"time,omitempty"`
+	Type       *PaperReplayEventType   `json:"type,omitempty"`
+}
+
+// PaperReplayEventType defines model for PaperReplayEvent.Type.
+type PaperReplayEventType string
+
+// PaperRiskAlert defines model for PaperRiskAlert.
+type PaperRiskAlert struct {
+	Code      *string                `json:"code,omitempty"`
+	Detail    string                 `json:"detail"`
+	Key       string                 `json:"key"`
+	Metric    interface{}            `json:"metric,omitempty"`
+	Severity  PaperRiskAlertSeverity `json:"severity"`
+	Threshold interface{}            `json:"threshold,omitempty"`
+	Title     string                 `json:"title"`
+}
+
+// PaperRiskAlertSeverity defines model for PaperRiskAlert.Severity.
+type PaperRiskAlertSeverity string
 
 // PaperRiskConfigAttributes defines model for PaperRiskConfigAttributes.
 type PaperRiskConfigAttributes struct {
@@ -3170,6 +7660,22 @@ type PaperRiskConfigUpsertDocument struct {
 
 // PaperRiskConfigUpsertDocumentDataType defines model for PaperRiskConfigUpsertDocument.Data.Type.
 type PaperRiskConfigUpsertDocumentDataType string
+
+// PaperRiskSummary defines model for PaperRiskSummary.
+type PaperRiskSummary struct {
+	AlertCount    *int                         `json:"alertCount,omitempty"`
+	CriticalCount *int                         `json:"criticalCount,omitempty"`
+	InfoCount     *int                         `json:"infoCount,omitempty"`
+	MaxSeverity   *PaperRiskSummaryMaxSeverity `json:"maxSeverity,omitempty"`
+	Status        *PaperRiskSummaryStatus      `json:"status,omitempty"`
+	WarningCount  *int                         `json:"warningCount,omitempty"`
+}
+
+// PaperRiskSummaryMaxSeverity defines model for PaperRiskSummary.MaxSeverity.
+type PaperRiskSummaryMaxSeverity string
+
+// PaperRiskSummaryStatus defines model for PaperRiskSummary.Status.
+type PaperRiskSummaryStatus string
 
 // PlatformAdapterCollectionDocument defines model for PlatformAdapterCollectionDocument.
 type PlatformAdapterCollectionDocument struct {
@@ -3514,6 +8020,78 @@ type SecretUpsertResource struct {
 // SecretUpsertResourceType defines model for SecretUpsertResource.Type.
 type SecretUpsertResourceType string
 
+// SetupActionResultAttributes defines model for SetupActionResultAttributes.
+type SetupActionResultAttributes struct {
+	Detail  *string                           `json:"detail,omitempty"`
+	Key     string                            `json:"key"`
+	Output  *map[string]interface{}           `json:"output,omitempty"`
+	RanAt   time.Time                         `json:"ranAt"`
+	Status  SetupActionResultAttributesStatus `json:"status"`
+	Summary string                            `json:"summary"`
+}
+
+// SetupActionResultAttributesStatus defines model for SetupActionResultAttributes.Status.
+type SetupActionResultAttributesStatus string
+
+// SetupActionResultDocument defines model for SetupActionResultDocument.
+type SetupActionResultDocument struct {
+	Data SetupActionResultResource `json:"data"`
+}
+
+// SetupActionResultResource defines model for SetupActionResultResource.
+type SetupActionResultResource struct {
+	Attributes SetupActionResultAttributes   `json:"attributes"`
+	Id         string                        `json:"id"`
+	Type       SetupActionResultResourceType `json:"type"`
+}
+
+// SetupActionResultResourceType defines model for SetupActionResultResource.Type.
+type SetupActionResultResourceType string
+
+// SetupReadinessAttributes defines model for SetupReadinessAttributes.
+type SetupReadinessAttributes struct {
+	Completed     int         `json:"completed"`
+	CompletionPct int         `json:"completionPct"`
+	GeneratedAt   time.Time   `json:"generatedAt"`
+	Steps         []SetupStep `json:"steps"`
+	Total         int         `json:"total"`
+}
+
+// SetupReadinessDocument defines model for SetupReadinessDocument.
+type SetupReadinessDocument struct {
+	Data SetupReadinessResource `json:"data"`
+}
+
+// SetupReadinessResource defines model for SetupReadinessResource.
+type SetupReadinessResource struct {
+	Attributes SetupReadinessAttributes   `json:"attributes"`
+	Id         SetupReadinessResourceId   `json:"id"`
+	Type       SetupReadinessResourceType `json:"type"`
+}
+
+// SetupReadinessResourceId defines model for SetupReadinessResource.Id.
+type SetupReadinessResourceId string
+
+// SetupReadinessResourceType defines model for SetupReadinessResource.Type.
+type SetupReadinessResourceType string
+
+// SetupStep defines model for SetupStep.
+type SetupStep struct {
+	ActionKey *string         `json:"actionKey,omitempty"`
+	Category  string          `json:"category"`
+	Detail    string          `json:"detail"`
+	Key       string          `json:"key"`
+	Optional  *bool           `json:"optional,omitempty"`
+	Ready     bool            `json:"ready"`
+	Route     *string         `json:"route,omitempty"`
+	Status    SetupStepStatus `json:"status"`
+	Summary   string          `json:"summary"`
+	Title     string          `json:"title"`
+}
+
+// SetupStepStatus defines model for SetupStep.Status.
+type SetupStepStatus string
+
 // WakePlanAttributes defines model for WakePlanAttributes.
 type WakePlanAttributes struct {
 	CreatedAt            time.Time                `json:"createdAt"`
@@ -3546,6 +8124,25 @@ type WakePlanDocument struct {
 	Data WakePlanResource `json:"data"`
 }
 
+// WakePlanInputAttributes defines model for WakePlanInputAttributes.
+type WakePlanInputAttributes struct {
+	MeetingId            *int                               `json:"meetingId,omitempty"`
+	NextCheckAt          *time.Time                         `json:"nextCheckAt,omitempty"`
+	Reason               string                             `json:"reason"`
+	ResearchTeamId       int                                `json:"researchTeamId"`
+	SourceMeetingEventId *int                               `json:"sourceMeetingEventId,omitempty"`
+	SourceRoleKey        *string                            `json:"sourceRoleKey,omitempty"`
+	Status               *WakePlanInputAttributesStatus     `json:"status,omitempty"`
+	TriggerConfig        map[string]interface{}             `json:"triggerConfig"`
+	TriggerType          WakePlanInputAttributesTriggerType `json:"triggerType"`
+}
+
+// WakePlanInputAttributesStatus defines model for WakePlanInputAttributes.Status.
+type WakePlanInputAttributesStatus string
+
+// WakePlanInputAttributesTriggerType defines model for WakePlanInputAttributes.TriggerType.
+type WakePlanInputAttributesTriggerType string
+
 // WakePlanResource defines model for WakePlanResource.
 type WakePlanResource struct {
 	Attributes    WakePlanAttributes `json:"attributes"`
@@ -3563,7 +8160,7 @@ type WakePlanResourceType string
 // WakePlanUpsertDocument defines model for WakePlanUpsertDocument.
 type WakePlanUpsertDocument struct {
 	Data struct {
-		Attributes WakePlanAttributes             `json:"attributes"`
+		Attributes WakePlanInputAttributes        `json:"attributes"`
 		Id         *string                        `json:"id,omitempty"`
 		Type       WakePlanUpsertDocumentDataType `json:"type"`
 	} `json:"data"`
@@ -3578,11 +8175,20 @@ type AccountId = string
 // AdapterId defines model for AdapterId.
 type AdapterId = string
 
+// BackupName defines model for BackupName.
+type BackupName = string
+
 // Code defines model for Code.
 type Code = string
 
 // ConfigId defines model for ConfigId.
 type ConfigId = string
+
+// ExportVersion defines model for ExportVersion.
+type ExportVersion = string
+
+// FeedbackLabelQuery defines model for FeedbackLabelQuery.
+type FeedbackLabelQuery string
 
 // FilterDecision defines model for FilterDecision.
 type FilterDecision = string
@@ -3592,6 +8198,9 @@ type FilterId = string
 
 // FilterStatus defines model for FilterStatus.
 type FilterStatus = string
+
+// IncludeRevoked defines model for IncludeRevoked.
+type IncludeRevoked = bool
 
 // ItemId defines model for ItemId.
 type ItemId = string
@@ -3650,6 +8259,18 @@ type MessageId = string
 // OnlyUnfiltered defines model for OnlyUnfiltered.
 type OnlyUnfiltered = bool
 
+// OpsFailedLimit defines model for OpsFailedLimit.
+type OpsFailedLimit = int
+
+// OpsQueueName defines model for OpsQueueName.
+type OpsQueueName = string
+
+// OpsTaskState defines model for OpsTaskState.
+type OpsTaskState string
+
+// OpsTaskType defines model for OpsTaskType.
+type OpsTaskType = string
+
 // OrderId defines model for OrderId.
 type OrderId = string
 
@@ -3664,6 +8285,12 @@ type PlanId = string
 
 // ProviderId defines model for ProviderId.
 type ProviderId = string
+
+// ProviderQuery defines model for ProviderQuery.
+type ProviderQuery = string
+
+// Queue defines model for Queue.
+type Queue = string
 
 // Range defines model for Range.
 type Range = string
@@ -3683,6 +8310,9 @@ type RoleKey = string
 // SearchQuery defines model for SearchQuery.
 type SearchQuery = string
 
+// SessionId defines model for SessionId.
+type SessionId = string
+
 // Status defines model for Status.
 type Status = string
 
@@ -3695,11 +8325,29 @@ type SubscriptionIdQuery = string
 // Tag defines model for Tag.
 type Tag = string
 
+// TaskId defines model for TaskId.
+type TaskId = string
+
 // TeamId defines model for TeamId.
 type TeamId = string
 
 // TriggerSource defines model for TriggerSource.
 type TriggerSource = string
+
+// UserId defines model for UserId.
+type UserId = string
+
+// Username defines model for Username.
+type Username = string
+
+// AdminUserCreateRequest defines model for AdminUserCreateRequest.
+type AdminUserCreateRequest = AdminUserCreateDocument
+
+// AdminUserPasswordResetRequest defines model for AdminUserPasswordResetRequest.
+type AdminUserPasswordResetRequest = AdminUserPasswordResetDocument
+
+// AdminUserUpdateRequest defines model for AdminUserUpdateRequest.
+type AdminUserUpdateRequest = AdminUserUpdateDocument
 
 // AiProviderUpsertRequest defines model for AiProviderUpsertRequest.
 type AiProviderUpsertRequest = AiProviderUpsertDocument
@@ -3713,6 +8361,15 @@ type AppSettingUpsertRequest = AppSettingUpsertDocument
 // AuthCredentialsRequest defines model for AuthCredentialsRequest.
 type AuthCredentialsRequest = AuthCredentialsDocument
 
+// AuthSessionRevokeRequest defines model for AuthSessionRevokeRequest.
+type AuthSessionRevokeRequest = AuthSessionRevokeDocument
+
+// IngestedMessageFeedbackBatchRequest defines model for IngestedMessageFeedbackBatchRequest.
+type IngestedMessageFeedbackBatchRequest = IngestedMessageFeedbackBatchRequestDocument
+
+// IngestedMessageFeedbackRequest defines model for IngestedMessageFeedbackRequest.
+type IngestedMessageFeedbackRequest = IngestedMessageFeedbackDocument
+
 // IngestedMessageRefilterRequest defines model for IngestedMessageRefilterRequest.
 type IngestedMessageRefilterRequest = IngestedMessageRefilterDocument
 
@@ -3722,17 +8379,26 @@ type IngestedMessageUpsertRequest = IngestedMessageUpsertDocument
 // MarketSymbolUpsertRequest defines model for MarketSymbolUpsertRequest.
 type MarketSymbolUpsertRequest = MarketSymbolUpsertDocument
 
+// MarketTaskRequest defines model for MarketTaskRequest.
+type MarketTaskRequest = MarketTaskRequestDocument
+
 // MarketToolQueryRequest defines model for MarketToolQueryRequest.
 type MarketToolQueryRequest = MarketToolQueryDocument
 
 // MarketWatchlistUpsertRequest defines model for MarketWatchlistUpsertRequest.
 type MarketWatchlistUpsertRequest = MarketWatchlistUpsertDocument
 
+// MeetingRecapActionReviewRequest defines model for MeetingRecapActionReviewRequest.
+type MeetingRecapActionReviewRequest = MeetingRecapActionReviewCreateDocument
+
 // MeetingReferenceCreateRequest defines model for MeetingReferenceCreateRequest.
 type MeetingReferenceCreateRequest = MeetingReferenceCreateDocument
 
 // MeetingStartRequest defines model for MeetingStartRequest.
 type MeetingStartRequest = MeetingStartDocument
+
+// MeetingTrustReviewRequest defines model for MeetingTrustReviewRequest.
+type MeetingTrustReviewRequest = MeetingTrustReviewCreateDocument
 
 // MeetingUpdateRequest defines model for MeetingUpdateRequest.
 type MeetingUpdateRequest = MeetingUpdateDocument
@@ -3749,6 +8415,9 @@ type MessageSubscriptionLoginStartRequest = MessageSubscriptionLoginStartDocumen
 // MessageSubscriptionLoginVerifyRequest defines model for MessageSubscriptionLoginVerifyRequest.
 type MessageSubscriptionLoginVerifyRequest = MessageSubscriptionLoginVerifyDocument
 
+// MessageSubscriptionMaintenanceRequest defines model for MessageSubscriptionMaintenanceRequest.
+type MessageSubscriptionMaintenanceRequest = MessageSubscriptionMaintenanceRequestDocument
+
 // MessageSubscriptionTestRequest defines model for MessageSubscriptionTestRequest.
 type MessageSubscriptionTestRequest = MessageSubscriptionTestRequestDocument
 
@@ -3758,11 +8427,23 @@ type MessageSubscriptionUpsertRequest = MessageSubscriptionUpsertDocument
 // PaperAccountUpsertRequest defines model for PaperAccountUpsertRequest.
 type PaperAccountUpsertRequest = PaperAccountUpsertDocument
 
+// PaperBacktestRunRequest defines model for PaperBacktestRunRequest.
+type PaperBacktestRunRequest = PaperBacktestRunDocument
+
+// PaperCorporateActionCreateRequest defines model for PaperCorporateActionCreateRequest.
+type PaperCorporateActionCreateRequest = PaperCorporateActionCreateDocument
+
+// PaperOrderApproveRequest defines model for PaperOrderApproveRequest.
+type PaperOrderApproveRequest = PaperOrderApproveDocument
+
 // PaperOrderCreateRequest defines model for PaperOrderCreateRequest.
 type PaperOrderCreateRequest = PaperOrderCreateDocument
 
 // PaperOrderFillRequest defines model for PaperOrderFillRequest.
 type PaperOrderFillRequest = PaperOrderFillDocument
+
+// PaperOrderRejectRequest defines model for PaperOrderRejectRequest.
+type PaperOrderRejectRequest = PaperOrderRejectDocument
 
 // PaperRiskConfigUpsertRequest defines model for PaperRiskConfigUpsertRequest.
 type PaperRiskConfigUpsertRequest = PaperRiskConfigUpsertDocument
@@ -3787,6 +8468,20 @@ type WakePlanUpsertRequest = WakePlanUpsertDocument
 
 // bearerAuthContextKey is the context key for bearerAuth security scheme
 type bearerAuthContextKey string
+
+// GetAdminSessionsParams defines parameters for GetAdminSessions.
+type GetAdminSessionsParams struct {
+	Username       *Username       `form:"username,omitempty" json:"username,omitempty"`
+	IncludeRevoked *IncludeRevoked `form:"includeRevoked,omitempty" json:"includeRevoked,omitempty"`
+	PageLimit      *PageLimit      `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor     *PageCursor     `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetAdminUsersParams defines parameters for GetAdminUsers.
+type GetAdminUsersParams struct {
+	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
 
 // GetAiProvidersParams defines parameters for GetAiProviders.
 type GetAiProvidersParams struct {
@@ -3814,6 +8509,12 @@ type GetAiSkillDefinitionsParams struct {
 
 // GetAiToolDefinitionsParams defines parameters for GetAiToolDefinitions.
 type GetAiToolDefinitionsParams struct {
+	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetAuditEventsParams defines parameters for GetAuditEvents.
+type GetAuditEventsParams struct {
 	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
 	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
 }
@@ -3908,6 +8609,86 @@ type GetMeetingReferencesParams struct {
 	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
 }
 
+// GetMessageFeedbackEvaluationParams defines parameters for GetMessageFeedbackEvaluation.
+type GetMessageFeedbackEvaluationParams struct {
+	SubscriptionId *SubscriptionIdQuery                             `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery                                   `form:"provider,omitempty" json:"provider,omitempty"`
+	FeedbackLabel  *GetMessageFeedbackEvaluationParamsFeedbackLabel `form:"feedbackLabel,omitempty" json:"feedbackLabel,omitempty"`
+}
+
+// GetMessageFeedbackEvaluationParamsFeedbackLabel defines parameters for GetMessageFeedbackEvaluation.
+type GetMessageFeedbackEvaluationParamsFeedbackLabel string
+
+// GetMessageFeedbackSourceTrustParams defines parameters for GetMessageFeedbackSourceTrust.
+type GetMessageFeedbackSourceTrustParams struct {
+	SubscriptionId *SubscriptionIdQuery `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery       `form:"provider,omitempty" json:"provider,omitempty"`
+	PageLimit      *PageLimit           `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor     *PageCursor          `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// PostMessageFeedbackSourceTrustRecomputeParams defines parameters for PostMessageFeedbackSourceTrustRecompute.
+type PostMessageFeedbackSourceTrustRecomputeParams struct {
+	SubscriptionId *SubscriptionIdQuery `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery       `form:"provider,omitempty" json:"provider,omitempty"`
+}
+
+// GetMessageFeedbackTrainingExportsParams defines parameters for GetMessageFeedbackTrainingExports.
+type GetMessageFeedbackTrainingExportsParams struct {
+	SubscriptionId *SubscriptionIdQuery                                  `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery                                        `form:"provider,omitempty" json:"provider,omitempty"`
+	FeedbackLabel  *GetMessageFeedbackTrainingExportsParamsFeedbackLabel `form:"feedbackLabel,omitempty" json:"feedbackLabel,omitempty"`
+	PageLimit      *PageLimit                                            `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor     *PageCursor                                           `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetMessageFeedbackTrainingExportsParamsFeedbackLabel defines parameters for GetMessageFeedbackTrainingExports.
+type GetMessageFeedbackTrainingExportsParamsFeedbackLabel string
+
+// PostMessageFeedbackTrainingExportParams defines parameters for PostMessageFeedbackTrainingExport.
+type PostMessageFeedbackTrainingExportParams struct {
+	SubscriptionId *SubscriptionIdQuery                                  `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery                                        `form:"provider,omitempty" json:"provider,omitempty"`
+	FeedbackLabel  *PostMessageFeedbackTrainingExportParamsFeedbackLabel `form:"feedbackLabel,omitempty" json:"feedbackLabel,omitempty"`
+}
+
+// PostMessageFeedbackTrainingExportParamsFeedbackLabel defines parameters for PostMessageFeedbackTrainingExport.
+type PostMessageFeedbackTrainingExportParamsFeedbackLabel string
+
+// GetMessageFeedbackTrainingSamplesParams defines parameters for GetMessageFeedbackTrainingSamples.
+type GetMessageFeedbackTrainingSamplesParams struct {
+	SubscriptionId *SubscriptionIdQuery                                  `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery                                        `form:"provider,omitempty" json:"provider,omitempty"`
+	FeedbackLabel  *GetMessageFeedbackTrainingSamplesParamsFeedbackLabel `form:"feedbackLabel,omitempty" json:"feedbackLabel,omitempty"`
+	PageLimit      *PageLimit                                            `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor     *PageCursor                                           `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetMessageFeedbackTrainingSamplesParamsFeedbackLabel defines parameters for GetMessageFeedbackTrainingSamples.
+type GetMessageFeedbackTrainingSamplesParamsFeedbackLabel string
+
+// GetMessageFeedbackTrainingSnapshotsParams defines parameters for GetMessageFeedbackTrainingSnapshots.
+type GetMessageFeedbackTrainingSnapshotsParams struct {
+	SubscriptionId *SubscriptionIdQuery                                    `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery                                          `form:"provider,omitempty" json:"provider,omitempty"`
+	FeedbackLabel  *GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel `form:"feedbackLabel,omitempty" json:"feedbackLabel,omitempty"`
+	PageLimit      *PageLimit                                              `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor     *PageCursor                                             `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel defines parameters for GetMessageFeedbackTrainingSnapshots.
+type GetMessageFeedbackTrainingSnapshotsParamsFeedbackLabel string
+
+// PostMessageFeedbackTrainingSnapshotParams defines parameters for PostMessageFeedbackTrainingSnapshot.
+type PostMessageFeedbackTrainingSnapshotParams struct {
+	SubscriptionId *SubscriptionIdQuery                                    `form:"subscriptionId,omitempty" json:"subscriptionId,omitempty"`
+	Provider       *ProviderQuery                                          `form:"provider,omitempty" json:"provider,omitempty"`
+	FeedbackLabel  *PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel `form:"feedbackLabel,omitempty" json:"feedbackLabel,omitempty"`
+}
+
+// PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel defines parameters for PostMessageFeedbackTrainingSnapshot.
+type PostMessageFeedbackTrainingSnapshotParamsFeedbackLabel string
+
 // GetMessageSubscriptionFiltersParams defines parameters for GetMessageSubscriptionFilters.
 type GetMessageSubscriptionFiltersParams struct {
 	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
@@ -3920,8 +8701,38 @@ type GetMessageSubscriptionsParams struct {
 	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
 }
 
+// GetMessageSubscriptionDiagnosticsParams defines parameters for GetMessageSubscriptionDiagnostics.
+type GetMessageSubscriptionDiagnosticsParams struct {
+	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetOpsJobsParams defines parameters for GetOpsJobs.
+type GetOpsJobsParams struct {
+	// Queue Optional Redis/asynq queue name used to filter failed task samples.
+	Queue *OpsQueueName `form:"queue,omitempty" json:"queue,omitempty"`
+
+	// Type Optional task type used to filter failed task samples.
+	Type *OpsTaskType `form:"type,omitempty" json:"type,omitempty"`
+
+	// State Optional failed task state used to filter samples.
+	State *GetOpsJobsParamsState `form:"state,omitempty" json:"state,omitempty"`
+
+	// FailedLimit Maximum number of failed task samples to return. Values above 50 are capped.
+	FailedLimit *OpsFailedLimit `form:"failedLimit,omitempty" json:"failedLimit,omitempty"`
+}
+
+// GetOpsJobsParamsState defines parameters for GetOpsJobs.
+type GetOpsJobsParamsState string
+
 // GetPaperAccountsParams defines parameters for GetPaperAccounts.
 type GetPaperAccountsParams struct {
+	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetPaperAccountCorporateActionsParams defines parameters for GetPaperAccountCorporateActions.
+type GetPaperAccountCorporateActionsParams struct {
 	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
 	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
 }
@@ -3990,6 +8801,18 @@ type GetWakePlansParams struct {
 	PageCursor     *PageCursor     `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
 }
 
+// PostAdminSessionRevokeApplicationVndAPIPlusJSONRequestBody defines body for PostAdminSessionRevoke for application/vnd.api+json ContentType.
+type PostAdminSessionRevokeApplicationVndAPIPlusJSONRequestBody = AuthSessionRevokeDocument
+
+// PostAdminUsersApplicationVndAPIPlusJSONRequestBody defines body for PostAdminUsers for application/vnd.api+json ContentType.
+type PostAdminUsersApplicationVndAPIPlusJSONRequestBody = AdminUserCreateDocument
+
+// PutAdminUserApplicationVndAPIPlusJSONRequestBody defines body for PutAdminUser for application/vnd.api+json ContentType.
+type PutAdminUserApplicationVndAPIPlusJSONRequestBody = AdminUserUpdateDocument
+
+// PostAdminUserPasswordResetApplicationVndAPIPlusJSONRequestBody defines body for PostAdminUserPasswordReset for application/vnd.api+json ContentType.
+type PostAdminUserPasswordResetApplicationVndAPIPlusJSONRequestBody = AdminUserPasswordResetDocument
+
 // PostAiProvidersApplicationVndAPIPlusJSONRequestBody defines body for PostAiProviders for application/vnd.api+json ContentType.
 type PostAiProvidersApplicationVndAPIPlusJSONRequestBody = AiProviderUpsertDocument
 
@@ -4008,17 +8831,26 @@ type PostAuthLoginApplicationVndAPIPlusJSONRequestBody = AuthCredentialsDocument
 // PostIngestedMessagesApplicationVndAPIPlusJSONRequestBody defines body for PostIngestedMessages for application/vnd.api+json ContentType.
 type PostIngestedMessagesApplicationVndAPIPlusJSONRequestBody = IngestedMessageUpsertDocument
 
+// PostIngestedMessagesFeedbackBatchApplicationVndAPIPlusJSONRequestBody defines body for PostIngestedMessagesFeedbackBatch for application/vnd.api+json ContentType.
+type PostIngestedMessagesFeedbackBatchApplicationVndAPIPlusJSONRequestBody = IngestedMessageFeedbackBatchRequestDocument
+
 // PostIngestedMessagesRefilterApplicationVndAPIPlusJSONRequestBody defines body for PostIngestedMessagesRefilter for application/vnd.api+json ContentType.
 type PostIngestedMessagesRefilterApplicationVndAPIPlusJSONRequestBody = IngestedMessageRefilterDocument
 
 // PutIngestedMessageApplicationVndAPIPlusJSONRequestBody defines body for PutIngestedMessage for application/vnd.api+json ContentType.
 type PutIngestedMessageApplicationVndAPIPlusJSONRequestBody = IngestedMessageUpsertDocument
 
+// PostIngestedMessageFeedbackApplicationVndAPIPlusJSONRequestBody defines body for PostIngestedMessageFeedback for application/vnd.api+json ContentType.
+type PostIngestedMessageFeedbackApplicationVndAPIPlusJSONRequestBody = IngestedMessageFeedbackDocument
+
 // PostMarketSymbolsApplicationVndAPIPlusJSONRequestBody defines body for PostMarketSymbols for application/vnd.api+json ContentType.
 type PostMarketSymbolsApplicationVndAPIPlusJSONRequestBody = MarketSymbolUpsertDocument
 
 // PutMarketSymbolApplicationVndAPIPlusJSONRequestBody defines body for PutMarketSymbol for application/vnd.api+json ContentType.
 type PutMarketSymbolApplicationVndAPIPlusJSONRequestBody = MarketSymbolUpsertDocument
+
+// PostMarketTasksApplicationVndAPIPlusJSONRequestBody defines body for PostMarketTasks for application/vnd.api+json ContentType.
+type PostMarketTasksApplicationVndAPIPlusJSONRequestBody = MarketTaskRequestDocument
 
 // PostMarketToolsQueryApplicationVndAPIPlusJSONRequestBody defines body for PostMarketToolsQuery for application/vnd.api+json ContentType.
 type PostMarketToolsQueryApplicationVndAPIPlusJSONRequestBody = MarketToolQueryDocument
@@ -4035,8 +8867,14 @@ type PostMeetingsApplicationVndAPIPlusJSONRequestBody = MeetingStartDocument
 // PutMeetingApplicationVndAPIPlusJSONRequestBody defines body for PutMeeting for application/vnd.api+json ContentType.
 type PutMeetingApplicationVndAPIPlusJSONRequestBody = MeetingUpdateDocument
 
+// PostMeetingRecapActionReviewApplicationVndAPIPlusJSONRequestBody defines body for PostMeetingRecapActionReview for application/vnd.api+json ContentType.
+type PostMeetingRecapActionReviewApplicationVndAPIPlusJSONRequestBody = MeetingRecapActionReviewCreateDocument
+
 // PostMeetingReferencesApplicationVndAPIPlusJSONRequestBody defines body for PostMeetingReferences for application/vnd.api+json ContentType.
 type PostMeetingReferencesApplicationVndAPIPlusJSONRequestBody = MeetingReferenceCreateDocument
+
+// PostMeetingTrustReviewApplicationVndAPIPlusJSONRequestBody defines body for PostMeetingTrustReview for application/vnd.api+json ContentType.
+type PostMeetingTrustReviewApplicationVndAPIPlusJSONRequestBody = MeetingTrustReviewCreateDocument
 
 // PostMessageSubscriptionFiltersApplicationVndAPIPlusJSONRequestBody defines body for PostMessageSubscriptionFilters for application/vnd.api+json ContentType.
 type PostMessageSubscriptionFiltersApplicationVndAPIPlusJSONRequestBody = MessageSubscriptionFilterUpsertDocument
@@ -4049,6 +8887,9 @@ type PostMessageSubscriptionsApplicationVndAPIPlusJSONRequestBody = MessageSubsc
 
 // PostMessageSubscriptionAppConfigApplicationVndAPIPlusJSONRequestBody defines body for PostMessageSubscriptionAppConfig for application/vnd.api+json ContentType.
 type PostMessageSubscriptionAppConfigApplicationVndAPIPlusJSONRequestBody = MessageSubscriptionAppConfigRequestDocument
+
+// PostMessageSubscriptionsMaintenanceApplicationVndAPIPlusJSONRequestBody defines body for PostMessageSubscriptionsMaintenance for application/vnd.api+json ContentType.
+type PostMessageSubscriptionsMaintenanceApplicationVndAPIPlusJSONRequestBody = MessageSubscriptionMaintenanceRequestDocument
 
 // PostMessageSubscriptionTelegramLoginStartApplicationVndAPIPlusJSONRequestBody defines body for PostMessageSubscriptionTelegramLoginStart for application/vnd.api+json ContentType.
 type PostMessageSubscriptionTelegramLoginStartApplicationVndAPIPlusJSONRequestBody = MessageSubscriptionLoginStartDocument
@@ -4068,11 +8909,23 @@ type PostPaperAccountsApplicationVndAPIPlusJSONRequestBody = PaperAccountUpsertD
 // PutPaperAccountApplicationVndAPIPlusJSONRequestBody defines body for PutPaperAccount for application/vnd.api+json ContentType.
 type PutPaperAccountApplicationVndAPIPlusJSONRequestBody = PaperAccountUpsertDocument
 
+// PostPaperAccountBacktestsApplicationVndAPIPlusJSONRequestBody defines body for PostPaperAccountBacktests for application/vnd.api+json ContentType.
+type PostPaperAccountBacktestsApplicationVndAPIPlusJSONRequestBody = PaperBacktestRunDocument
+
+// PostPaperAccountCorporateActionsApplicationVndAPIPlusJSONRequestBody defines body for PostPaperAccountCorporateActions for application/vnd.api+json ContentType.
+type PostPaperAccountCorporateActionsApplicationVndAPIPlusJSONRequestBody = PaperCorporateActionCreateDocument
+
 // PostPaperOrdersApplicationVndAPIPlusJSONRequestBody defines body for PostPaperOrders for application/vnd.api+json ContentType.
 type PostPaperOrdersApplicationVndAPIPlusJSONRequestBody = PaperOrderCreateDocument
 
+// PostPaperOrderApproveApplicationVndAPIPlusJSONRequestBody defines body for PostPaperOrderApprove for application/vnd.api+json ContentType.
+type PostPaperOrderApproveApplicationVndAPIPlusJSONRequestBody = PaperOrderApproveDocument
+
 // PostPaperOrderFillApplicationVndAPIPlusJSONRequestBody defines body for PostPaperOrderFill for application/vnd.api+json ContentType.
 type PostPaperOrderFillApplicationVndAPIPlusJSONRequestBody = PaperOrderFillDocument
+
+// PostPaperOrderRejectApplicationVndAPIPlusJSONRequestBody defines body for PostPaperOrderReject for application/vnd.api+json ContentType.
+type PostPaperOrderRejectApplicationVndAPIPlusJSONRequestBody = PaperOrderRejectDocument
 
 // PostPaperRiskConfigsApplicationVndAPIPlusJSONRequestBody defines body for PostPaperRiskConfigs for application/vnd.api+json ContentType.
 type PostPaperRiskConfigsApplicationVndAPIPlusJSONRequestBody = PaperRiskConfigUpsertDocument
@@ -4106,6 +8959,1429 @@ type PostSettingsSecretsApplicationVndAPIPlusJSONRequestBody = SecretUpsertDocum
 
 // PostWakePlansApplicationVndAPIPlusJSONRequestBody defines body for PostWakePlans for application/vnd.api+json ContentType.
 type PostWakePlansApplicationVndAPIPlusJSONRequestBody = WakePlanUpsertDocument
+
+// PutWakePlanApplicationVndAPIPlusJSONRequestBody defines body for PutWakePlan for application/vnd.api+json ContentType.
+type PutWakePlanApplicationVndAPIPlusJSONRequestBody = WakePlanUpsertDocument
+
+// Getter for additional properties for DashboardAlert. Returns the specified
+// element and whether it was found
+func (a DashboardAlert) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for DashboardAlert
+func (a *DashboardAlert) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for DashboardAlert to handle AdditionalProperties
+func (a *DashboardAlert) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["level"]; found {
+		err = json.Unmarshal(raw, &a.Level)
+		if err != nil {
+			return fmt.Errorf("error reading 'level': %w", err)
+		}
+		delete(object, "level")
+	}
+
+	if raw, found := object["link"]; found {
+		err = json.Unmarshal(raw, &a.Link)
+		if err != nil {
+			return fmt.Errorf("error reading 'link': %w", err)
+		}
+		delete(object, "link")
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &a.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+		delete(object, "title")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for DashboardAlert to handle AdditionalProperties
+func (a DashboardAlert) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["detail"], err = json.Marshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	object["level"], err = json.Marshal(a.Level)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'level': %w", err)
+	}
+
+	object["link"], err = json.Marshal(a.Link)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'link': %w", err)
+	}
+
+	object["title"], err = json.Marshal(a.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for DashboardBusinessMetrics. Returns the specified
+// element and whether it was found
+func (a DashboardBusinessMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for DashboardBusinessMetrics
+func (a *DashboardBusinessMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for DashboardBusinessMetrics to handle AdditionalProperties
+func (a *DashboardBusinessMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["aiCompletionTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.AiCompletionTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiCompletionTokens24h': %w", err)
+		}
+		delete(object, "aiCompletionTokens24h")
+	}
+
+	if raw, found := object["aiCostAmount24h"]; found {
+		err = json.Unmarshal(raw, &a.AiCostAmount24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiCostAmount24h': %w", err)
+		}
+		delete(object, "aiCostAmount24h")
+	}
+
+	if raw, found := object["aiCostBudgetStatus"]; found {
+		err = json.Unmarshal(raw, &a.AiCostBudgetStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiCostBudgetStatus': %w", err)
+		}
+		delete(object, "aiCostBudgetStatus")
+	}
+
+	if raw, found := object["aiEnabledProviderCount"]; found {
+		err = json.Unmarshal(raw, &a.AiEnabledProviderCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiEnabledProviderCount': %w", err)
+		}
+		delete(object, "aiEnabledProviderCount")
+	}
+
+	if raw, found := object["aiModelCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.AiModelCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiModelCalls24h': %w", err)
+		}
+		delete(object, "aiModelCalls24h")
+	}
+
+	if raw, found := object["aiPromptTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.AiPromptTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiPromptTokens24h': %w", err)
+		}
+		delete(object, "aiPromptTokens24h")
+	}
+
+	if raw, found := object["aiReadyProviderCount"]; found {
+		err = json.Unmarshal(raw, &a.AiReadyProviderCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiReadyProviderCount': %w", err)
+		}
+		delete(object, "aiReadyProviderCount")
+	}
+
+	if raw, found := object["aiTotalTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.AiTotalTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiTotalTokens24h': %w", err)
+		}
+		delete(object, "aiTotalTokens24h")
+	}
+
+	if raw, found := object["aiTotalTokensTotal"]; found {
+		err = json.Unmarshal(raw, &a.AiTotalTokensTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'aiTotalTokensTotal': %w", err)
+		}
+		delete(object, "aiTotalTokensTotal")
+	}
+
+	if raw, found := object["ingestedMessages24h"]; found {
+		err = json.Unmarshal(raw, &a.IngestedMessages24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'ingestedMessages24h': %w", err)
+		}
+		delete(object, "ingestedMessages24h")
+	}
+
+	if raw, found := object["ingestedUnfilteredCount"]; found {
+		err = json.Unmarshal(raw, &a.IngestedUnfilteredCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'ingestedUnfilteredCount': %w", err)
+		}
+		delete(object, "ingestedUnfilteredCount")
+	}
+
+	if raw, found := object["marketActiveWatchlistCount"]; found {
+		err = json.Unmarshal(raw, &a.MarketActiveWatchlistCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'marketActiveWatchlistCount': %w", err)
+		}
+		delete(object, "marketActiveWatchlistCount")
+	}
+
+	if raw, found := object["marketSymbolCount"]; found {
+		err = json.Unmarshal(raw, &a.MarketSymbolCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'marketSymbolCount': %w", err)
+		}
+		delete(object, "marketSymbolCount")
+	}
+
+	if raw, found := object["marketWatchlistCount"]; found {
+		err = json.Unmarshal(raw, &a.MarketWatchlistCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'marketWatchlistCount': %w", err)
+		}
+		delete(object, "marketWatchlistCount")
+	}
+
+	if raw, found := object["meetingQueueWaitAvgSeconds24h"]; found {
+		err = json.Unmarshal(raw, &a.MeetingQueueWaitAvgSeconds24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingQueueWaitAvgSeconds24h': %w", err)
+		}
+		delete(object, "meetingQueueWaitAvgSeconds24h")
+	}
+
+	if raw, found := object["meetingRunAvgSeconds24h"]; found {
+		err = json.Unmarshal(raw, &a.MeetingRunAvgSeconds24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingRunAvgSeconds24h': %w", err)
+		}
+		delete(object, "meetingRunAvgSeconds24h")
+	}
+
+	if raw, found := object["meetingRunP95Seconds24h"]; found {
+		err = json.Unmarshal(raw, &a.MeetingRunP95Seconds24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingRunP95Seconds24h': %w", err)
+		}
+		delete(object, "meetingRunP95Seconds24h")
+	}
+
+	if raw, found := object["meetingsFailed24h"]; found {
+		err = json.Unmarshal(raw, &a.MeetingsFailed24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingsFailed24h': %w", err)
+		}
+		delete(object, "meetingsFailed24h")
+	}
+
+	if raw, found := object["meetingsRunning"]; found {
+		err = json.Unmarshal(raw, &a.MeetingsRunning)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingsRunning': %w", err)
+		}
+		delete(object, "meetingsRunning")
+	}
+
+	if raw, found := object["meetingsTotal"]; found {
+		err = json.Unmarshal(raw, &a.MeetingsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingsTotal': %w", err)
+		}
+		delete(object, "meetingsTotal")
+	}
+
+	if raw, found := object["messageSubscriptionEnabledCount"]; found {
+		err = json.Unmarshal(raw, &a.MessageSubscriptionEnabledCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'messageSubscriptionEnabledCount': %w", err)
+		}
+		delete(object, "messageSubscriptionEnabledCount")
+	}
+
+	if raw, found := object["newsFilterReady"]; found {
+		err = json.Unmarshal(raw, &a.NewsFilterReady)
+		if err != nil {
+			return fmt.Errorf("error reading 'newsFilterReady': %w", err)
+		}
+		delete(object, "newsFilterReady")
+	}
+
+	if raw, found := object["paperAccountCount"]; found {
+		err = json.Unmarshal(raw, &a.PaperAccountCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperAccountCount': %w", err)
+		}
+		delete(object, "paperAccountCount")
+	}
+
+	if raw, found := object["paperActiveAccountCount"]; found {
+		err = json.Unmarshal(raw, &a.PaperActiveAccountCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperActiveAccountCount': %w", err)
+		}
+		delete(object, "paperActiveAccountCount")
+	}
+
+	if raw, found := object["paperIsTradingTime"]; found {
+		err = json.Unmarshal(raw, &a.PaperIsTradingTime)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperIsTradingTime': %w", err)
+		}
+		delete(object, "paperIsTradingTime")
+	}
+
+	if raw, found := object["paperPendingOrderCount"]; found {
+		err = json.Unmarshal(raw, &a.PaperPendingOrderCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperPendingOrderCount': %w", err)
+		}
+		delete(object, "paperPendingOrderCount")
+	}
+
+	if raw, found := object["paperTotalEquity"]; found {
+		err = json.Unmarshal(raw, &a.PaperTotalEquity)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperTotalEquity': %w", err)
+		}
+		delete(object, "paperTotalEquity")
+	}
+
+	if raw, found := object["platformAdapterEnabledCount"]; found {
+		err = json.Unmarshal(raw, &a.PlatformAdapterEnabledCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'platformAdapterEnabledCount': %w", err)
+		}
+		delete(object, "platformAdapterEnabledCount")
+	}
+
+	if raw, found := object["wakeActiveCount"]; found {
+		err = json.Unmarshal(raw, &a.WakeActiveCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'wakeActiveCount': %w", err)
+		}
+		delete(object, "wakeActiveCount")
+	}
+
+	if raw, found := object["wakeOverdueCount"]; found {
+		err = json.Unmarshal(raw, &a.WakeOverdueCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'wakeOverdueCount': %w", err)
+		}
+		delete(object, "wakeOverdueCount")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for DashboardBusinessMetrics to handle AdditionalProperties
+func (a DashboardBusinessMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AiCompletionTokens24h != nil {
+		object["aiCompletionTokens24h"], err = json.Marshal(a.AiCompletionTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'aiCompletionTokens24h': %w", err)
+		}
+	}
+
+	object["aiCostAmount24h"], err = json.Marshal(a.AiCostAmount24h)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'aiCostAmount24h': %w", err)
+	}
+
+	if a.AiCostBudgetStatus != nil {
+		object["aiCostBudgetStatus"], err = json.Marshal(a.AiCostBudgetStatus)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'aiCostBudgetStatus': %w", err)
+		}
+	}
+
+	object["aiEnabledProviderCount"], err = json.Marshal(a.AiEnabledProviderCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'aiEnabledProviderCount': %w", err)
+	}
+
+	if a.AiModelCalls24h != nil {
+		object["aiModelCalls24h"], err = json.Marshal(a.AiModelCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'aiModelCalls24h': %w", err)
+		}
+	}
+
+	if a.AiPromptTokens24h != nil {
+		object["aiPromptTokens24h"], err = json.Marshal(a.AiPromptTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'aiPromptTokens24h': %w", err)
+		}
+	}
+
+	object["aiReadyProviderCount"], err = json.Marshal(a.AiReadyProviderCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'aiReadyProviderCount': %w", err)
+	}
+
+	if a.AiTotalTokens24h != nil {
+		object["aiTotalTokens24h"], err = json.Marshal(a.AiTotalTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'aiTotalTokens24h': %w", err)
+		}
+	}
+
+	if a.AiTotalTokensTotal != nil {
+		object["aiTotalTokensTotal"], err = json.Marshal(a.AiTotalTokensTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'aiTotalTokensTotal': %w", err)
+		}
+	}
+
+	object["ingestedMessages24h"], err = json.Marshal(a.IngestedMessages24h)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'ingestedMessages24h': %w", err)
+	}
+
+	object["ingestedUnfilteredCount"], err = json.Marshal(a.IngestedUnfilteredCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'ingestedUnfilteredCount': %w", err)
+	}
+
+	object["marketActiveWatchlistCount"], err = json.Marshal(a.MarketActiveWatchlistCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'marketActiveWatchlistCount': %w", err)
+	}
+
+	object["marketSymbolCount"], err = json.Marshal(a.MarketSymbolCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'marketSymbolCount': %w", err)
+	}
+
+	object["marketWatchlistCount"], err = json.Marshal(a.MarketWatchlistCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'marketWatchlistCount': %w", err)
+	}
+
+	if a.MeetingQueueWaitAvgSeconds24h != nil {
+		object["meetingQueueWaitAvgSeconds24h"], err = json.Marshal(a.MeetingQueueWaitAvgSeconds24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'meetingQueueWaitAvgSeconds24h': %w", err)
+		}
+	}
+
+	if a.MeetingRunAvgSeconds24h != nil {
+		object["meetingRunAvgSeconds24h"], err = json.Marshal(a.MeetingRunAvgSeconds24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'meetingRunAvgSeconds24h': %w", err)
+		}
+	}
+
+	if a.MeetingRunP95Seconds24h != nil {
+		object["meetingRunP95Seconds24h"], err = json.Marshal(a.MeetingRunP95Seconds24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'meetingRunP95Seconds24h': %w", err)
+		}
+	}
+
+	object["meetingsFailed24h"], err = json.Marshal(a.MeetingsFailed24h)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'meetingsFailed24h': %w", err)
+	}
+
+	object["meetingsRunning"], err = json.Marshal(a.MeetingsRunning)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'meetingsRunning': %w", err)
+	}
+
+	object["meetingsTotal"], err = json.Marshal(a.MeetingsTotal)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'meetingsTotal': %w", err)
+	}
+
+	object["messageSubscriptionEnabledCount"], err = json.Marshal(a.MessageSubscriptionEnabledCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'messageSubscriptionEnabledCount': %w", err)
+	}
+
+	object["newsFilterReady"], err = json.Marshal(a.NewsFilterReady)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'newsFilterReady': %w", err)
+	}
+
+	object["paperAccountCount"], err = json.Marshal(a.PaperAccountCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'paperAccountCount': %w", err)
+	}
+
+	object["paperActiveAccountCount"], err = json.Marshal(a.PaperActiveAccountCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'paperActiveAccountCount': %w", err)
+	}
+
+	object["paperIsTradingTime"], err = json.Marshal(a.PaperIsTradingTime)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'paperIsTradingTime': %w", err)
+	}
+
+	object["paperPendingOrderCount"], err = json.Marshal(a.PaperPendingOrderCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'paperPendingOrderCount': %w", err)
+	}
+
+	object["paperTotalEquity"], err = json.Marshal(a.PaperTotalEquity)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'paperTotalEquity': %w", err)
+	}
+
+	object["platformAdapterEnabledCount"], err = json.Marshal(a.PlatformAdapterEnabledCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'platformAdapterEnabledCount': %w", err)
+	}
+
+	object["wakeActiveCount"], err = json.Marshal(a.WakeActiveCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'wakeActiveCount': %w", err)
+	}
+
+	object["wakeOverdueCount"], err = json.Marshal(a.WakeOverdueCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'wakeOverdueCount': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for DashboardRecentIngestedMessage. Returns the specified
+// element and whether it was found
+func (a DashboardRecentIngestedMessage) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for DashboardRecentIngestedMessage
+func (a *DashboardRecentIngestedMessage) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for DashboardRecentIngestedMessage to handle AdditionalProperties
+func (a *DashboardRecentIngestedMessage) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["filterDecision"]; found {
+		err = json.Unmarshal(raw, &a.FilterDecision)
+		if err != nil {
+			return fmt.Errorf("error reading 'filterDecision': %w", err)
+		}
+		delete(object, "filterDecision")
+	}
+
+	if raw, found := object["filterStatus"]; found {
+		err = json.Unmarshal(raw, &a.FilterStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'filterStatus': %w", err)
+		}
+		delete(object, "filterStatus")
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["messageTime"]; found {
+		err = json.Unmarshal(raw, &a.MessageTime)
+		if err != nil {
+			return fmt.Errorf("error reading 'messageTime': %w", err)
+		}
+		delete(object, "messageTime")
+	}
+
+	if raw, found := object["sourceRef"]; found {
+		err = json.Unmarshal(raw, &a.SourceRef)
+		if err != nil {
+			return fmt.Errorf("error reading 'sourceRef': %w", err)
+		}
+		delete(object, "sourceRef")
+	}
+
+	if raw, found := object["subscriptionId"]; found {
+		err = json.Unmarshal(raw, &a.SubscriptionId)
+		if err != nil {
+			return fmt.Errorf("error reading 'subscriptionId': %w", err)
+		}
+		delete(object, "subscriptionId")
+	}
+
+	if raw, found := object["subscriptionTitle"]; found {
+		err = json.Unmarshal(raw, &a.SubscriptionTitle)
+		if err != nil {
+			return fmt.Errorf("error reading 'subscriptionTitle': %w", err)
+		}
+		delete(object, "subscriptionTitle")
+	}
+
+	if raw, found := object["text"]; found {
+		err = json.Unmarshal(raw, &a.Text)
+		if err != nil {
+			return fmt.Errorf("error reading 'text': %w", err)
+		}
+		delete(object, "text")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for DashboardRecentIngestedMessage to handle AdditionalProperties
+func (a DashboardRecentIngestedMessage) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.FilterDecision != nil {
+		object["filterDecision"], err = json.Marshal(a.FilterDecision)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filterDecision': %w", err)
+		}
+	}
+
+	if a.FilterStatus != nil {
+		object["filterStatus"], err = json.Marshal(a.FilterStatus)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filterStatus': %w", err)
+		}
+	}
+
+	object["id"], err = json.Marshal(a.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	object["messageTime"], err = json.Marshal(a.MessageTime)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'messageTime': %w", err)
+	}
+
+	if a.SourceRef != nil {
+		object["sourceRef"], err = json.Marshal(a.SourceRef)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sourceRef': %w", err)
+		}
+	}
+
+	object["subscriptionId"], err = json.Marshal(a.SubscriptionId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'subscriptionId': %w", err)
+	}
+
+	if a.SubscriptionTitle != nil {
+		object["subscriptionTitle"], err = json.Marshal(a.SubscriptionTitle)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'subscriptionTitle': %w", err)
+		}
+	}
+
+	object["text"], err = json.Marshal(a.Text)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'text': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for DashboardRecentMeeting. Returns the specified
+// element and whether it was found
+func (a DashboardRecentMeeting) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for DashboardRecentMeeting
+func (a *DashboardRecentMeeting) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for DashboardRecentMeeting to handle AdditionalProperties
+func (a *DashboardRecentMeeting) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["autoRequeueCount"]; found {
+		err = json.Unmarshal(raw, &a.AutoRequeueCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'autoRequeueCount': %w", err)
+		}
+		delete(object, "autoRequeueCount")
+	}
+
+	if raw, found := object["completedAt"]; found {
+		err = json.Unmarshal(raw, &a.CompletedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'completedAt': %w", err)
+		}
+		delete(object, "completedAt")
+	}
+
+	if raw, found := object["conclusion"]; found {
+		err = json.Unmarshal(raw, &a.Conclusion)
+		if err != nil {
+			return fmt.Errorf("error reading 'conclusion': %w", err)
+		}
+		delete(object, "conclusion")
+	}
+
+	if raw, found := object["createdAt"]; found {
+		err = json.Unmarshal(raw, &a.CreatedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'createdAt': %w", err)
+		}
+		delete(object, "createdAt")
+	}
+
+	if raw, found := object["heartbeatAt"]; found {
+		err = json.Unmarshal(raw, &a.HeartbeatAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'heartbeatAt': %w", err)
+		}
+		delete(object, "heartbeatAt")
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["recapStatus"]; found {
+		err = json.Unmarshal(raw, &a.RecapStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'recapStatus': %w", err)
+		}
+		delete(object, "recapStatus")
+	}
+
+	if raw, found := object["recapUpdatedAt"]; found {
+		err = json.Unmarshal(raw, &a.RecapUpdatedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'recapUpdatedAt': %w", err)
+		}
+		delete(object, "recapUpdatedAt")
+	}
+
+	if raw, found := object["runAttempt"]; found {
+		err = json.Unmarshal(raw, &a.RunAttempt)
+		if err != nil {
+			return fmt.Errorf("error reading 'runAttempt': %w", err)
+		}
+		delete(object, "runAttempt")
+	}
+
+	if raw, found := object["startedAt"]; found {
+		err = json.Unmarshal(raw, &a.StartedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'startedAt': %w", err)
+		}
+		delete(object, "startedAt")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["summary"]; found {
+		err = json.Unmarshal(raw, &a.Summary)
+		if err != nil {
+			return fmt.Errorf("error reading 'summary': %w", err)
+		}
+		delete(object, "summary")
+	}
+
+	if raw, found := object["tags"]; found {
+		err = json.Unmarshal(raw, &a.Tags)
+		if err != nil {
+			return fmt.Errorf("error reading 'tags': %w", err)
+		}
+		delete(object, "tags")
+	}
+
+	if raw, found := object["topic"]; found {
+		err = json.Unmarshal(raw, &a.Topic)
+		if err != nil {
+			return fmt.Errorf("error reading 'topic': %w", err)
+		}
+		delete(object, "topic")
+	}
+
+	if raw, found := object["triggerSource"]; found {
+		err = json.Unmarshal(raw, &a.TriggerSource)
+		if err != nil {
+			return fmt.Errorf("error reading 'triggerSource': %w", err)
+		}
+		delete(object, "triggerSource")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for DashboardRecentMeeting to handle AdditionalProperties
+func (a DashboardRecentMeeting) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AutoRequeueCount != nil {
+		object["autoRequeueCount"], err = json.Marshal(a.AutoRequeueCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'autoRequeueCount': %w", err)
+		}
+	}
+
+	if a.CompletedAt != nil {
+		object["completedAt"], err = json.Marshal(a.CompletedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completedAt': %w", err)
+		}
+	}
+
+	if a.Conclusion != nil {
+		object["conclusion"], err = json.Marshal(a.Conclusion)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'conclusion': %w", err)
+		}
+	}
+
+	object["createdAt"], err = json.Marshal(a.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'createdAt': %w", err)
+	}
+
+	if a.HeartbeatAt != nil {
+		object["heartbeatAt"], err = json.Marshal(a.HeartbeatAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'heartbeatAt': %w", err)
+		}
+	}
+
+	object["id"], err = json.Marshal(a.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	if a.RecapStatus != nil {
+		object["recapStatus"], err = json.Marshal(a.RecapStatus)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'recapStatus': %w", err)
+		}
+	}
+
+	if a.RecapUpdatedAt != nil {
+		object["recapUpdatedAt"], err = json.Marshal(a.RecapUpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'recapUpdatedAt': %w", err)
+		}
+	}
+
+	if a.RunAttempt != nil {
+		object["runAttempt"], err = json.Marshal(a.RunAttempt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'runAttempt': %w", err)
+		}
+	}
+
+	if a.StartedAt != nil {
+		object["startedAt"], err = json.Marshal(a.StartedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'startedAt': %w", err)
+		}
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	if a.Summary != nil {
+		object["summary"], err = json.Marshal(a.Summary)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'summary': %w", err)
+		}
+	}
+
+	if a.Tags != nil {
+		object["tags"], err = json.Marshal(a.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'tags': %w", err)
+		}
+	}
+
+	object["topic"], err = json.Marshal(a.Topic)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'topic': %w", err)
+	}
+
+	object["triggerSource"], err = json.Marshal(a.TriggerSource)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'triggerSource': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for DashboardStatusItem. Returns the specified
+// element and whether it was found
+func (a DashboardStatusItem) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for DashboardStatusItem
+func (a *DashboardStatusItem) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for DashboardStatusItem to handle AdditionalProperties
+func (a *DashboardStatusItem) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["checkedAt"]; found {
+		err = json.Unmarshal(raw, &a.CheckedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'checkedAt': %w", err)
+		}
+		delete(object, "checkedAt")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["key"]; found {
+		err = json.Unmarshal(raw, &a.Key)
+		if err != nil {
+			return fmt.Errorf("error reading 'key': %w", err)
+		}
+		delete(object, "key")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["summary"]; found {
+		err = json.Unmarshal(raw, &a.Summary)
+		if err != nil {
+			return fmt.Errorf("error reading 'summary': %w", err)
+		}
+		delete(object, "summary")
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &a.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+		delete(object, "title")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for DashboardStatusItem to handle AdditionalProperties
+func (a DashboardStatusItem) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["checkedAt"], err = json.Marshal(a.CheckedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'checkedAt': %w", err)
+	}
+
+	object["detail"], err = json.Marshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	object["key"], err = json.Marshal(a.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'key': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	object["summary"], err = json.Marshal(a.Summary)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'summary': %w", err)
+	}
+
+	object["title"], err = json.Marshal(a.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for DashboardSummary. Returns the specified
+// element and whether it was found
+func (a DashboardSummary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for DashboardSummary
+func (a *DashboardSummary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for DashboardSummary to handle AdditionalProperties
+func (a *DashboardSummary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["appEnv"]; found {
+		err = json.Unmarshal(raw, &a.AppEnv)
+		if err != nil {
+			return fmt.Errorf("error reading 'appEnv': %w", err)
+		}
+		delete(object, "appEnv")
+	}
+
+	if raw, found := object["appName"]; found {
+		err = json.Unmarshal(raw, &a.AppName)
+		if err != nil {
+			return fmt.Errorf("error reading 'appName': %w", err)
+		}
+		delete(object, "appName")
+	}
+
+	if raw, found := object["databaseBackend"]; found {
+		err = json.Unmarshal(raw, &a.DatabaseBackend)
+		if err != nil {
+			return fmt.Errorf("error reading 'databaseBackend': %w", err)
+		}
+		delete(object, "databaseBackend")
+	}
+
+	if raw, found := object["databaseTarget"]; found {
+		err = json.Unmarshal(raw, &a.DatabaseTarget)
+		if err != nil {
+			return fmt.Errorf("error reading 'databaseTarget': %w", err)
+		}
+		delete(object, "databaseTarget")
+	}
+
+	if raw, found := object["deploymentModeLabel"]; found {
+		err = json.Unmarshal(raw, &a.DeploymentModeLabel)
+		if err != nil {
+			return fmt.Errorf("error reading 'deploymentModeLabel': %w", err)
+		}
+		delete(object, "deploymentModeLabel")
+	}
+
+	if raw, found := object["meetingDispatchMode"]; found {
+		err = json.Unmarshal(raw, &a.MeetingDispatchMode)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingDispatchMode': %w", err)
+		}
+		delete(object, "meetingDispatchMode")
+	}
+
+	if raw, found := object["paperExecutionMode"]; found {
+		err = json.Unmarshal(raw, &a.PaperExecutionMode)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperExecutionMode': %w", err)
+		}
+		delete(object, "paperExecutionMode")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for DashboardSummary to handle AdditionalProperties
+func (a DashboardSummary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["appEnv"], err = json.Marshal(a.AppEnv)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'appEnv': %w", err)
+	}
+
+	object["appName"], err = json.Marshal(a.AppName)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'appName': %w", err)
+	}
+
+	object["databaseBackend"], err = json.Marshal(a.DatabaseBackend)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'databaseBackend': %w", err)
+	}
+
+	if a.DatabaseTarget != nil {
+		object["databaseTarget"], err = json.Marshal(a.DatabaseTarget)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'databaseTarget': %w", err)
+		}
+	}
+
+	object["deploymentModeLabel"], err = json.Marshal(a.DeploymentModeLabel)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'deploymentModeLabel': %w", err)
+	}
+
+	object["meetingDispatchMode"], err = json.Marshal(a.MeetingDispatchMode)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'meetingDispatchMode': %w", err)
+	}
+
+	object["paperExecutionMode"], err = json.Marshal(a.PaperExecutionMode)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'paperExecutionMode': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for DashboardSystemStatus. Returns the specified
+// element and whether it was found
+func (a DashboardSystemStatus) Get(fieldName string) (value DashboardStatusItem, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for DashboardSystemStatus
+func (a *DashboardSystemStatus) Set(fieldName string, value DashboardStatusItem) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]DashboardStatusItem)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for DashboardSystemStatus to handle AdditionalProperties
+func (a *DashboardSystemStatus) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["database"]; found {
+		err = json.Unmarshal(raw, &a.Database)
+		if err != nil {
+			return fmt.Errorf("error reading 'database': %w", err)
+		}
+		delete(object, "database")
+	}
+
+	if raw, found := object["messageSubscriptionListener"]; found {
+		err = json.Unmarshal(raw, &a.MessageSubscriptionListener)
+		if err != nil {
+			return fmt.Errorf("error reading 'messageSubscriptionListener': %w", err)
+		}
+		delete(object, "messageSubscriptionListener")
+	}
+
+	if raw, found := object["paperEngine"]; found {
+		err = json.Unmarshal(raw, &a.PaperEngine)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperEngine': %w", err)
+		}
+		delete(object, "paperEngine")
+	}
+
+	if raw, found := object["platformAdapter"]; found {
+		err = json.Unmarshal(raw, &a.PlatformAdapter)
+		if err != nil {
+			return fmt.Errorf("error reading 'platformAdapter': %w", err)
+		}
+		delete(object, "platformAdapter")
+	}
+
+	if raw, found := object["redis"]; found {
+		err = json.Unmarshal(raw, &a.Redis)
+		if err != nil {
+			return fmt.Errorf("error reading 'redis': %w", err)
+		}
+		delete(object, "redis")
+	}
+
+	if raw, found := object["scheduler"]; found {
+		err = json.Unmarshal(raw, &a.Scheduler)
+		if err != nil {
+			return fmt.Errorf("error reading 'scheduler': %w", err)
+		}
+		delete(object, "scheduler")
+	}
+
+	if raw, found := object["worker"]; found {
+		err = json.Unmarshal(raw, &a.Worker)
+		if err != nil {
+			return fmt.Errorf("error reading 'worker': %w", err)
+		}
+		delete(object, "worker")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]DashboardStatusItem)
+		for fieldName, fieldBuf := range object {
+			var fieldVal DashboardStatusItem
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for DashboardSystemStatus to handle AdditionalProperties
+func (a DashboardSystemStatus) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["database"], err = json.Marshal(a.Database)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'database': %w", err)
+	}
+
+	object["messageSubscriptionListener"], err = json.Marshal(a.MessageSubscriptionListener)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'messageSubscriptionListener': %w", err)
+	}
+
+	object["paperEngine"], err = json.Marshal(a.PaperEngine)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'paperEngine': %w", err)
+	}
+
+	object["platformAdapter"], err = json.Marshal(a.PlatformAdapter)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'platformAdapter': %w", err)
+	}
+
+	object["redis"], err = json.Marshal(a.Redis)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'redis': %w", err)
+	}
+
+	object["scheduler"], err = json.Marshal(a.Scheduler)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'scheduler': %w", err)
+	}
+
+	object["worker"], err = json.Marshal(a.Worker)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'worker': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
 
 // Getter for additional properties for LogFileCollectionDocument_Meta. Returns the specified
 // element and whether it was found
@@ -4175,6 +10451,3785 @@ func (a LogFileCollectionDocument_Meta) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for OpsAICostRateCoverage. Returns the specified
+// element and whether it was found
+func (a OpsAICostRateCoverage) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsAICostRateCoverage
+func (a *OpsAICostRateCoverage) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsAICostRateCoverage to handle AdditionalProperties
+func (a *OpsAICostRateCoverage) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["coveragePct"]; found {
+		err = json.Unmarshal(raw, &a.CoveragePct)
+		if err != nil {
+			return fmt.Errorf("error reading 'coveragePct': %w", err)
+		}
+		delete(object, "coveragePct")
+	}
+
+	if raw, found := object["coveredModelCount"]; found {
+		err = json.Unmarshal(raw, &a.CoveredModelCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'coveredModelCount': %w", err)
+		}
+		delete(object, "coveredModelCount")
+	}
+
+	if raw, found := object["currency"]; found {
+		err = json.Unmarshal(raw, &a.Currency)
+		if err != nil {
+			return fmt.Errorf("error reading 'currency': %w", err)
+		}
+		delete(object, "currency")
+	}
+
+	if raw, found := object["missingModelCount"]; found {
+		err = json.Unmarshal(raw, &a.MissingModelCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'missingModelCount': %w", err)
+		}
+		delete(object, "missingModelCount")
+	}
+
+	if raw, found := object["missingModels"]; found {
+		err = json.Unmarshal(raw, &a.MissingModels)
+		if err != nil {
+			return fmt.Errorf("error reading 'missingModels': %w", err)
+		}
+		delete(object, "missingModels")
+	}
+
+	if raw, found := object["modelCount"]; found {
+		err = json.Unmarshal(raw, &a.ModelCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'modelCount': %w", err)
+		}
+		delete(object, "modelCount")
+	}
+
+	if raw, found := object["ratesConfigured"]; found {
+		err = json.Unmarshal(raw, &a.RatesConfigured)
+		if err != nil {
+			return fmt.Errorf("error reading 'ratesConfigured': %w", err)
+		}
+		delete(object, "ratesConfigured")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsAICostRateCoverage to handle AdditionalProperties
+func (a OpsAICostRateCoverage) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.CoveragePct != nil {
+		object["coveragePct"], err = json.Marshal(a.CoveragePct)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'coveragePct': %w", err)
+		}
+	}
+
+	if a.CoveredModelCount != nil {
+		object["coveredModelCount"], err = json.Marshal(a.CoveredModelCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'coveredModelCount': %w", err)
+		}
+	}
+
+	if a.Currency != nil {
+		object["currency"], err = json.Marshal(a.Currency)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'currency': %w", err)
+		}
+	}
+
+	if a.MissingModelCount != nil {
+		object["missingModelCount"], err = json.Marshal(a.MissingModelCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'missingModelCount': %w", err)
+		}
+	}
+
+	if a.MissingModels != nil {
+		object["missingModels"], err = json.Marshal(a.MissingModels)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'missingModels': %w", err)
+		}
+	}
+
+	if a.ModelCount != nil {
+		object["modelCount"], err = json.Marshal(a.ModelCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'modelCount': %w", err)
+		}
+	}
+
+	if a.RatesConfigured != nil {
+		object["ratesConfigured"], err = json.Marshal(a.RatesConfigured)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'ratesConfigured': %w", err)
+		}
+	}
+
+	if a.Status != nil {
+		object["status"], err = json.Marshal(a.Status)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'status': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsAICostRateMissingModel. Returns the specified
+// element and whether it was found
+func (a OpsAICostRateMissingModel) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsAICostRateMissingModel
+func (a *OpsAICostRateMissingModel) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsAICostRateMissingModel to handle AdditionalProperties
+func (a *OpsAICostRateMissingModel) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["model"]; found {
+		err = json.Unmarshal(raw, &a.Model)
+		if err != nil {
+			return fmt.Errorf("error reading 'model': %w", err)
+		}
+		delete(object, "model")
+	}
+
+	if raw, found := object["providerId"]; found {
+		err = json.Unmarshal(raw, &a.ProviderId)
+		if err != nil {
+			return fmt.Errorf("error reading 'providerId': %w", err)
+		}
+		delete(object, "providerId")
+	}
+
+	if raw, found := object["providerName"]; found {
+		err = json.Unmarshal(raw, &a.ProviderName)
+		if err != nil {
+			return fmt.Errorf("error reading 'providerName': %w", err)
+		}
+		delete(object, "providerName")
+	}
+
+	if raw, found := object["source"]; found {
+		err = json.Unmarshal(raw, &a.Source)
+		if err != nil {
+			return fmt.Errorf("error reading 'source': %w", err)
+		}
+		delete(object, "source")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsAICostRateMissingModel to handle AdditionalProperties
+func (a OpsAICostRateMissingModel) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Model != nil {
+		object["model"], err = json.Marshal(a.Model)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'model': %w", err)
+		}
+	}
+
+	if a.ProviderId != nil {
+		object["providerId"], err = json.Marshal(a.ProviderId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'providerId': %w", err)
+		}
+	}
+
+	if a.ProviderName != nil {
+		object["providerName"], err = json.Marshal(a.ProviderName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'providerName': %w", err)
+		}
+	}
+
+	if a.Source != nil {
+		object["source"], err = json.Marshal(a.Source)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'source': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsAIProviderDiagnostics. Returns the specified
+// element and whether it was found
+func (a OpsAIProviderDiagnostics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsAIProviderDiagnostics
+func (a *OpsAIProviderDiagnostics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsAIProviderDiagnostics to handle AdditionalProperties
+func (a *OpsAIProviderDiagnostics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["defaultModel"]; found {
+		err = json.Unmarshal(raw, &a.DefaultModel)
+		if err != nil {
+			return fmt.Errorf("error reading 'defaultModel': %w", err)
+		}
+		delete(object, "defaultModel")
+	}
+
+	if raw, found := object["enabled"]; found {
+		err = json.Unmarshal(raw, &a.Enabled)
+		if err != nil {
+			return fmt.Errorf("error reading 'enabled': %w", err)
+		}
+		delete(object, "enabled")
+	}
+
+	if raw, found := object["enabledModelCount"]; found {
+		err = json.Unmarshal(raw, &a.EnabledModelCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'enabledModelCount': %w", err)
+		}
+		delete(object, "enabledModelCount")
+	}
+
+	if raw, found := object["hasApiKey"]; found {
+		err = json.Unmarshal(raw, &a.HasApiKey)
+		if err != nil {
+			return fmt.Errorf("error reading 'hasApiKey': %w", err)
+		}
+		delete(object, "hasApiKey")
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["modelCount"]; found {
+		err = json.Unmarshal(raw, &a.ModelCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'modelCount': %w", err)
+		}
+		delete(object, "modelCount")
+	}
+
+	if raw, found := object["name"]; found {
+		err = json.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return fmt.Errorf("error reading 'name': %w", err)
+		}
+		delete(object, "name")
+	}
+
+	if raw, found := object["ready"]; found {
+		err = json.Unmarshal(raw, &a.Ready)
+		if err != nil {
+			return fmt.Errorf("error reading 'ready': %w", err)
+		}
+		delete(object, "ready")
+	}
+
+	if raw, found := object["roleCount"]; found {
+		err = json.Unmarshal(raw, &a.RoleCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'roleCount': %w", err)
+		}
+		delete(object, "roleCount")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["summary"]; found {
+		err = json.Unmarshal(raw, &a.Summary)
+		if err != nil {
+			return fmt.Errorf("error reading 'summary': %w", err)
+		}
+		delete(object, "summary")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsAIProviderDiagnostics to handle AdditionalProperties
+func (a OpsAIProviderDiagnostics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.DefaultModel != nil {
+		object["defaultModel"], err = json.Marshal(a.DefaultModel)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'defaultModel': %w", err)
+		}
+	}
+
+	if a.Enabled != nil {
+		object["enabled"], err = json.Marshal(a.Enabled)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'enabled': %w", err)
+		}
+	}
+
+	if a.EnabledModelCount != nil {
+		object["enabledModelCount"], err = json.Marshal(a.EnabledModelCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'enabledModelCount': %w", err)
+		}
+	}
+
+	if a.HasApiKey != nil {
+		object["hasApiKey"], err = json.Marshal(a.HasApiKey)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'hasApiKey': %w", err)
+		}
+	}
+
+	if a.Id != nil {
+		object["id"], err = json.Marshal(a.Id)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'id': %w", err)
+		}
+	}
+
+	if a.ModelCount != nil {
+		object["modelCount"], err = json.Marshal(a.ModelCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'modelCount': %w", err)
+		}
+	}
+
+	if a.Name != nil {
+		object["name"], err = json.Marshal(a.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'name': %w", err)
+		}
+	}
+
+	if a.Ready != nil {
+		object["ready"], err = json.Marshal(a.Ready)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'ready': %w", err)
+		}
+	}
+
+	if a.RoleCount != nil {
+		object["roleCount"], err = json.Marshal(a.RoleCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'roleCount': %w", err)
+		}
+	}
+
+	if a.Status != nil {
+		object["status"], err = json.Marshal(a.Status)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'status': %w", err)
+		}
+	}
+
+	if a.Summary != nil {
+		object["summary"], err = json.Marshal(a.Summary)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'summary': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsAIProviderHealth. Returns the specified
+// element and whether it was found
+func (a OpsAIProviderHealth) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsAIProviderHealth
+func (a *OpsAIProviderHealth) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsAIProviderHealth to handle AdditionalProperties
+func (a *OpsAIProviderHealth) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["enabledProviders"]; found {
+		err = json.Unmarshal(raw, &a.EnabledProviders)
+		if err != nil {
+			return fmt.Errorf("error reading 'enabledProviders': %w", err)
+		}
+		delete(object, "enabledProviders")
+	}
+
+	if raw, found := object["newsFilterReady"]; found {
+		err = json.Unmarshal(raw, &a.NewsFilterReady)
+		if err != nil {
+			return fmt.Errorf("error reading 'newsFilterReady': %w", err)
+		}
+		delete(object, "newsFilterReady")
+	}
+
+	if raw, found := object["providers"]; found {
+		err = json.Unmarshal(raw, &a.Providers)
+		if err != nil {
+			return fmt.Errorf("error reading 'providers': %w", err)
+		}
+		delete(object, "providers")
+	}
+
+	if raw, found := object["readyProviders"]; found {
+		err = json.Unmarshal(raw, &a.ReadyProviders)
+		if err != nil {
+			return fmt.Errorf("error reading 'readyProviders': %w", err)
+		}
+		delete(object, "readyProviders")
+	}
+
+	if raw, found := object["usage"]; found {
+		err = json.Unmarshal(raw, &a.Usage)
+		if err != nil {
+			return fmt.Errorf("error reading 'usage': %w", err)
+		}
+		delete(object, "usage")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsAIProviderHealth to handle AdditionalProperties
+func (a OpsAIProviderHealth) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.EnabledProviders != nil {
+		object["enabledProviders"], err = json.Marshal(a.EnabledProviders)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'enabledProviders': %w", err)
+		}
+	}
+
+	if a.NewsFilterReady != nil {
+		object["newsFilterReady"], err = json.Marshal(a.NewsFilterReady)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'newsFilterReady': %w", err)
+		}
+	}
+
+	if a.Providers != nil {
+		object["providers"], err = json.Marshal(a.Providers)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'providers': %w", err)
+		}
+	}
+
+	if a.ReadyProviders != nil {
+		object["readyProviders"], err = json.Marshal(a.ReadyProviders)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'readyProviders': %w", err)
+		}
+	}
+
+	if a.Usage != nil {
+		object["usage"], err = json.Marshal(a.Usage)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'usage': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsAIUsageDiagnostics. Returns the specified
+// element and whether it was found
+func (a OpsAIUsageDiagnostics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsAIUsageDiagnostics
+func (a *OpsAIUsageDiagnostics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsAIUsageDiagnostics to handle AdditionalProperties
+func (a *OpsAIUsageDiagnostics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["byProviderModel"]; found {
+		err = json.Unmarshal(raw, &a.ByProviderModel)
+		if err != nil {
+			return fmt.Errorf("error reading 'byProviderModel': %w", err)
+		}
+		delete(object, "byProviderModel")
+	}
+
+	if raw, found := object["completionTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.CompletionTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'completionTokens24h': %w", err)
+		}
+		delete(object, "completionTokens24h")
+	}
+
+	if raw, found := object["completionTokensTotal"]; found {
+		err = json.Unmarshal(raw, &a.CompletionTokensTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'completionTokensTotal': %w", err)
+		}
+		delete(object, "completionTokensTotal")
+	}
+
+	if raw, found := object["costAmount24h"]; found {
+		err = json.Unmarshal(raw, &a.CostAmount24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'costAmount24h': %w", err)
+		}
+		delete(object, "costAmount24h")
+	}
+
+	if raw, found := object["costAmountSource"]; found {
+		err = json.Unmarshal(raw, &a.CostAmountSource)
+		if err != nil {
+			return fmt.Errorf("error reading 'costAmountSource': %w", err)
+		}
+		delete(object, "costAmountSource")
+	}
+
+	if raw, found := object["costAmountTotal"]; found {
+		err = json.Unmarshal(raw, &a.CostAmountTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'costAmountTotal': %w", err)
+		}
+		delete(object, "costAmountTotal")
+	}
+
+	if raw, found := object["costBudgetAmount"]; found {
+		err = json.Unmarshal(raw, &a.CostBudgetAmount)
+		if err != nil {
+			return fmt.Errorf("error reading 'costBudgetAmount': %w", err)
+		}
+		delete(object, "costBudgetAmount")
+	}
+
+	if raw, found := object["costBudgetStatus"]; found {
+		err = json.Unmarshal(raw, &a.CostBudgetStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'costBudgetStatus': %w", err)
+		}
+		delete(object, "costBudgetStatus")
+	}
+
+	if raw, found := object["costBudgetUsedPct"]; found {
+		err = json.Unmarshal(raw, &a.CostBudgetUsedPct)
+		if err != nil {
+			return fmt.Errorf("error reading 'costBudgetUsedPct': %w", err)
+		}
+		delete(object, "costBudgetUsedPct")
+	}
+
+	if raw, found := object["costCurrency"]; found {
+		err = json.Unmarshal(raw, &a.CostCurrency)
+		if err != nil {
+			return fmt.Errorf("error reading 'costCurrency': %w", err)
+		}
+		delete(object, "costCurrency")
+	}
+
+	if raw, found := object["costEstimatedCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.CostEstimatedCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'costEstimatedCalls24h': %w", err)
+		}
+		delete(object, "costEstimatedCalls24h")
+	}
+
+	if raw, found := object["costEstimatedCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.CostEstimatedCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'costEstimatedCallsTotal': %w", err)
+		}
+		delete(object, "costEstimatedCallsTotal")
+	}
+
+	if raw, found := object["costMissingCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.CostMissingCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'costMissingCalls24h': %w", err)
+		}
+		delete(object, "costMissingCalls24h")
+	}
+
+	if raw, found := object["costMissingCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.CostMissingCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'costMissingCallsTotal': %w", err)
+		}
+		delete(object, "costMissingCallsTotal")
+	}
+
+	if raw, found := object["costRateCoverage"]; found {
+		err = json.Unmarshal(raw, &a.CostRateCoverage)
+		if err != nil {
+			return fmt.Errorf("error reading 'costRateCoverage': %w", err)
+		}
+		delete(object, "costRateCoverage")
+	}
+
+	if raw, found := object["costRatesConfigured"]; found {
+		err = json.Unmarshal(raw, &a.CostRatesConfigured)
+		if err != nil {
+			return fmt.Errorf("error reading 'costRatesConfigured': %w", err)
+		}
+		delete(object, "costRatesConfigured")
+	}
+
+	if raw, found := object["latencyAvgMs24h"]; found {
+		err = json.Unmarshal(raw, &a.LatencyAvgMs24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyAvgMs24h': %w", err)
+		}
+		delete(object, "latencyAvgMs24h")
+	}
+
+	if raw, found := object["latencyAvgMsTotal"]; found {
+		err = json.Unmarshal(raw, &a.LatencyAvgMsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyAvgMsTotal': %w", err)
+		}
+		delete(object, "latencyAvgMsTotal")
+	}
+
+	if raw, found := object["latencyObservedCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.LatencyObservedCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyObservedCalls24h': %w", err)
+		}
+		delete(object, "latencyObservedCalls24h")
+	}
+
+	if raw, found := object["latencyObservedCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.LatencyObservedCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyObservedCallsTotal': %w", err)
+		}
+		delete(object, "latencyObservedCallsTotal")
+	}
+
+	if raw, found := object["latencyP95Ms24h"]; found {
+		err = json.Unmarshal(raw, &a.LatencyP95Ms24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyP95Ms24h': %w", err)
+		}
+		delete(object, "latencyP95Ms24h")
+	}
+
+	if raw, found := object["modelCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.ModelCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'modelCalls24h': %w", err)
+		}
+		delete(object, "modelCalls24h")
+	}
+
+	if raw, found := object["modelCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.ModelCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'modelCallsTotal': %w", err)
+		}
+		delete(object, "modelCallsTotal")
+	}
+
+	if raw, found := object["promptTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.PromptTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'promptTokens24h': %w", err)
+		}
+		delete(object, "promptTokens24h")
+	}
+
+	if raw, found := object["promptTokensTotal"]; found {
+		err = json.Unmarshal(raw, &a.PromptTokensTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'promptTokensTotal': %w", err)
+		}
+		delete(object, "promptTokensTotal")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["summary"]; found {
+		err = json.Unmarshal(raw, &a.Summary)
+		if err != nil {
+			return fmt.Errorf("error reading 'summary': %w", err)
+		}
+		delete(object, "summary")
+	}
+
+	if raw, found := object["totalTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.TotalTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'totalTokens24h': %w", err)
+		}
+		delete(object, "totalTokens24h")
+	}
+
+	if raw, found := object["totalTokensTotal"]; found {
+		err = json.Unmarshal(raw, &a.TotalTokensTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'totalTokensTotal': %w", err)
+		}
+		delete(object, "totalTokensTotal")
+	}
+
+	if raw, found := object["windowSeconds"]; found {
+		err = json.Unmarshal(raw, &a.WindowSeconds)
+		if err != nil {
+			return fmt.Errorf("error reading 'windowSeconds': %w", err)
+		}
+		delete(object, "windowSeconds")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsAIUsageDiagnostics to handle AdditionalProperties
+func (a OpsAIUsageDiagnostics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.ByProviderModel != nil {
+		object["byProviderModel"], err = json.Marshal(a.ByProviderModel)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'byProviderModel': %w", err)
+		}
+	}
+
+	if a.CompletionTokens24h != nil {
+		object["completionTokens24h"], err = json.Marshal(a.CompletionTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completionTokens24h': %w", err)
+		}
+	}
+
+	if a.CompletionTokensTotal != nil {
+		object["completionTokensTotal"], err = json.Marshal(a.CompletionTokensTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completionTokensTotal': %w", err)
+		}
+	}
+
+	if a.CostAmount24h != nil {
+		object["costAmount24h"], err = json.Marshal(a.CostAmount24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costAmount24h': %w", err)
+		}
+	}
+
+	if a.CostAmountSource != nil {
+		object["costAmountSource"], err = json.Marshal(a.CostAmountSource)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costAmountSource': %w", err)
+		}
+	}
+
+	if a.CostAmountTotal != nil {
+		object["costAmountTotal"], err = json.Marshal(a.CostAmountTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costAmountTotal': %w", err)
+		}
+	}
+
+	if a.CostBudgetAmount != nil {
+		object["costBudgetAmount"], err = json.Marshal(a.CostBudgetAmount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costBudgetAmount': %w", err)
+		}
+	}
+
+	if a.CostBudgetStatus != nil {
+		object["costBudgetStatus"], err = json.Marshal(a.CostBudgetStatus)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costBudgetStatus': %w", err)
+		}
+	}
+
+	if a.CostBudgetUsedPct != nil {
+		object["costBudgetUsedPct"], err = json.Marshal(a.CostBudgetUsedPct)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costBudgetUsedPct': %w", err)
+		}
+	}
+
+	if a.CostCurrency != nil {
+		object["costCurrency"], err = json.Marshal(a.CostCurrency)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costCurrency': %w", err)
+		}
+	}
+
+	if a.CostEstimatedCalls24h != nil {
+		object["costEstimatedCalls24h"], err = json.Marshal(a.CostEstimatedCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costEstimatedCalls24h': %w", err)
+		}
+	}
+
+	if a.CostEstimatedCallsTotal != nil {
+		object["costEstimatedCallsTotal"], err = json.Marshal(a.CostEstimatedCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costEstimatedCallsTotal': %w", err)
+		}
+	}
+
+	if a.CostMissingCalls24h != nil {
+		object["costMissingCalls24h"], err = json.Marshal(a.CostMissingCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costMissingCalls24h': %w", err)
+		}
+	}
+
+	if a.CostMissingCallsTotal != nil {
+		object["costMissingCallsTotal"], err = json.Marshal(a.CostMissingCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costMissingCallsTotal': %w", err)
+		}
+	}
+
+	if a.CostRateCoverage != nil {
+		object["costRateCoverage"], err = json.Marshal(a.CostRateCoverage)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costRateCoverage': %w", err)
+		}
+	}
+
+	if a.CostRatesConfigured != nil {
+		object["costRatesConfigured"], err = json.Marshal(a.CostRatesConfigured)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costRatesConfigured': %w", err)
+		}
+	}
+
+	if a.LatencyAvgMs24h != nil {
+		object["latencyAvgMs24h"], err = json.Marshal(a.LatencyAvgMs24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyAvgMs24h': %w", err)
+		}
+	}
+
+	if a.LatencyAvgMsTotal != nil {
+		object["latencyAvgMsTotal"], err = json.Marshal(a.LatencyAvgMsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyAvgMsTotal': %w", err)
+		}
+	}
+
+	if a.LatencyObservedCalls24h != nil {
+		object["latencyObservedCalls24h"], err = json.Marshal(a.LatencyObservedCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyObservedCalls24h': %w", err)
+		}
+	}
+
+	if a.LatencyObservedCallsTotal != nil {
+		object["latencyObservedCallsTotal"], err = json.Marshal(a.LatencyObservedCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyObservedCallsTotal': %w", err)
+		}
+	}
+
+	if a.LatencyP95Ms24h != nil {
+		object["latencyP95Ms24h"], err = json.Marshal(a.LatencyP95Ms24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyP95Ms24h': %w", err)
+		}
+	}
+
+	if a.ModelCalls24h != nil {
+		object["modelCalls24h"], err = json.Marshal(a.ModelCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'modelCalls24h': %w", err)
+		}
+	}
+
+	if a.ModelCallsTotal != nil {
+		object["modelCallsTotal"], err = json.Marshal(a.ModelCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'modelCallsTotal': %w", err)
+		}
+	}
+
+	if a.PromptTokens24h != nil {
+		object["promptTokens24h"], err = json.Marshal(a.PromptTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'promptTokens24h': %w", err)
+		}
+	}
+
+	if a.PromptTokensTotal != nil {
+		object["promptTokensTotal"], err = json.Marshal(a.PromptTokensTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'promptTokensTotal': %w", err)
+		}
+	}
+
+	if a.Status != nil {
+		object["status"], err = json.Marshal(a.Status)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'status': %w", err)
+		}
+	}
+
+	if a.Summary != nil {
+		object["summary"], err = json.Marshal(a.Summary)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'summary': %w", err)
+		}
+	}
+
+	if a.TotalTokens24h != nil {
+		object["totalTokens24h"], err = json.Marshal(a.TotalTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'totalTokens24h': %w", err)
+		}
+	}
+
+	if a.TotalTokensTotal != nil {
+		object["totalTokensTotal"], err = json.Marshal(a.TotalTokensTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'totalTokensTotal': %w", err)
+		}
+	}
+
+	if a.WindowSeconds != nil {
+		object["windowSeconds"], err = json.Marshal(a.WindowSeconds)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'windowSeconds': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsAIUsageProviderModel. Returns the specified
+// element and whether it was found
+func (a OpsAIUsageProviderModel) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsAIUsageProviderModel
+func (a *OpsAIUsageProviderModel) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsAIUsageProviderModel to handle AdditionalProperties
+func (a *OpsAIUsageProviderModel) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["completionTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.CompletionTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'completionTokens24h': %w", err)
+		}
+		delete(object, "completionTokens24h")
+	}
+
+	if raw, found := object["completionTokensTotal"]; found {
+		err = json.Unmarshal(raw, &a.CompletionTokensTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'completionTokensTotal': %w", err)
+		}
+		delete(object, "completionTokensTotal")
+	}
+
+	if raw, found := object["costAmount24h"]; found {
+		err = json.Unmarshal(raw, &a.CostAmount24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'costAmount24h': %w", err)
+		}
+		delete(object, "costAmount24h")
+	}
+
+	if raw, found := object["costAmountSource"]; found {
+		err = json.Unmarshal(raw, &a.CostAmountSource)
+		if err != nil {
+			return fmt.Errorf("error reading 'costAmountSource': %w", err)
+		}
+		delete(object, "costAmountSource")
+	}
+
+	if raw, found := object["costAmountTotal"]; found {
+		err = json.Unmarshal(raw, &a.CostAmountTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'costAmountTotal': %w", err)
+		}
+		delete(object, "costAmountTotal")
+	}
+
+	if raw, found := object["costEstimatedCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.CostEstimatedCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'costEstimatedCalls24h': %w", err)
+		}
+		delete(object, "costEstimatedCalls24h")
+	}
+
+	if raw, found := object["costEstimatedCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.CostEstimatedCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'costEstimatedCallsTotal': %w", err)
+		}
+		delete(object, "costEstimatedCallsTotal")
+	}
+
+	if raw, found := object["costMissingCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.CostMissingCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'costMissingCalls24h': %w", err)
+		}
+		delete(object, "costMissingCalls24h")
+	}
+
+	if raw, found := object["costMissingCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.CostMissingCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'costMissingCallsTotal': %w", err)
+		}
+		delete(object, "costMissingCallsTotal")
+	}
+
+	if raw, found := object["latencyAvgMs24h"]; found {
+		err = json.Unmarshal(raw, &a.LatencyAvgMs24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyAvgMs24h': %w", err)
+		}
+		delete(object, "latencyAvgMs24h")
+	}
+
+	if raw, found := object["latencyAvgMsTotal"]; found {
+		err = json.Unmarshal(raw, &a.LatencyAvgMsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyAvgMsTotal': %w", err)
+		}
+		delete(object, "latencyAvgMsTotal")
+	}
+
+	if raw, found := object["latencyObservedCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.LatencyObservedCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyObservedCalls24h': %w", err)
+		}
+		delete(object, "latencyObservedCalls24h")
+	}
+
+	if raw, found := object["latencyObservedCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.LatencyObservedCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyObservedCallsTotal': %w", err)
+		}
+		delete(object, "latencyObservedCallsTotal")
+	}
+
+	if raw, found := object["latencyP95Ms24h"]; found {
+		err = json.Unmarshal(raw, &a.LatencyP95Ms24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'latencyP95Ms24h': %w", err)
+		}
+		delete(object, "latencyP95Ms24h")
+	}
+
+	if raw, found := object["model"]; found {
+		err = json.Unmarshal(raw, &a.Model)
+		if err != nil {
+			return fmt.Errorf("error reading 'model': %w", err)
+		}
+		delete(object, "model")
+	}
+
+	if raw, found := object["modelCalls24h"]; found {
+		err = json.Unmarshal(raw, &a.ModelCalls24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'modelCalls24h': %w", err)
+		}
+		delete(object, "modelCalls24h")
+	}
+
+	if raw, found := object["modelCallsTotal"]; found {
+		err = json.Unmarshal(raw, &a.ModelCallsTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'modelCallsTotal': %w", err)
+		}
+		delete(object, "modelCallsTotal")
+	}
+
+	if raw, found := object["promptTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.PromptTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'promptTokens24h': %w", err)
+		}
+		delete(object, "promptTokens24h")
+	}
+
+	if raw, found := object["promptTokensTotal"]; found {
+		err = json.Unmarshal(raw, &a.PromptTokensTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'promptTokensTotal': %w", err)
+		}
+		delete(object, "promptTokensTotal")
+	}
+
+	if raw, found := object["providerId"]; found {
+		err = json.Unmarshal(raw, &a.ProviderId)
+		if err != nil {
+			return fmt.Errorf("error reading 'providerId': %w", err)
+		}
+		delete(object, "providerId")
+	}
+
+	if raw, found := object["providerName"]; found {
+		err = json.Unmarshal(raw, &a.ProviderName)
+		if err != nil {
+			return fmt.Errorf("error reading 'providerName': %w", err)
+		}
+		delete(object, "providerName")
+	}
+
+	if raw, found := object["totalTokens24h"]; found {
+		err = json.Unmarshal(raw, &a.TotalTokens24h)
+		if err != nil {
+			return fmt.Errorf("error reading 'totalTokens24h': %w", err)
+		}
+		delete(object, "totalTokens24h")
+	}
+
+	if raw, found := object["totalTokensTotal"]; found {
+		err = json.Unmarshal(raw, &a.TotalTokensTotal)
+		if err != nil {
+			return fmt.Errorf("error reading 'totalTokensTotal': %w", err)
+		}
+		delete(object, "totalTokensTotal")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsAIUsageProviderModel to handle AdditionalProperties
+func (a OpsAIUsageProviderModel) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.CompletionTokens24h != nil {
+		object["completionTokens24h"], err = json.Marshal(a.CompletionTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completionTokens24h': %w", err)
+		}
+	}
+
+	if a.CompletionTokensTotal != nil {
+		object["completionTokensTotal"], err = json.Marshal(a.CompletionTokensTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completionTokensTotal': %w", err)
+		}
+	}
+
+	if a.CostAmount24h != nil {
+		object["costAmount24h"], err = json.Marshal(a.CostAmount24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costAmount24h': %w", err)
+		}
+	}
+
+	if a.CostAmountSource != nil {
+		object["costAmountSource"], err = json.Marshal(a.CostAmountSource)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costAmountSource': %w", err)
+		}
+	}
+
+	if a.CostAmountTotal != nil {
+		object["costAmountTotal"], err = json.Marshal(a.CostAmountTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costAmountTotal': %w", err)
+		}
+	}
+
+	if a.CostEstimatedCalls24h != nil {
+		object["costEstimatedCalls24h"], err = json.Marshal(a.CostEstimatedCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costEstimatedCalls24h': %w", err)
+		}
+	}
+
+	if a.CostEstimatedCallsTotal != nil {
+		object["costEstimatedCallsTotal"], err = json.Marshal(a.CostEstimatedCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costEstimatedCallsTotal': %w", err)
+		}
+	}
+
+	if a.CostMissingCalls24h != nil {
+		object["costMissingCalls24h"], err = json.Marshal(a.CostMissingCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costMissingCalls24h': %w", err)
+		}
+	}
+
+	if a.CostMissingCallsTotal != nil {
+		object["costMissingCallsTotal"], err = json.Marshal(a.CostMissingCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'costMissingCallsTotal': %w", err)
+		}
+	}
+
+	if a.LatencyAvgMs24h != nil {
+		object["latencyAvgMs24h"], err = json.Marshal(a.LatencyAvgMs24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyAvgMs24h': %w", err)
+		}
+	}
+
+	if a.LatencyAvgMsTotal != nil {
+		object["latencyAvgMsTotal"], err = json.Marshal(a.LatencyAvgMsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyAvgMsTotal': %w", err)
+		}
+	}
+
+	if a.LatencyObservedCalls24h != nil {
+		object["latencyObservedCalls24h"], err = json.Marshal(a.LatencyObservedCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyObservedCalls24h': %w", err)
+		}
+	}
+
+	if a.LatencyObservedCallsTotal != nil {
+		object["latencyObservedCallsTotal"], err = json.Marshal(a.LatencyObservedCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyObservedCallsTotal': %w", err)
+		}
+	}
+
+	if a.LatencyP95Ms24h != nil {
+		object["latencyP95Ms24h"], err = json.Marshal(a.LatencyP95Ms24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latencyP95Ms24h': %w", err)
+		}
+	}
+
+	if a.Model != nil {
+		object["model"], err = json.Marshal(a.Model)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'model': %w", err)
+		}
+	}
+
+	if a.ModelCalls24h != nil {
+		object["modelCalls24h"], err = json.Marshal(a.ModelCalls24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'modelCalls24h': %w", err)
+		}
+	}
+
+	if a.ModelCallsTotal != nil {
+		object["modelCallsTotal"], err = json.Marshal(a.ModelCallsTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'modelCallsTotal': %w", err)
+		}
+	}
+
+	if a.PromptTokens24h != nil {
+		object["promptTokens24h"], err = json.Marshal(a.PromptTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'promptTokens24h': %w", err)
+		}
+	}
+
+	if a.PromptTokensTotal != nil {
+		object["promptTokensTotal"], err = json.Marshal(a.PromptTokensTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'promptTokensTotal': %w", err)
+		}
+	}
+
+	if a.ProviderId != nil {
+		object["providerId"], err = json.Marshal(a.ProviderId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'providerId': %w", err)
+		}
+	}
+
+	if a.ProviderName != nil {
+		object["providerName"], err = json.Marshal(a.ProviderName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'providerName': %w", err)
+		}
+	}
+
+	if a.TotalTokens24h != nil {
+		object["totalTokens24h"], err = json.Marshal(a.TotalTokens24h)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'totalTokens24h': %w", err)
+		}
+	}
+
+	if a.TotalTokensTotal != nil {
+		object["totalTokensTotal"], err = json.Marshal(a.TotalTokensTotal)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'totalTokensTotal': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsBackupArchiveProvider. Returns the specified
+// element and whether it was found
+func (a OpsBackupArchiveProvider) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsBackupArchiveProvider
+func (a *OpsBackupArchiveProvider) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsBackupArchiveProvider to handle AdditionalProperties
+func (a *OpsBackupArchiveProvider) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["configuredExternalProvider"]; found {
+		err = json.Unmarshal(raw, &a.ConfiguredExternalProvider)
+		if err != nil {
+			return fmt.Errorf("error reading 'configuredExternalProvider': %w", err)
+		}
+		delete(object, "configuredExternalProvider")
+	}
+
+	if raw, found := object["configuredProvider"]; found {
+		err = json.Unmarshal(raw, &a.ConfiguredProvider)
+		if err != nil {
+			return fmt.Errorf("error reading 'configuredProvider': %w", err)
+		}
+		delete(object, "configuredProvider")
+	}
+
+	if raw, found := object["external"]; found {
+		err = json.Unmarshal(raw, &a.External)
+		if err != nil {
+			return fmt.Errorf("error reading 'external': %w", err)
+		}
+		delete(object, "external")
+	}
+
+	if raw, found := object["externalReady"]; found {
+		err = json.Unmarshal(raw, &a.ExternalReady)
+		if err != nil {
+			return fmt.Errorf("error reading 'externalReady': %w", err)
+		}
+		delete(object, "externalReady")
+	}
+
+	if raw, found := object["key"]; found {
+		err = json.Unmarshal(raw, &a.Key)
+		if err != nil {
+			return fmt.Errorf("error reading 'key': %w", err)
+		}
+		delete(object, "key")
+	}
+
+	if raw, found := object["kind"]; found {
+		err = json.Unmarshal(raw, &a.Kind)
+		if err != nil {
+			return fmt.Errorf("error reading 'kind': %w", err)
+		}
+		delete(object, "kind")
+	}
+
+	if raw, found := object["missingExternalConfig"]; found {
+		err = json.Unmarshal(raw, &a.MissingExternalConfig)
+		if err != nil {
+			return fmt.Errorf("error reading 'missingExternalConfig': %w", err)
+		}
+		delete(object, "missingExternalConfig")
+	}
+
+	if raw, found := object["root"]; found {
+		err = json.Unmarshal(raw, &a.Root)
+		if err != nil {
+			return fmt.Errorf("error reading 'root': %w", err)
+		}
+		delete(object, "root")
+	}
+
+	if raw, found := object["setupHint"]; found {
+		err = json.Unmarshal(raw, &a.SetupHint)
+		if err != nil {
+			return fmt.Errorf("error reading 'setupHint': %w", err)
+		}
+		delete(object, "setupHint")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["supportsDelete"]; found {
+		err = json.Unmarshal(raw, &a.SupportsDelete)
+		if err != nil {
+			return fmt.Errorf("error reading 'supportsDelete': %w", err)
+		}
+		delete(object, "supportsDelete")
+	}
+
+	if raw, found := object["supportsList"]; found {
+		err = json.Unmarshal(raw, &a.SupportsList)
+		if err != nil {
+			return fmt.Errorf("error reading 'supportsList': %w", err)
+		}
+		delete(object, "supportsList")
+	}
+
+	if raw, found := object["supportsRead"]; found {
+		err = json.Unmarshal(raw, &a.SupportsRead)
+		if err != nil {
+			return fmt.Errorf("error reading 'supportsRead': %w", err)
+		}
+		delete(object, "supportsRead")
+	}
+
+	if raw, found := object["supportsWrite"]; found {
+		err = json.Unmarshal(raw, &a.SupportsWrite)
+		if err != nil {
+			return fmt.Errorf("error reading 'supportsWrite': %w", err)
+		}
+		delete(object, "supportsWrite")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsBackupArchiveProvider to handle AdditionalProperties
+func (a OpsBackupArchiveProvider) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["configuredExternalProvider"], err = json.Marshal(a.ConfiguredExternalProvider)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'configuredExternalProvider': %w", err)
+	}
+
+	object["configuredProvider"], err = json.Marshal(a.ConfiguredProvider)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'configuredProvider': %w", err)
+	}
+
+	object["external"], err = json.Marshal(a.External)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'external': %w", err)
+	}
+
+	object["externalReady"], err = json.Marshal(a.ExternalReady)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'externalReady': %w", err)
+	}
+
+	object["key"], err = json.Marshal(a.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'key': %w", err)
+	}
+
+	object["kind"], err = json.Marshal(a.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
+	}
+
+	if a.MissingExternalConfig != nil {
+		object["missingExternalConfig"], err = json.Marshal(a.MissingExternalConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'missingExternalConfig': %w", err)
+		}
+	}
+
+	object["root"], err = json.Marshal(a.Root)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'root': %w", err)
+	}
+
+	object["setupHint"], err = json.Marshal(a.SetupHint)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'setupHint': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	object["supportsDelete"], err = json.Marshal(a.SupportsDelete)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'supportsDelete': %w", err)
+	}
+
+	object["supportsList"], err = json.Marshal(a.SupportsList)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'supportsList': %w", err)
+	}
+
+	object["supportsRead"], err = json.Marshal(a.SupportsRead)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'supportsRead': %w", err)
+	}
+
+	object["supportsWrite"], err = json.Marshal(a.SupportsWrite)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'supportsWrite': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsBackupRestoreDryRunAttributes. Returns the specified
+// element and whether it was found
+func (a OpsBackupRestoreDryRunAttributes) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsBackupRestoreDryRunAttributes
+func (a *OpsBackupRestoreDryRunAttributes) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsBackupRestoreDryRunAttributes to handle AdditionalProperties
+func (a *OpsBackupRestoreDryRunAttributes) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["archiveProvider"]; found {
+		err = json.Unmarshal(raw, &a.ArchiveProvider)
+		if err != nil {
+			return fmt.Errorf("error reading 'archiveProvider': %w", err)
+		}
+		delete(object, "archiveProvider")
+	}
+
+	if raw, found := object["archiveProviderDetail"]; found {
+		err = json.Unmarshal(raw, &a.ArchiveProviderDetail)
+		if err != nil {
+			return fmt.Errorf("error reading 'archiveProviderDetail': %w", err)
+		}
+		delete(object, "archiveProviderDetail")
+	}
+
+	if raw, found := object["backupDir"]; found {
+		err = json.Unmarshal(raw, &a.BackupDir)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupDir': %w", err)
+		}
+		delete(object, "backupDir")
+	}
+
+	if raw, found := object["backupMetadataDir"]; found {
+		err = json.Unmarshal(raw, &a.BackupMetadataDir)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupMetadataDir': %w", err)
+		}
+		delete(object, "backupMetadataDir")
+	}
+
+	if raw, found := object["backupName"]; found {
+		err = json.Unmarshal(raw, &a.BackupName)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupName': %w", err)
+		}
+		delete(object, "backupName")
+	}
+
+	if raw, found := object["backupPath"]; found {
+		err = json.Unmarshal(raw, &a.BackupPath)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupPath': %w", err)
+		}
+		delete(object, "backupPath")
+	}
+
+	if raw, found := object["checkedAt"]; found {
+		err = json.Unmarshal(raw, &a.CheckedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'checkedAt': %w", err)
+		}
+		delete(object, "checkedAt")
+	}
+
+	if raw, found := object["databaseEntryCount"]; found {
+		err = json.Unmarshal(raw, &a.DatabaseEntryCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'databaseEntryCount': %w", err)
+		}
+		delete(object, "databaseEntryCount")
+	}
+
+	if raw, found := object["destructive"]; found {
+		err = json.Unmarshal(raw, &a.Destructive)
+		if err != nil {
+			return fmt.Errorf("error reading 'destructive': %w", err)
+		}
+		delete(object, "destructive")
+	}
+
+	if raw, found := object["entries"]; found {
+		err = json.Unmarshal(raw, &a.Entries)
+		if err != nil {
+			return fmt.Errorf("error reading 'entries': %w", err)
+		}
+		delete(object, "entries")
+	}
+
+	if raw, found := object["entryCount"]; found {
+		err = json.Unmarshal(raw, &a.EntryCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'entryCount': %w", err)
+		}
+		delete(object, "entryCount")
+	}
+
+	if raw, found := object["logEntryCount"]; found {
+		err = json.Unmarshal(raw, &a.LogEntryCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'logEntryCount': %w", err)
+		}
+		delete(object, "logEntryCount")
+	}
+
+	if raw, found := object["manifest"]; found {
+		err = json.Unmarshal(raw, &a.Manifest)
+		if err != nil {
+			return fmt.Errorf("error reading 'manifest': %w", err)
+		}
+		delete(object, "manifest")
+	}
+
+	if raw, found := object["manifestVersion"]; found {
+		err = json.Unmarshal(raw, &a.ManifestVersion)
+		if err != nil {
+			return fmt.Errorf("error reading 'manifestVersion': %w", err)
+		}
+		delete(object, "manifestVersion")
+	}
+
+	if raw, found := object["notes"]; found {
+		err = json.Unmarshal(raw, &a.Notes)
+		if err != nil {
+			return fmt.Errorf("error reading 'notes': %w", err)
+		}
+		delete(object, "notes")
+	}
+
+	if raw, found := object["operatorAction"]; found {
+		err = json.Unmarshal(raw, &a.OperatorAction)
+		if err != nil {
+			return fmt.Errorf("error reading 'operatorAction': %w", err)
+		}
+		delete(object, "operatorAction")
+	}
+
+	if raw, found := object["restorePlan"]; found {
+		err = json.Unmarshal(raw, &a.RestorePlan)
+		if err != nil {
+			return fmt.Errorf("error reading 'restorePlan': %w", err)
+		}
+		delete(object, "restorePlan")
+	}
+
+	if raw, found := object["retentionPolicyHint"]; found {
+		err = json.Unmarshal(raw, &a.RetentionPolicyHint)
+		if err != nil {
+			return fmt.Errorf("error reading 'retentionPolicyHint': %w", err)
+		}
+		delete(object, "retentionPolicyHint")
+	}
+
+	if raw, found := object["sandboxChecks"]; found {
+		err = json.Unmarshal(raw, &a.SandboxChecks)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxChecks': %w", err)
+		}
+		delete(object, "sandboxChecks")
+	}
+
+	if raw, found := object["sandboxDatabaseFiles"]; found {
+		err = json.Unmarshal(raw, &a.SandboxDatabaseFiles)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxDatabaseFiles': %w", err)
+		}
+		delete(object, "sandboxDatabaseFiles")
+	}
+
+	if raw, found := object["sandboxDir"]; found {
+		err = json.Unmarshal(raw, &a.SandboxDir)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxDir': %w", err)
+		}
+		delete(object, "sandboxDir")
+	}
+
+	if raw, found := object["sandboxFileCount"]; found {
+		err = json.Unmarshal(raw, &a.SandboxFileCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxFileCount': %w", err)
+		}
+		delete(object, "sandboxFileCount")
+	}
+
+	if raw, found := object["sandboxLogFiles"]; found {
+		err = json.Unmarshal(raw, &a.SandboxLogFiles)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxLogFiles': %w", err)
+		}
+		delete(object, "sandboxLogFiles")
+	}
+
+	if raw, found := object["sandboxRuntimeFiles"]; found {
+		err = json.Unmarshal(raw, &a.SandboxRuntimeFiles)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxRuntimeFiles': %w", err)
+		}
+		delete(object, "sandboxRuntimeFiles")
+	}
+
+	if raw, found := object["sandboxSizeBytes"]; found {
+		err = json.Unmarshal(raw, &a.SandboxSizeBytes)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxSizeBytes': %w", err)
+		}
+		delete(object, "sandboxSizeBytes")
+	}
+
+	if raw, found := object["sandboxStatus"]; found {
+		err = json.Unmarshal(raw, &a.SandboxStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'sandboxStatus': %w", err)
+		}
+		delete(object, "sandboxStatus")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsBackupRestoreDryRunAttributes to handle AdditionalProperties
+func (a OpsBackupRestoreDryRunAttributes) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["archiveProvider"], err = json.Marshal(a.ArchiveProvider)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'archiveProvider': %w", err)
+	}
+
+	object["archiveProviderDetail"], err = json.Marshal(a.ArchiveProviderDetail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'archiveProviderDetail': %w", err)
+	}
+
+	object["backupDir"], err = json.Marshal(a.BackupDir)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupDir': %w", err)
+	}
+
+	object["backupMetadataDir"], err = json.Marshal(a.BackupMetadataDir)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupMetadataDir': %w", err)
+	}
+
+	object["backupName"], err = json.Marshal(a.BackupName)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupName': %w", err)
+	}
+
+	object["backupPath"], err = json.Marshal(a.BackupPath)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupPath': %w", err)
+	}
+
+	object["checkedAt"], err = json.Marshal(a.CheckedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'checkedAt': %w", err)
+	}
+
+	object["databaseEntryCount"], err = json.Marshal(a.DatabaseEntryCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'databaseEntryCount': %w", err)
+	}
+
+	object["destructive"], err = json.Marshal(a.Destructive)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'destructive': %w", err)
+	}
+
+	if a.Entries != nil {
+		object["entries"], err = json.Marshal(a.Entries)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'entries': %w", err)
+		}
+	}
+
+	object["entryCount"], err = json.Marshal(a.EntryCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'entryCount': %w", err)
+	}
+
+	object["logEntryCount"], err = json.Marshal(a.LogEntryCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'logEntryCount': %w", err)
+	}
+
+	if a.Manifest != nil {
+		object["manifest"], err = json.Marshal(a.Manifest)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'manifest': %w", err)
+		}
+	}
+
+	if a.ManifestVersion != nil {
+		object["manifestVersion"], err = json.Marshal(a.ManifestVersion)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'manifestVersion': %w", err)
+		}
+	}
+
+	if a.Notes != nil {
+		object["notes"], err = json.Marshal(a.Notes)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'notes': %w", err)
+		}
+	}
+
+	object["operatorAction"], err = json.Marshal(a.OperatorAction)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'operatorAction': %w", err)
+	}
+
+	if a.RestorePlan != nil {
+		object["restorePlan"], err = json.Marshal(a.RestorePlan)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'restorePlan': %w", err)
+		}
+	}
+
+	if a.RetentionPolicyHint != nil {
+		object["retentionPolicyHint"], err = json.Marshal(a.RetentionPolicyHint)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'retentionPolicyHint': %w", err)
+		}
+	}
+
+	if a.SandboxChecks != nil {
+		object["sandboxChecks"], err = json.Marshal(a.SandboxChecks)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sandboxChecks': %w", err)
+		}
+	}
+
+	if a.SandboxDatabaseFiles != nil {
+		object["sandboxDatabaseFiles"], err = json.Marshal(a.SandboxDatabaseFiles)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sandboxDatabaseFiles': %w", err)
+		}
+	}
+
+	object["sandboxDir"], err = json.Marshal(a.SandboxDir)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'sandboxDir': %w", err)
+	}
+
+	object["sandboxFileCount"], err = json.Marshal(a.SandboxFileCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'sandboxFileCount': %w", err)
+	}
+
+	if a.SandboxLogFiles != nil {
+		object["sandboxLogFiles"], err = json.Marshal(a.SandboxLogFiles)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sandboxLogFiles': %w", err)
+		}
+	}
+
+	if a.SandboxRuntimeFiles != nil {
+		object["sandboxRuntimeFiles"], err = json.Marshal(a.SandboxRuntimeFiles)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sandboxRuntimeFiles': %w", err)
+		}
+	}
+
+	object["sandboxSizeBytes"], err = json.Marshal(a.SandboxSizeBytes)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'sandboxSizeBytes': %w", err)
+	}
+
+	object["sandboxStatus"], err = json.Marshal(a.SandboxStatus)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'sandboxStatus': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsBackupRunAttributes. Returns the specified
+// element and whether it was found
+func (a OpsBackupRunAttributes) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsBackupRunAttributes
+func (a *OpsBackupRunAttributes) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsBackupRunAttributes to handle AdditionalProperties
+func (a *OpsBackupRunAttributes) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["archiveProvider"]; found {
+		err = json.Unmarshal(raw, &a.ArchiveProvider)
+		if err != nil {
+			return fmt.Errorf("error reading 'archiveProvider': %w", err)
+		}
+		delete(object, "archiveProvider")
+	}
+
+	if raw, found := object["archiveProviderDetail"]; found {
+		err = json.Unmarshal(raw, &a.ArchiveProviderDetail)
+		if err != nil {
+			return fmt.Errorf("error reading 'archiveProviderDetail': %w", err)
+		}
+		delete(object, "archiveProviderDetail")
+	}
+
+	if raw, found := object["backupDir"]; found {
+		err = json.Unmarshal(raw, &a.BackupDir)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupDir': %w", err)
+		}
+		delete(object, "backupDir")
+	}
+
+	if raw, found := object["backupMetadataDir"]; found {
+		err = json.Unmarshal(raw, &a.BackupMetadataDir)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupMetadataDir': %w", err)
+		}
+		delete(object, "backupMetadataDir")
+	}
+
+	if raw, found := object["backupName"]; found {
+		err = json.Unmarshal(raw, &a.BackupName)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupName': %w", err)
+		}
+		delete(object, "backupName")
+	}
+
+	if raw, found := object["backupPath"]; found {
+		err = json.Unmarshal(raw, &a.BackupPath)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupPath': %w", err)
+		}
+		delete(object, "backupPath")
+	}
+
+	if raw, found := object["createdAt"]; found {
+		err = json.Unmarshal(raw, &a.CreatedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'createdAt': %w", err)
+		}
+		delete(object, "createdAt")
+	}
+
+	if raw, found := object["databaseBackend"]; found {
+		err = json.Unmarshal(raw, &a.DatabaseBackend)
+		if err != nil {
+			return fmt.Errorf("error reading 'databaseBackend': %w", err)
+		}
+		delete(object, "databaseBackend")
+	}
+
+	if raw, found := object["databaseTarget"]; found {
+		err = json.Unmarshal(raw, &a.DatabaseTarget)
+		if err != nil {
+			return fmt.Errorf("error reading 'databaseTarget': %w", err)
+		}
+		delete(object, "databaseTarget")
+	}
+
+	if raw, found := object["included"]; found {
+		err = json.Unmarshal(raw, &a.Included)
+		if err != nil {
+			return fmt.Errorf("error reading 'included': %w", err)
+		}
+		delete(object, "included")
+	}
+
+	if raw, found := object["notes"]; found {
+		err = json.Unmarshal(raw, &a.Notes)
+		if err != nil {
+			return fmt.Errorf("error reading 'notes': %w", err)
+		}
+		delete(object, "notes")
+	}
+
+	if raw, found := object["retentionRun"]; found {
+		err = json.Unmarshal(raw, &a.RetentionRun)
+		if err != nil {
+			return fmt.Errorf("error reading 'retentionRun': %w", err)
+		}
+		delete(object, "retentionRun")
+	}
+
+	if raw, found := object["sizeBytes"]; found {
+		err = json.Unmarshal(raw, &a.SizeBytes)
+		if err != nil {
+			return fmt.Errorf("error reading 'sizeBytes': %w", err)
+		}
+		delete(object, "sizeBytes")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsBackupRunAttributes to handle AdditionalProperties
+func (a OpsBackupRunAttributes) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["archiveProvider"], err = json.Marshal(a.ArchiveProvider)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'archiveProvider': %w", err)
+	}
+
+	object["archiveProviderDetail"], err = json.Marshal(a.ArchiveProviderDetail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'archiveProviderDetail': %w", err)
+	}
+
+	object["backupDir"], err = json.Marshal(a.BackupDir)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupDir': %w", err)
+	}
+
+	object["backupMetadataDir"], err = json.Marshal(a.BackupMetadataDir)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupMetadataDir': %w", err)
+	}
+
+	object["backupName"], err = json.Marshal(a.BackupName)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupName': %w", err)
+	}
+
+	object["backupPath"], err = json.Marshal(a.BackupPath)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupPath': %w", err)
+	}
+
+	object["createdAt"], err = json.Marshal(a.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'createdAt': %w", err)
+	}
+
+	object["databaseBackend"], err = json.Marshal(a.DatabaseBackend)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'databaseBackend': %w", err)
+	}
+
+	object["databaseTarget"], err = json.Marshal(a.DatabaseTarget)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'databaseTarget': %w", err)
+	}
+
+	if a.Included != nil {
+		object["included"], err = json.Marshal(a.Included)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'included': %w", err)
+		}
+	}
+
+	if a.Notes != nil {
+		object["notes"], err = json.Marshal(a.Notes)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'notes': %w", err)
+		}
+	}
+
+	if a.RetentionRun != nil {
+		object["retentionRun"], err = json.Marshal(a.RetentionRun)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'retentionRun': %w", err)
+		}
+	}
+
+	object["sizeBytes"], err = json.Marshal(a.SizeBytes)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'sizeBytes': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsBackupSandboxCheck. Returns the specified
+// element and whether it was found
+func (a OpsBackupSandboxCheck) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsBackupSandboxCheck
+func (a *OpsBackupSandboxCheck) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsBackupSandboxCheck to handle AdditionalProperties
+func (a *OpsBackupSandboxCheck) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["name"]; found {
+		err = json.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return fmt.Errorf("error reading 'name': %w", err)
+		}
+		delete(object, "name")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsBackupSandboxCheck to handle AdditionalProperties
+func (a OpsBackupSandboxCheck) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["detail"], err = json.Marshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	object["name"], err = json.Marshal(a.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'name': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsBackupsAttributes. Returns the specified
+// element and whether it was found
+func (a OpsBackupsAttributes) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsBackupsAttributes
+func (a *OpsBackupsAttributes) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsBackupsAttributes to handle AdditionalProperties
+func (a *OpsBackupsAttributes) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["archiveProvider"]; found {
+		err = json.Unmarshal(raw, &a.ArchiveProvider)
+		if err != nil {
+			return fmt.Errorf("error reading 'archiveProvider': %w", err)
+		}
+		delete(object, "archiveProvider")
+	}
+
+	if raw, found := object["archiveProviderDetail"]; found {
+		err = json.Unmarshal(raw, &a.ArchiveProviderDetail)
+		if err != nil {
+			return fmt.Errorf("error reading 'archiveProviderDetail': %w", err)
+		}
+		delete(object, "archiveProviderDetail")
+	}
+
+	if raw, found := object["backupDir"]; found {
+		err = json.Unmarshal(raw, &a.BackupDir)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupDir': %w", err)
+		}
+		delete(object, "backupDir")
+	}
+
+	if raw, found := object["backupMetadataDir"]; found {
+		err = json.Unmarshal(raw, &a.BackupMetadataDir)
+		if err != nil {
+			return fmt.Errorf("error reading 'backupMetadataDir': %w", err)
+		}
+		delete(object, "backupMetadataDir")
+	}
+
+	if raw, found := object["backups"]; found {
+		err = json.Unmarshal(raw, &a.Backups)
+		if err != nil {
+			return fmt.Errorf("error reading 'backups': %w", err)
+		}
+		delete(object, "backups")
+	}
+
+	if raw, found := object["databaseBackend"]; found {
+		err = json.Unmarshal(raw, &a.DatabaseBackend)
+		if err != nil {
+			return fmt.Errorf("error reading 'databaseBackend': %w", err)
+		}
+		delete(object, "databaseBackend")
+	}
+
+	if raw, found := object["databaseTarget"]; found {
+		err = json.Unmarshal(raw, &a.DatabaseTarget)
+		if err != nil {
+			return fmt.Errorf("error reading 'databaseTarget': %w", err)
+		}
+		delete(object, "databaseTarget")
+	}
+
+	if raw, found := object["generatedAt"]; found {
+		err = json.Unmarshal(raw, &a.GeneratedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'generatedAt': %w", err)
+		}
+		delete(object, "generatedAt")
+	}
+
+	if raw, found := object["latestBackup"]; found {
+		err = json.Unmarshal(raw, &a.LatestBackup)
+		if err != nil {
+			return fmt.Errorf("error reading 'latestBackup': %w", err)
+		}
+		delete(object, "latestBackup")
+	}
+
+	if raw, found := object["restoreDrill"]; found {
+		err = json.Unmarshal(raw, &a.RestoreDrill)
+		if err != nil {
+			return fmt.Errorf("error reading 'restoreDrill': %w", err)
+		}
+		delete(object, "restoreDrill")
+	}
+
+	if raw, found := object["restoreDrillDetail"]; found {
+		err = json.Unmarshal(raw, &a.RestoreDrillDetail)
+		if err != nil {
+			return fmt.Errorf("error reading 'restoreDrillDetail': %w", err)
+		}
+		delete(object, "restoreDrillDetail")
+	}
+
+	if raw, found := object["restoreDrillSchedule"]; found {
+		err = json.Unmarshal(raw, &a.RestoreDrillSchedule)
+		if err != nil {
+			return fmt.Errorf("error reading 'restoreDrillSchedule': %w", err)
+		}
+		delete(object, "restoreDrillSchedule")
+	}
+
+	if raw, found := object["restoreDrillScheduleHint"]; found {
+		err = json.Unmarshal(raw, &a.RestoreDrillScheduleHint)
+		if err != nil {
+			return fmt.Errorf("error reading 'restoreDrillScheduleHint': %w", err)
+		}
+		delete(object, "restoreDrillScheduleHint")
+	}
+
+	if raw, found := object["retentionLastRun"]; found {
+		err = json.Unmarshal(raw, &a.RetentionLastRun)
+		if err != nil {
+			return fmt.Errorf("error reading 'retentionLastRun': %w", err)
+		}
+		delete(object, "retentionLastRun")
+	}
+
+	if raw, found := object["retentionPolicy"]; found {
+		err = json.Unmarshal(raw, &a.RetentionPolicy)
+		if err != nil {
+			return fmt.Errorf("error reading 'retentionPolicy': %w", err)
+		}
+		delete(object, "retentionPolicy")
+	}
+
+	if raw, found := object["retentionPolicyDetail"]; found {
+		err = json.Unmarshal(raw, &a.RetentionPolicyDetail)
+		if err != nil {
+			return fmt.Errorf("error reading 'retentionPolicyDetail': %w", err)
+		}
+		delete(object, "retentionPolicyDetail")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["supportedActions"]; found {
+		err = json.Unmarshal(raw, &a.SupportedActions)
+		if err != nil {
+			return fmt.Errorf("error reading 'supportedActions': %w", err)
+		}
+		delete(object, "supportedActions")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsBackupsAttributes to handle AdditionalProperties
+func (a OpsBackupsAttributes) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["archiveProvider"], err = json.Marshal(a.ArchiveProvider)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'archiveProvider': %w", err)
+	}
+
+	object["archiveProviderDetail"], err = json.Marshal(a.ArchiveProviderDetail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'archiveProviderDetail': %w", err)
+	}
+
+	object["backupDir"], err = json.Marshal(a.BackupDir)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupDir': %w", err)
+	}
+
+	object["backupMetadataDir"], err = json.Marshal(a.BackupMetadataDir)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'backupMetadataDir': %w", err)
+	}
+
+	if a.Backups != nil {
+		object["backups"], err = json.Marshal(a.Backups)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'backups': %w", err)
+		}
+	}
+
+	object["databaseBackend"], err = json.Marshal(a.DatabaseBackend)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'databaseBackend': %w", err)
+	}
+
+	object["databaseTarget"], err = json.Marshal(a.DatabaseTarget)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'databaseTarget': %w", err)
+	}
+
+	object["generatedAt"], err = json.Marshal(a.GeneratedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'generatedAt': %w", err)
+	}
+
+	if a.LatestBackup != nil {
+		object["latestBackup"], err = json.Marshal(a.LatestBackup)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'latestBackup': %w", err)
+		}
+	}
+
+	object["restoreDrill"], err = json.Marshal(a.RestoreDrill)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'restoreDrill': %w", err)
+	}
+
+	if a.RestoreDrillDetail != nil {
+		object["restoreDrillDetail"], err = json.Marshal(a.RestoreDrillDetail)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'restoreDrillDetail': %w", err)
+		}
+	}
+
+	if a.RestoreDrillSchedule != nil {
+		object["restoreDrillSchedule"], err = json.Marshal(a.RestoreDrillSchedule)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'restoreDrillSchedule': %w", err)
+		}
+	}
+
+	if a.RestoreDrillScheduleHint != nil {
+		object["restoreDrillScheduleHint"], err = json.Marshal(a.RestoreDrillScheduleHint)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'restoreDrillScheduleHint': %w", err)
+		}
+	}
+
+	if a.RetentionLastRun != nil {
+		object["retentionLastRun"], err = json.Marshal(a.RetentionLastRun)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'retentionLastRun': %w", err)
+		}
+	}
+
+	object["retentionPolicy"], err = json.Marshal(a.RetentionPolicy)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'retentionPolicy': %w", err)
+	}
+
+	if a.RetentionPolicyDetail != nil {
+		object["retentionPolicyDetail"], err = json.Marshal(a.RetentionPolicyDetail)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'retentionPolicyDetail': %w", err)
+		}
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	if a.SupportedActions != nil {
+		object["supportedActions"], err = json.Marshal(a.SupportedActions)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'supportedActions': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsJobActionResource_Attributes. Returns the specified
+// element and whether it was found
+func (a OpsJobActionResource_Attributes) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsJobActionResource_Attributes
+func (a *OpsJobActionResource_Attributes) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsJobActionResource_Attributes to handle AdditionalProperties
+func (a *OpsJobActionResource_Attributes) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["action"]; found {
+		err = json.Unmarshal(raw, &a.Action)
+		if err != nil {
+			return fmt.Errorf("error reading 'action': %w", err)
+		}
+		delete(object, "action")
+	}
+
+	if raw, found := object["destructive"]; found {
+		err = json.Unmarshal(raw, &a.Destructive)
+		if err != nil {
+			return fmt.Errorf("error reading 'destructive': %w", err)
+		}
+		delete(object, "destructive")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["queues"]; found {
+		err = json.Unmarshal(raw, &a.Queues)
+		if err != nil {
+			return fmt.Errorf("error reading 'queues': %w", err)
+		}
+		delete(object, "queues")
+	}
+
+	if raw, found := object["ranAt"]; found {
+		err = json.Unmarshal(raw, &a.RanAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'ranAt': %w", err)
+		}
+		delete(object, "ranAt")
+	}
+
+	if raw, found := object["retriedArchiveCount"]; found {
+		err = json.Unmarshal(raw, &a.RetriedArchiveCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'retriedArchiveCount': %w", err)
+		}
+		delete(object, "retriedArchiveCount")
+	}
+
+	if raw, found := object["retriedRetryCount"]; found {
+		err = json.Unmarshal(raw, &a.RetriedRetryCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'retriedRetryCount': %w", err)
+		}
+		delete(object, "retriedRetryCount")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["totalSubmitted"]; found {
+		err = json.Unmarshal(raw, &a.TotalSubmitted)
+		if err != nil {
+			return fmt.Errorf("error reading 'totalSubmitted': %w", err)
+		}
+		delete(object, "totalSubmitted")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsJobActionResource_Attributes to handle AdditionalProperties
+func (a OpsJobActionResource_Attributes) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Action != nil {
+		object["action"], err = json.Marshal(a.Action)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'action': %w", err)
+		}
+	}
+
+	if a.Destructive != nil {
+		object["destructive"], err = json.Marshal(a.Destructive)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'destructive': %w", err)
+		}
+	}
+
+	if a.Detail != nil {
+		object["detail"], err = json.Marshal(a.Detail)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+		}
+	}
+
+	if a.Queues != nil {
+		object["queues"], err = json.Marshal(a.Queues)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'queues': %w", err)
+		}
+	}
+
+	if a.RanAt != nil {
+		object["ranAt"], err = json.Marshal(a.RanAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'ranAt': %w", err)
+		}
+	}
+
+	if a.RetriedArchiveCount != nil {
+		object["retriedArchiveCount"], err = json.Marshal(a.RetriedArchiveCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'retriedArchiveCount': %w", err)
+		}
+	}
+
+	if a.RetriedRetryCount != nil {
+		object["retriedRetryCount"], err = json.Marshal(a.RetriedRetryCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'retriedRetryCount': %w", err)
+		}
+	}
+
+	if a.Status != nil {
+		object["status"], err = json.Marshal(a.Status)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'status': %w", err)
+		}
+	}
+
+	if a.TotalSubmitted != nil {
+		object["totalSubmitted"], err = json.Marshal(a.TotalSubmitted)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'totalSubmitted': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsJobsResource_Attributes. Returns the specified
+// element and whether it was found
+func (a OpsJobsResource_Attributes) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsJobsResource_Attributes
+func (a *OpsJobsResource_Attributes) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsJobsResource_Attributes to handle AdditionalProperties
+func (a *OpsJobsResource_Attributes) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["generatedAt"]; found {
+		err = json.Unmarshal(raw, &a.GeneratedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'generatedAt': %w", err)
+		}
+		delete(object, "generatedAt")
+	}
+
+	if raw, found := object["meetingDispatchMode"]; found {
+		err = json.Unmarshal(raw, &a.MeetingDispatchMode)
+		if err != nil {
+			return fmt.Errorf("error reading 'meetingDispatchMode': %w", err)
+		}
+		delete(object, "meetingDispatchMode")
+	}
+
+	if raw, found := object["messageListener"]; found {
+		err = json.Unmarshal(raw, &a.MessageListener)
+		if err != nil {
+			return fmt.Errorf("error reading 'messageListener': %w", err)
+		}
+		delete(object, "messageListener")
+	}
+
+	if raw, found := object["paperEngine"]; found {
+		err = json.Unmarshal(raw, &a.PaperEngine)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperEngine': %w", err)
+		}
+		delete(object, "paperEngine")
+	}
+
+	if raw, found := object["paperExecutionMode"]; found {
+		err = json.Unmarshal(raw, &a.PaperExecutionMode)
+		if err != nil {
+			return fmt.Errorf("error reading 'paperExecutionMode': %w", err)
+		}
+		delete(object, "paperExecutionMode")
+	}
+
+	if raw, found := object["queue"]; found {
+		err = json.Unmarshal(raw, &a.Queue)
+		if err != nil {
+			return fmt.Errorf("error reading 'queue': %w", err)
+		}
+		delete(object, "queue")
+	}
+
+	if raw, found := object["recentErrors"]; found {
+		err = json.Unmarshal(raw, &a.RecentErrors)
+		if err != nil {
+			return fmt.Errorf("error reading 'recentErrors': %w", err)
+		}
+		delete(object, "recentErrors")
+	}
+
+	if raw, found := object["redis"]; found {
+		err = json.Unmarshal(raw, &a.Redis)
+		if err != nil {
+			return fmt.Errorf("error reading 'redis': %w", err)
+		}
+		delete(object, "redis")
+	}
+
+	if raw, found := object["scheduler"]; found {
+		err = json.Unmarshal(raw, &a.Scheduler)
+		if err != nil {
+			return fmt.Errorf("error reading 'scheduler': %w", err)
+		}
+		delete(object, "scheduler")
+	}
+
+	if raw, found := object["worker"]; found {
+		err = json.Unmarshal(raw, &a.Worker)
+		if err != nil {
+			return fmt.Errorf("error reading 'worker': %w", err)
+		}
+		delete(object, "worker")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsJobsResource_Attributes to handle AdditionalProperties
+func (a OpsJobsResource_Attributes) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.GeneratedAt != nil {
+		object["generatedAt"], err = json.Marshal(a.GeneratedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'generatedAt': %w", err)
+		}
+	}
+
+	if a.MeetingDispatchMode != nil {
+		object["meetingDispatchMode"], err = json.Marshal(a.MeetingDispatchMode)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'meetingDispatchMode': %w", err)
+		}
+	}
+
+	if a.MessageListener != nil {
+		object["messageListener"], err = json.Marshal(a.MessageListener)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'messageListener': %w", err)
+		}
+	}
+
+	if a.PaperEngine != nil {
+		object["paperEngine"], err = json.Marshal(a.PaperEngine)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'paperEngine': %w", err)
+		}
+	}
+
+	if a.PaperExecutionMode != nil {
+		object["paperExecutionMode"], err = json.Marshal(a.PaperExecutionMode)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'paperExecutionMode': %w", err)
+		}
+	}
+
+	if a.Queue != nil {
+		object["queue"], err = json.Marshal(a.Queue)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'queue': %w", err)
+		}
+	}
+
+	if a.RecentErrors != nil {
+		object["recentErrors"], err = json.Marshal(a.RecentErrors)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'recentErrors': %w", err)
+		}
+	}
+
+	if a.Redis != nil {
+		object["redis"], err = json.Marshal(a.Redis)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'redis': %w", err)
+		}
+	}
+
+	if a.Scheduler != nil {
+		object["scheduler"], err = json.Marshal(a.Scheduler)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'scheduler': %w", err)
+		}
+	}
+
+	if a.Worker != nil {
+		object["worker"], err = json.Marshal(a.Worker)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worker': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsQueueFailedTask. Returns the specified
+// element and whether it was found
+func (a OpsQueueFailedTask) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsQueueFailedTask
+func (a *OpsQueueFailedTask) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsQueueFailedTask to handle AdditionalProperties
+func (a *OpsQueueFailedTask) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["lastError"]; found {
+		err = json.Unmarshal(raw, &a.LastError)
+		if err != nil {
+			return fmt.Errorf("error reading 'lastError': %w", err)
+		}
+		delete(object, "lastError")
+	}
+
+	if raw, found := object["lastFailedAt"]; found {
+		err = json.Unmarshal(raw, &a.LastFailedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'lastFailedAt': %w", err)
+		}
+		delete(object, "lastFailedAt")
+	}
+
+	if raw, found := object["maxRetry"]; found {
+		err = json.Unmarshal(raw, &a.MaxRetry)
+		if err != nil {
+			return fmt.Errorf("error reading 'maxRetry': %w", err)
+		}
+		delete(object, "maxRetry")
+	}
+
+	if raw, found := object["nextProcessAt"]; found {
+		err = json.Unmarshal(raw, &a.NextProcessAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'nextProcessAt': %w", err)
+		}
+		delete(object, "nextProcessAt")
+	}
+
+	if raw, found := object["payloadPreview"]; found {
+		err = json.Unmarshal(raw, &a.PayloadPreview)
+		if err != nil {
+			return fmt.Errorf("error reading 'payloadPreview': %w", err)
+		}
+		delete(object, "payloadPreview")
+	}
+
+	if raw, found := object["queue"]; found {
+		err = json.Unmarshal(raw, &a.Queue)
+		if err != nil {
+			return fmt.Errorf("error reading 'queue': %w", err)
+		}
+		delete(object, "queue")
+	}
+
+	if raw, found := object["retried"]; found {
+		err = json.Unmarshal(raw, &a.Retried)
+		if err != nil {
+			return fmt.Errorf("error reading 'retried': %w", err)
+		}
+		delete(object, "retried")
+	}
+
+	if raw, found := object["state"]; found {
+		err = json.Unmarshal(raw, &a.State)
+		if err != nil {
+			return fmt.Errorf("error reading 'state': %w", err)
+		}
+		delete(object, "state")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["timeoutSeconds"]; found {
+		err = json.Unmarshal(raw, &a.TimeoutSeconds)
+		if err != nil {
+			return fmt.Errorf("error reading 'timeoutSeconds': %w", err)
+		}
+		delete(object, "timeoutSeconds")
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsQueueFailedTask to handle AdditionalProperties
+func (a OpsQueueFailedTask) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Id != nil {
+		object["id"], err = json.Marshal(a.Id)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'id': %w", err)
+		}
+	}
+
+	if a.LastError != nil {
+		object["lastError"], err = json.Marshal(a.LastError)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'lastError': %w", err)
+		}
+	}
+
+	if a.LastFailedAt != nil {
+		object["lastFailedAt"], err = json.Marshal(a.LastFailedAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'lastFailedAt': %w", err)
+		}
+	}
+
+	if a.MaxRetry != nil {
+		object["maxRetry"], err = json.Marshal(a.MaxRetry)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'maxRetry': %w", err)
+		}
+	}
+
+	if a.NextProcessAt != nil {
+		object["nextProcessAt"], err = json.Marshal(a.NextProcessAt)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'nextProcessAt': %w", err)
+		}
+	}
+
+	if a.PayloadPreview != nil {
+		object["payloadPreview"], err = json.Marshal(a.PayloadPreview)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'payloadPreview': %w", err)
+		}
+	}
+
+	if a.Queue != nil {
+		object["queue"], err = json.Marshal(a.Queue)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'queue': %w", err)
+		}
+	}
+
+	if a.Retried != nil {
+		object["retried"], err = json.Marshal(a.Retried)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'retried': %w", err)
+		}
+	}
+
+	if a.State != nil {
+		object["state"], err = json.Marshal(a.State)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'state': %w", err)
+		}
+	}
+
+	if a.Status != nil {
+		object["status"], err = json.Marshal(a.Status)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'status': %w", err)
+		}
+	}
+
+	if a.TimeoutSeconds != nil {
+		object["timeoutSeconds"], err = json.Marshal(a.TimeoutSeconds)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'timeoutSeconds': %w", err)
+		}
+	}
+
+	if a.Type != nil {
+		object["type"], err = json.Marshal(a.Type)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'type': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OpsRecentErrorEntry. Returns the specified
+// element and whether it was found
+func (a OpsRecentErrorEntry) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OpsRecentErrorEntry
+func (a *OpsRecentErrorEntry) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OpsRecentErrorEntry to handle AdditionalProperties
+func (a *OpsRecentErrorEntry) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["caller"]; found {
+		err = json.Unmarshal(raw, &a.Caller)
+		if err != nil {
+			return fmt.Errorf("error reading 'caller': %w", err)
+		}
+		delete(object, "caller")
+	}
+
+	if raw, found := object["durationMs"]; found {
+		err = json.Unmarshal(raw, &a.DurationMs)
+		if err != nil {
+			return fmt.Errorf("error reading 'durationMs': %w", err)
+		}
+		delete(object, "durationMs")
+	}
+
+	if raw, found := object["event"]; found {
+		err = json.Unmarshal(raw, &a.Event)
+		if err != nil {
+			return fmt.Errorf("error reading 'event': %w", err)
+		}
+		delete(object, "event")
+	}
+
+	if raw, found := object["file"]; found {
+		err = json.Unmarshal(raw, &a.File)
+		if err != nil {
+			return fmt.Errorf("error reading 'file': %w", err)
+		}
+		delete(object, "file")
+	}
+
+	if raw, found := object["group"]; found {
+		err = json.Unmarshal(raw, &a.Group)
+		if err != nil {
+			return fmt.Errorf("error reading 'group': %w", err)
+		}
+		delete(object, "group")
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["level"]; found {
+		err = json.Unmarshal(raw, &a.Level)
+		if err != nil {
+			return fmt.Errorf("error reading 'level': %w", err)
+		}
+		delete(object, "level")
+	}
+
+	if raw, found := object["message"]; found {
+		err = json.Unmarshal(raw, &a.Message)
+		if err != nil {
+			return fmt.Errorf("error reading 'message': %w", err)
+		}
+		delete(object, "message")
+	}
+
+	if raw, found := object["method"]; found {
+		err = json.Unmarshal(raw, &a.Method)
+		if err != nil {
+			return fmt.Errorf("error reading 'method': %w", err)
+		}
+		delete(object, "method")
+	}
+
+	if raw, found := object["path"]; found {
+		err = json.Unmarshal(raw, &a.Path)
+		if err != nil {
+			return fmt.Errorf("error reading 'path': %w", err)
+		}
+		delete(object, "path")
+	}
+
+	if raw, found := object["role"]; found {
+		err = json.Unmarshal(raw, &a.Role)
+		if err != nil {
+			return fmt.Errorf("error reading 'role': %w", err)
+		}
+		delete(object, "role")
+	}
+
+	if raw, found := object["source"]; found {
+		err = json.Unmarshal(raw, &a.Source)
+		if err != nil {
+			return fmt.Errorf("error reading 'source': %w", err)
+		}
+		delete(object, "source")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["time"]; found {
+		err = json.Unmarshal(raw, &a.Time)
+		if err != nil {
+			return fmt.Errorf("error reading 'time': %w", err)
+		}
+		delete(object, "time")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OpsRecentErrorEntry to handle AdditionalProperties
+func (a OpsRecentErrorEntry) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Caller != nil {
+		object["caller"], err = json.Marshal(a.Caller)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'caller': %w", err)
+		}
+	}
+
+	if a.DurationMs != nil {
+		object["durationMs"], err = json.Marshal(a.DurationMs)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'durationMs': %w", err)
+		}
+	}
+
+	if a.Event != nil {
+		object["event"], err = json.Marshal(a.Event)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'event': %w", err)
+		}
+	}
+
+	if a.File != nil {
+		object["file"], err = json.Marshal(a.File)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'file': %w", err)
+		}
+	}
+
+	if a.Group != nil {
+		object["group"], err = json.Marshal(a.Group)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'group': %w", err)
+		}
+	}
+
+	if a.Id != nil {
+		object["id"], err = json.Marshal(a.Id)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'id': %w", err)
+		}
+	}
+
+	if a.Level != nil {
+		object["level"], err = json.Marshal(a.Level)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'level': %w", err)
+		}
+	}
+
+	if a.Message != nil {
+		object["message"], err = json.Marshal(a.Message)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'message': %w", err)
+		}
+	}
+
+	if a.Method != nil {
+		object["method"], err = json.Marshal(a.Method)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'method': %w", err)
+		}
+	}
+
+	if a.Path != nil {
+		object["path"], err = json.Marshal(a.Path)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'path': %w", err)
+		}
+	}
+
+	if a.Role != nil {
+		object["role"], err = json.Marshal(a.Role)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'role': %w", err)
+		}
+	}
+
+	if a.Source != nil {
+		object["source"], err = json.Marshal(a.Source)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'source': %w", err)
+		}
+	}
+
+	if a.Status != nil {
+		object["status"], err = json.Marshal(a.Status)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'status': %w", err)
+		}
+	}
+
+	if a.Time != nil {
+		object["time"], err = json.Marshal(a.Time)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'time': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// AsOpsBackupRestoreDryRunAttributesManifestVersion0 returns the union data inside the OpsBackupRestoreDryRunAttributes_ManifestVersion as a OpsBackupRestoreDryRunAttributesManifestVersion0
+func (t OpsBackupRestoreDryRunAttributes_ManifestVersion) AsOpsBackupRestoreDryRunAttributesManifestVersion0() (OpsBackupRestoreDryRunAttributesManifestVersion0, error) {
+	var body OpsBackupRestoreDryRunAttributesManifestVersion0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOpsBackupRestoreDryRunAttributesManifestVersion0 overwrites any union data inside the OpsBackupRestoreDryRunAttributes_ManifestVersion as the provided OpsBackupRestoreDryRunAttributesManifestVersion0
+func (t *OpsBackupRestoreDryRunAttributes_ManifestVersion) FromOpsBackupRestoreDryRunAttributesManifestVersion0(v OpsBackupRestoreDryRunAttributesManifestVersion0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOpsBackupRestoreDryRunAttributesManifestVersion0 performs a merge with any union data inside the OpsBackupRestoreDryRunAttributes_ManifestVersion, using the provided OpsBackupRestoreDryRunAttributesManifestVersion0
+func (t *OpsBackupRestoreDryRunAttributes_ManifestVersion) MergeOpsBackupRestoreDryRunAttributesManifestVersion0(v OpsBackupRestoreDryRunAttributesManifestVersion0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOpsBackupRestoreDryRunAttributesManifestVersion1 returns the union data inside the OpsBackupRestoreDryRunAttributes_ManifestVersion as a OpsBackupRestoreDryRunAttributesManifestVersion1
+func (t OpsBackupRestoreDryRunAttributes_ManifestVersion) AsOpsBackupRestoreDryRunAttributesManifestVersion1() (OpsBackupRestoreDryRunAttributesManifestVersion1, error) {
+	var body OpsBackupRestoreDryRunAttributesManifestVersion1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOpsBackupRestoreDryRunAttributesManifestVersion1 overwrites any union data inside the OpsBackupRestoreDryRunAttributes_ManifestVersion as the provided OpsBackupRestoreDryRunAttributesManifestVersion1
+func (t *OpsBackupRestoreDryRunAttributes_ManifestVersion) FromOpsBackupRestoreDryRunAttributesManifestVersion1(v OpsBackupRestoreDryRunAttributesManifestVersion1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOpsBackupRestoreDryRunAttributesManifestVersion1 performs a merge with any union data inside the OpsBackupRestoreDryRunAttributes_ManifestVersion, using the provided OpsBackupRestoreDryRunAttributesManifestVersion1
+func (t *OpsBackupRestoreDryRunAttributes_ManifestVersion) MergeOpsBackupRestoreDryRunAttributesManifestVersion1(v OpsBackupRestoreDryRunAttributesManifestVersion1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OpsBackupRestoreDryRunAttributes_ManifestVersion) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OpsBackupRestoreDryRunAttributes_ManifestVersion) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsResourceIdentifier returns the union data inside the Relationship_Data as a ResourceIdentifier
 func (t Relationship_Data) AsResourceIdentifier() (ResourceIdentifier, error) {
 	var body ResourceIdentifier
@@ -4240,6 +14295,24 @@ func (t *Relationship_Data) UnmarshalJSON(b []byte) error {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /admin/sessions)
+	GetAdminSessions(w http.ResponseWriter, r *http.Request, params GetAdminSessionsParams)
+
+	// (POST /admin/sessions/{sessionId}/revoke)
+	PostAdminSessionRevoke(w http.ResponseWriter, r *http.Request, sessionId SessionId)
+
+	// (GET /admin/users)
+	GetAdminUsers(w http.ResponseWriter, r *http.Request, params GetAdminUsersParams)
+
+	// (POST /admin/users)
+	PostAdminUsers(w http.ResponseWriter, r *http.Request)
+
+	// (PUT /admin/users/{userId})
+	PutAdminUser(w http.ResponseWriter, r *http.Request, userId UserId)
+
+	// (POST /admin/users/{userId}/password-reset)
+	PostAdminUserPasswordReset(w http.ResponseWriter, r *http.Request, userId UserId)
+
 	// (GET /ai/providers)
 	GetAiProviders(w http.ResponseWriter, r *http.Request, params GetAiProvidersParams)
 
@@ -4270,6 +14343,9 @@ type ServerInterface interface {
 	// (GET /ai/tool-definitions)
 	GetAiToolDefinitions(w http.ResponseWriter, r *http.Request, params GetAiToolDefinitionsParams)
 
+	// (GET /audit-events)
+	GetAuditEvents(w http.ResponseWriter, r *http.Request, params GetAuditEventsParams)
+
 	// (POST /auth/bootstrap)
 	PostAuthBootstrap(w http.ResponseWriter, r *http.Request)
 
@@ -4278,6 +14354,9 @@ type ServerInterface interface {
 
 	// (POST /auth/login)
 	PostAuthLogin(w http.ResponseWriter, r *http.Request)
+
+	// (POST /auth/logout)
+	PostAuthLogout(w http.ResponseWriter, r *http.Request)
 
 	// (GET /dashboard)
 	GetDashboard(w http.ResponseWriter, r *http.Request)
@@ -4291,6 +14370,9 @@ type ServerInterface interface {
 	// (POST /ingested-messages)
 	PostIngestedMessages(w http.ResponseWriter, r *http.Request)
 
+	// (POST /ingested-messages/feedback/batch)
+	PostIngestedMessagesFeedbackBatch(w http.ResponseWriter, r *http.Request)
+
 	// (POST /ingested-messages/refilter)
 	PostIngestedMessagesRefilter(w http.ResponseWriter, r *http.Request)
 
@@ -4299,6 +14381,9 @@ type ServerInterface interface {
 
 	// (PUT /ingested-messages/{messageId})
 	PutIngestedMessage(w http.ResponseWriter, r *http.Request, messageId MessageId)
+
+	// (POST /ingested-messages/{messageId}/feedback)
+	PostIngestedMessageFeedback(w http.ResponseWriter, r *http.Request, messageId MessageId)
 
 	// (POST /ingested-messages/{messageId}/filter)
 	PostIngestedMessageFilter(w http.ResponseWriter, r *http.Request, messageId MessageId)
@@ -4332,6 +14417,9 @@ type ServerInterface interface {
 
 	// (PUT /market/symbols/{code})
 	PutMarketSymbol(w http.ResponseWriter, r *http.Request, code Code)
+
+	// (POST /market/tasks)
+	PostMarketTasks(w http.ResponseWriter, r *http.Request)
 
 	// (POST /market/tools/query)
 	PostMarketToolsQuery(w http.ResponseWriter, r *http.Request)
@@ -4372,6 +14460,9 @@ type ServerInterface interface {
 	// (POST /meetings/{meetingId}/recap)
 	PostMeetingRecap(w http.ResponseWriter, r *http.Request, meetingId MeetingId)
 
+	// (POST /meetings/{meetingId}/recap-action-reviews)
+	PostMeetingRecapActionReview(w http.ResponseWriter, r *http.Request, meetingId MeetingId)
+
 	// (GET /meetings/{meetingId}/references)
 	GetMeetingReferences(w http.ResponseWriter, r *http.Request, meetingId MeetingId, params GetMeetingReferencesParams)
 
@@ -4386,6 +14477,36 @@ type ServerInterface interface {
 
 	// (GET /meetings/{meetingId}/stream)
 	GetMeetingStream(w http.ResponseWriter, r *http.Request, meetingId MeetingId)
+
+	// (POST /meetings/{meetingId}/trust-reviews)
+	PostMeetingTrustReview(w http.ResponseWriter, r *http.Request, meetingId MeetingId)
+
+	// (GET /message-feedback/evaluation)
+	GetMessageFeedbackEvaluation(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackEvaluationParams)
+
+	// (GET /message-feedback/source-trust)
+	GetMessageFeedbackSourceTrust(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackSourceTrustParams)
+
+	// (POST /message-feedback/source-trust/recompute)
+	PostMessageFeedbackSourceTrustRecompute(w http.ResponseWriter, r *http.Request, params PostMessageFeedbackSourceTrustRecomputeParams)
+
+	// (GET /message-feedback/training-exports)
+	GetMessageFeedbackTrainingExports(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackTrainingExportsParams)
+
+	// (POST /message-feedback/training-exports)
+	PostMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request, params PostMessageFeedbackTrainingExportParams)
+
+	// (GET /message-feedback/training-exports/{exportVersion})
+	GetMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request, exportVersion ExportVersion)
+
+	// (GET /message-feedback/training-samples)
+	GetMessageFeedbackTrainingSamples(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackTrainingSamplesParams)
+
+	// (GET /message-feedback/training-snapshots)
+	GetMessageFeedbackTrainingSnapshots(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackTrainingSnapshotsParams)
+
+	// (POST /message-feedback/training-snapshots)
+	PostMessageFeedbackTrainingSnapshot(w http.ResponseWriter, r *http.Request, params PostMessageFeedbackTrainingSnapshotParams)
 
 	// (GET /message-subscription-filters)
 	GetMessageSubscriptionFilters(w http.ResponseWriter, r *http.Request, params GetMessageSubscriptionFiltersParams)
@@ -4411,6 +14532,12 @@ type ServerInterface interface {
 	// (POST /message-subscriptions/collect)
 	PostMessageSubscriptionsCollect(w http.ResponseWriter, r *http.Request)
 
+	// (GET /message-subscriptions/diagnostics)
+	GetMessageSubscriptionDiagnostics(w http.ResponseWriter, r *http.Request, params GetMessageSubscriptionDiagnosticsParams)
+
+	// (POST /message-subscriptions/maintenance)
+	PostMessageSubscriptionsMaintenance(w http.ResponseWriter, r *http.Request)
+
 	// (POST /message-subscriptions/telegram/login/start)
 	PostMessageSubscriptionTelegramLoginStart(w http.ResponseWriter, r *http.Request)
 
@@ -4429,6 +14556,30 @@ type ServerInterface interface {
 	// (POST /message-subscriptions/{subscriptionId}/test)
 	PostMessageSubscriptionTest(w http.ResponseWriter, r *http.Request, subscriptionId SubscriptionId)
 
+	// (GET /ops/backups)
+	GetOpsBackups(w http.ResponseWriter, r *http.Request)
+
+	// (POST /ops/backups)
+	PostOpsBackups(w http.ResponseWriter, r *http.Request)
+
+	// (POST /ops/backups/{backupName}/restore-dry-run)
+	PostOpsBackupRestoreDryRun(w http.ResponseWriter, r *http.Request, backupName BackupName)
+
+	// (GET /ops/jobs)
+	GetOpsJobs(w http.ResponseWriter, r *http.Request, params GetOpsJobsParams)
+
+	// (POST /ops/jobs/retry-failed)
+	PostOpsJobsRetryFailed(w http.ResponseWriter, r *http.Request)
+
+	// (POST /ops/jobs/{queue}/tasks/{taskId}/run)
+	PostOpsJobTaskRun(w http.ResponseWriter, r *http.Request, queue Queue, taskId TaskId)
+
+	// (GET /ops/metrics)
+	GetOpsMetrics(w http.ResponseWriter, r *http.Request)
+
+	// (GET /ops/provider-health)
+	GetOpsProviderHealth(w http.ResponseWriter, r *http.Request)
+
 	// (GET /paper/accounts)
 	GetPaperAccounts(w http.ResponseWriter, r *http.Request, params GetPaperAccountsParams)
 
@@ -4443,6 +14594,15 @@ type ServerInterface interface {
 
 	// (POST /paper/accounts/{accountId}/activate)
 	PostPaperAccountActivate(w http.ResponseWriter, r *http.Request, accountId AccountId)
+
+	// (POST /paper/accounts/{accountId}/backtests)
+	PostPaperAccountBacktests(w http.ResponseWriter, r *http.Request, accountId AccountId)
+
+	// (GET /paper/accounts/{accountId}/corporate-actions)
+	GetPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request, accountId AccountId, params GetPaperAccountCorporateActionsParams)
+
+	// (POST /paper/accounts/{accountId}/corporate-actions)
+	PostPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request, accountId AccountId)
 
 	// (POST /paper/accounts/{accountId}/deactivate)
 	PostPaperAccountDeactivate(w http.ResponseWriter, r *http.Request, accountId AccountId)
@@ -4459,6 +14619,9 @@ type ServerInterface interface {
 	// (GET /paper/accounts/{accountId}/positions)
 	GetPaperAccountPositions(w http.ResponseWriter, r *http.Request, accountId AccountId, params GetPaperAccountPositionsParams)
 
+	// (GET /paper/accounts/{accountId}/replay)
+	GetPaperAccountReplay(w http.ResponseWriter, r *http.Request, accountId AccountId)
+
 	// (GET /paper/orders)
 	GetPaperOrders(w http.ResponseWriter, r *http.Request, params GetPaperOrdersParams)
 
@@ -4468,11 +14631,17 @@ type ServerInterface interface {
 	// (DELETE /paper/orders/{orderId})
 	DeletePaperOrder(w http.ResponseWriter, r *http.Request, orderId OrderId)
 
+	// (POST /paper/orders/{orderId}/approve)
+	PostPaperOrderApprove(w http.ResponseWriter, r *http.Request, orderId OrderId)
+
 	// (POST /paper/orders/{orderId}/cancel)
 	PostPaperOrderCancel(w http.ResponseWriter, r *http.Request, orderId OrderId)
 
 	// (POST /paper/orders/{orderId}/fill)
 	PostPaperOrderFill(w http.ResponseWriter, r *http.Request, orderId OrderId)
+
+	// (POST /paper/orders/{orderId}/reject)
+	PostPaperOrderReject(w http.ResponseWriter, r *http.Request, orderId OrderId)
 
 	// (GET /paper/overview)
 	GetPaperOverview(w http.ResponseWriter, r *http.Request)
@@ -4555,6 +14724,12 @@ type ServerInterface interface {
 	// (POST /settings/secrets)
 	PostSettingsSecrets(w http.ResponseWriter, r *http.Request)
 
+	// (POST /setup/actions/{key})
+	PostSetupAction(w http.ResponseWriter, r *http.Request, key Key)
+
+	// (GET /setup/readiness)
+	GetSetupReadiness(w http.ResponseWriter, r *http.Request)
+
 	// (GET /wake-plans)
 	GetWakePlans(w http.ResponseWriter, r *http.Request, params GetWakePlansParams)
 
@@ -4563,6 +14738,9 @@ type ServerInterface interface {
 
 	// (DELETE /wake-plans/{planId})
 	DeleteWakePlan(w http.ResponseWriter, r *http.Request, planId PlanId)
+
+	// (PUT /wake-plans/{planId})
+	PutWakePlan(w http.ResponseWriter, r *http.Request, planId PlanId)
 
 	// (POST /wake-plans/{planId}/cancel)
 	PostWakePlanCancel(w http.ResponseWriter, r *http.Request, planId PlanId)
@@ -4580,6 +14758,36 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// (GET /admin/sessions)
+func (_ Unimplemented) GetAdminSessions(w http.ResponseWriter, r *http.Request, params GetAdminSessionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /admin/sessions/{sessionId}/revoke)
+func (_ Unimplemented) PostAdminSessionRevoke(w http.ResponseWriter, r *http.Request, sessionId SessionId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /admin/users)
+func (_ Unimplemented) GetAdminUsers(w http.ResponseWriter, r *http.Request, params GetAdminUsersParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /admin/users)
+func (_ Unimplemented) PostAdminUsers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /admin/users/{userId})
+func (_ Unimplemented) PutAdminUser(w http.ResponseWriter, r *http.Request, userId UserId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /admin/users/{userId}/password-reset)
+func (_ Unimplemented) PostAdminUserPasswordReset(w http.ResponseWriter, r *http.Request, userId UserId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // (GET /ai/providers)
 func (_ Unimplemented) GetAiProviders(w http.ResponseWriter, r *http.Request, params GetAiProvidersParams) {
@@ -4631,6 +14839,11 @@ func (_ Unimplemented) GetAiToolDefinitions(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /audit-events)
+func (_ Unimplemented) GetAuditEvents(w http.ResponseWriter, r *http.Request, params GetAuditEventsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (POST /auth/bootstrap)
 func (_ Unimplemented) PostAuthBootstrap(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -4643,6 +14856,11 @@ func (_ Unimplemented) GetAuthBootstrapRequired(w http.ResponseWriter, r *http.R
 
 // (POST /auth/login)
 func (_ Unimplemented) PostAuthLogin(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /auth/logout)
+func (_ Unimplemented) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4666,6 +14884,11 @@ func (_ Unimplemented) PostIngestedMessages(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (POST /ingested-messages/feedback/batch)
+func (_ Unimplemented) PostIngestedMessagesFeedbackBatch(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (POST /ingested-messages/refilter)
 func (_ Unimplemented) PostIngestedMessagesRefilter(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -4678,6 +14901,11 @@ func (_ Unimplemented) DeleteIngestedMessage(w http.ResponseWriter, r *http.Requ
 
 // (PUT /ingested-messages/{messageId})
 func (_ Unimplemented) PutIngestedMessage(w http.ResponseWriter, r *http.Request, messageId MessageId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /ingested-messages/{messageId}/feedback)
+func (_ Unimplemented) PostIngestedMessageFeedback(w http.ResponseWriter, r *http.Request, messageId MessageId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4733,6 +14961,11 @@ func (_ Unimplemented) DeleteMarketSymbol(w http.ResponseWriter, r *http.Request
 
 // (PUT /market/symbols/{code})
 func (_ Unimplemented) PutMarketSymbol(w http.ResponseWriter, r *http.Request, code Code) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /market/tasks)
+func (_ Unimplemented) PostMarketTasks(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4801,6 +15034,11 @@ func (_ Unimplemented) PostMeetingRecap(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (POST /meetings/{meetingId}/recap-action-reviews)
+func (_ Unimplemented) PostMeetingRecapActionReview(w http.ResponseWriter, r *http.Request, meetingId MeetingId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /meetings/{meetingId}/references)
 func (_ Unimplemented) GetMeetingReferences(w http.ResponseWriter, r *http.Request, meetingId MeetingId, params GetMeetingReferencesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -4823,6 +15061,56 @@ func (_ Unimplemented) PostMeetingRestart(w http.ResponseWriter, r *http.Request
 
 // (GET /meetings/{meetingId}/stream)
 func (_ Unimplemented) GetMeetingStream(w http.ResponseWriter, r *http.Request, meetingId MeetingId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /meetings/{meetingId}/trust-reviews)
+func (_ Unimplemented) PostMeetingTrustReview(w http.ResponseWriter, r *http.Request, meetingId MeetingId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /message-feedback/evaluation)
+func (_ Unimplemented) GetMessageFeedbackEvaluation(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackEvaluationParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /message-feedback/source-trust)
+func (_ Unimplemented) GetMessageFeedbackSourceTrust(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackSourceTrustParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /message-feedback/source-trust/recompute)
+func (_ Unimplemented) PostMessageFeedbackSourceTrustRecompute(w http.ResponseWriter, r *http.Request, params PostMessageFeedbackSourceTrustRecomputeParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /message-feedback/training-exports)
+func (_ Unimplemented) GetMessageFeedbackTrainingExports(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackTrainingExportsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /message-feedback/training-exports)
+func (_ Unimplemented) PostMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request, params PostMessageFeedbackTrainingExportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /message-feedback/training-exports/{exportVersion})
+func (_ Unimplemented) GetMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request, exportVersion ExportVersion) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /message-feedback/training-samples)
+func (_ Unimplemented) GetMessageFeedbackTrainingSamples(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackTrainingSamplesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /message-feedback/training-snapshots)
+func (_ Unimplemented) GetMessageFeedbackTrainingSnapshots(w http.ResponseWriter, r *http.Request, params GetMessageFeedbackTrainingSnapshotsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /message-feedback/training-snapshots)
+func (_ Unimplemented) PostMessageFeedbackTrainingSnapshot(w http.ResponseWriter, r *http.Request, params PostMessageFeedbackTrainingSnapshotParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4866,6 +15154,16 @@ func (_ Unimplemented) PostMessageSubscriptionsCollect(w http.ResponseWriter, r 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /message-subscriptions/diagnostics)
+func (_ Unimplemented) GetMessageSubscriptionDiagnostics(w http.ResponseWriter, r *http.Request, params GetMessageSubscriptionDiagnosticsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /message-subscriptions/maintenance)
+func (_ Unimplemented) PostMessageSubscriptionsMaintenance(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (POST /message-subscriptions/telegram/login/start)
 func (_ Unimplemented) PostMessageSubscriptionTelegramLoginStart(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -4896,6 +15194,46 @@ func (_ Unimplemented) PostMessageSubscriptionTest(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /ops/backups)
+func (_ Unimplemented) GetOpsBackups(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /ops/backups)
+func (_ Unimplemented) PostOpsBackups(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /ops/backups/{backupName}/restore-dry-run)
+func (_ Unimplemented) PostOpsBackupRestoreDryRun(w http.ResponseWriter, r *http.Request, backupName BackupName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /ops/jobs)
+func (_ Unimplemented) GetOpsJobs(w http.ResponseWriter, r *http.Request, params GetOpsJobsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /ops/jobs/retry-failed)
+func (_ Unimplemented) PostOpsJobsRetryFailed(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /ops/jobs/{queue}/tasks/{taskId}/run)
+func (_ Unimplemented) PostOpsJobTaskRun(w http.ResponseWriter, r *http.Request, queue Queue, taskId TaskId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /ops/metrics)
+func (_ Unimplemented) GetOpsMetrics(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /ops/provider-health)
+func (_ Unimplemented) GetOpsProviderHealth(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /paper/accounts)
 func (_ Unimplemented) GetPaperAccounts(w http.ResponseWriter, r *http.Request, params GetPaperAccountsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -4918,6 +15256,21 @@ func (_ Unimplemented) PutPaperAccount(w http.ResponseWriter, r *http.Request, a
 
 // (POST /paper/accounts/{accountId}/activate)
 func (_ Unimplemented) PostPaperAccountActivate(w http.ResponseWriter, r *http.Request, accountId AccountId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /paper/accounts/{accountId}/backtests)
+func (_ Unimplemented) PostPaperAccountBacktests(w http.ResponseWriter, r *http.Request, accountId AccountId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /paper/accounts/{accountId}/corporate-actions)
+func (_ Unimplemented) GetPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request, accountId AccountId, params GetPaperAccountCorporateActionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /paper/accounts/{accountId}/corporate-actions)
+func (_ Unimplemented) PostPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request, accountId AccountId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4946,6 +15299,11 @@ func (_ Unimplemented) GetPaperAccountPositions(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /paper/accounts/{accountId}/replay)
+func (_ Unimplemented) GetPaperAccountReplay(w http.ResponseWriter, r *http.Request, accountId AccountId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /paper/orders)
 func (_ Unimplemented) GetPaperOrders(w http.ResponseWriter, r *http.Request, params GetPaperOrdersParams) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -4961,6 +15319,11 @@ func (_ Unimplemented) DeletePaperOrder(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (POST /paper/orders/{orderId}/approve)
+func (_ Unimplemented) PostPaperOrderApprove(w http.ResponseWriter, r *http.Request, orderId OrderId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (POST /paper/orders/{orderId}/cancel)
 func (_ Unimplemented) PostPaperOrderCancel(w http.ResponseWriter, r *http.Request, orderId OrderId) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -4968,6 +15331,11 @@ func (_ Unimplemented) PostPaperOrderCancel(w http.ResponseWriter, r *http.Reque
 
 // (POST /paper/orders/{orderId}/fill)
 func (_ Unimplemented) PostPaperOrderFill(w http.ResponseWriter, r *http.Request, orderId OrderId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /paper/orders/{orderId}/reject)
+func (_ Unimplemented) PostPaperOrderReject(w http.ResponseWriter, r *http.Request, orderId OrderId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5106,6 +15474,16 @@ func (_ Unimplemented) PostSettingsSecrets(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (POST /setup/actions/{key})
+func (_ Unimplemented) PostSetupAction(w http.ResponseWriter, r *http.Request, key Key) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /setup/readiness)
+func (_ Unimplemented) GetSetupReadiness(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /wake-plans)
 func (_ Unimplemented) GetWakePlans(w http.ResponseWriter, r *http.Request, params GetWakePlansParams) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -5118,6 +15496,11 @@ func (_ Unimplemented) PostWakePlans(w http.ResponseWriter, r *http.Request) {
 
 // (DELETE /wake-plans/{planId})
 func (_ Unimplemented) DeleteWakePlan(w http.ResponseWriter, r *http.Request, planId PlanId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /wake-plans/{planId})
+func (_ Unimplemented) PutWakePlan(w http.ResponseWriter, r *http.Request, planId PlanId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5149,6 +15532,252 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetAdminSessions operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminSessions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAdminSessionsParams
+
+	// ------------- Optional query parameter "username" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "username", r.URL.Query(), &params.Username, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "username"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "includeRevoked" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "includeRevoked", r.URL.Query(), &params.IncludeRevoked, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "includeRevoked"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "includeRevoked", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAdminSessions(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostAdminSessionRevoke operation middleware
+func (siw *ServerInterfaceWrapper) PostAdminSessionRevoke(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "sessionId" -------------
+	var sessionId SessionId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sessionId", chi.URLParam(r, "sessionId"), &sessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sessionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostAdminSessionRevoke(w, r, sessionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAdminUsers operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminUsers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAdminUsersParams
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAdminUsers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostAdminUsers operation middleware
+func (siw *ServerInterfaceWrapper) PostAdminUsers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostAdminUsers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutAdminUser operation middleware
+func (siw *ServerInterfaceWrapper) PutAdminUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId UserId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", chi.URLParam(r, "userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutAdminUser(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostAdminUserPasswordReset operation middleware
+func (siw *ServerInterfaceWrapper) PostAdminUserPasswordReset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId UserId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", chi.URLParam(r, "userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostAdminUserPasswordReset(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetAiProviders operation middleware
 func (siw *ServerInterfaceWrapper) GetAiProviders(w http.ResponseWriter, r *http.Request) {
@@ -5555,6 +16184,58 @@ func (siw *ServerInterfaceWrapper) GetAiToolDefinitions(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// GetAuditEvents operation middleware
+func (siw *ServerInterfaceWrapper) GetAuditEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditEventsParams
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAuditEvents(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PostAuthBootstrap operation middleware
 func (siw *ServerInterfaceWrapper) PostAuthBootstrap(w http.ResponseWriter, r *http.Request) {
 
@@ -5588,6 +16269,26 @@ func (siw *ServerInterfaceWrapper) PostAuthLogin(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostAuthLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostAuthLogout operation middleware
+func (siw *ServerInterfaceWrapper) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostAuthLogout(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5781,6 +16482,26 @@ func (siw *ServerInterfaceWrapper) PostIngestedMessages(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// PostIngestedMessagesFeedbackBatch operation middleware
+func (siw *ServerInterfaceWrapper) PostIngestedMessagesFeedbackBatch(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostIngestedMessagesFeedbackBatch(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PostIngestedMessagesRefilter operation middleware
 func (siw *ServerInterfaceWrapper) PostIngestedMessagesRefilter(w http.ResponseWriter, r *http.Request) {
 
@@ -5856,6 +16577,38 @@ func (siw *ServerInterfaceWrapper) PutIngestedMessage(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutIngestedMessage(w, r, messageId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostIngestedMessageFeedback operation middleware
+func (siw *ServerInterfaceWrapper) PostIngestedMessageFeedback(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "messageId" -------------
+	var messageId MessageId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "messageId", chi.URLParam(r, "messageId"), &messageId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "messageId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostIngestedMessageFeedback(w, r, messageId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6516,6 +17269,26 @@ func (siw *ServerInterfaceWrapper) PutMarketSymbol(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// PostMarketTasks operation middleware
+func (siw *ServerInterfaceWrapper) PostMarketTasks(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMarketTasks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PostMarketToolsQuery operation middleware
 func (siw *ServerInterfaceWrapper) PostMarketToolsQuery(w http.ResponseWriter, r *http.Request) {
 
@@ -7030,6 +17803,38 @@ func (siw *ServerInterfaceWrapper) PostMeetingRecap(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// PostMeetingRecapActionReview operation middleware
+func (siw *ServerInterfaceWrapper) PostMeetingRecapActionReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "meetingId" -------------
+	var meetingId MeetingId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "meetingId", chi.URLParam(r, "meetingId"), &meetingId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "meetingId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMeetingRecapActionReview(w, r, meetingId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetMeetingReferences operation middleware
 func (siw *ServerInterfaceWrapper) GetMeetingReferences(w http.ResponseWriter, r *http.Request) {
 
@@ -7219,6 +18024,668 @@ func (siw *ServerInterfaceWrapper) GetMeetingStream(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMeetingStream(w, r, meetingId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostMeetingTrustReview operation middleware
+func (siw *ServerInterfaceWrapper) PostMeetingTrustReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "meetingId" -------------
+	var meetingId MeetingId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "meetingId", chi.URLParam(r, "meetingId"), &meetingId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "meetingId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMeetingTrustReview(w, r, meetingId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMessageFeedbackEvaluation operation middleware
+func (siw *ServerInterfaceWrapper) GetMessageFeedbackEvaluation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMessageFeedbackEvaluationParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "feedbackLabel" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "feedbackLabel", r.URL.Query(), &params.FeedbackLabel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "feedbackLabel"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "feedbackLabel", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessageFeedbackEvaluation(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMessageFeedbackSourceTrust operation middleware
+func (siw *ServerInterfaceWrapper) GetMessageFeedbackSourceTrust(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMessageFeedbackSourceTrustParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessageFeedbackSourceTrust(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostMessageFeedbackSourceTrustRecompute operation middleware
+func (siw *ServerInterfaceWrapper) PostMessageFeedbackSourceTrustRecompute(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostMessageFeedbackSourceTrustRecomputeParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMessageFeedbackSourceTrustRecompute(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMessageFeedbackTrainingExports operation middleware
+func (siw *ServerInterfaceWrapper) GetMessageFeedbackTrainingExports(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMessageFeedbackTrainingExportsParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "feedbackLabel" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "feedbackLabel", r.URL.Query(), &params.FeedbackLabel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "feedbackLabel"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "feedbackLabel", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessageFeedbackTrainingExports(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostMessageFeedbackTrainingExport operation middleware
+func (siw *ServerInterfaceWrapper) PostMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostMessageFeedbackTrainingExportParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "feedbackLabel" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "feedbackLabel", r.URL.Query(), &params.FeedbackLabel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "feedbackLabel"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "feedbackLabel", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMessageFeedbackTrainingExport(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMessageFeedbackTrainingExport operation middleware
+func (siw *ServerInterfaceWrapper) GetMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "exportVersion" -------------
+	var exportVersion ExportVersion
+
+	err = runtime.BindStyledParameterWithOptions("simple", "exportVersion", chi.URLParam(r, "exportVersion"), &exportVersion, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "exportVersion", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessageFeedbackTrainingExport(w, r, exportVersion)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMessageFeedbackTrainingSamples operation middleware
+func (siw *ServerInterfaceWrapper) GetMessageFeedbackTrainingSamples(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMessageFeedbackTrainingSamplesParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "feedbackLabel" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "feedbackLabel", r.URL.Query(), &params.FeedbackLabel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "feedbackLabel"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "feedbackLabel", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessageFeedbackTrainingSamples(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMessageFeedbackTrainingSnapshots operation middleware
+func (siw *ServerInterfaceWrapper) GetMessageFeedbackTrainingSnapshots(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMessageFeedbackTrainingSnapshotsParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "feedbackLabel" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "feedbackLabel", r.URL.Query(), &params.FeedbackLabel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "feedbackLabel"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "feedbackLabel", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessageFeedbackTrainingSnapshots(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostMessageFeedbackTrainingSnapshot operation middleware
+func (siw *ServerInterfaceWrapper) PostMessageFeedbackTrainingSnapshot(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostMessageFeedbackTrainingSnapshotParams
+
+	// ------------- Optional query parameter "subscriptionId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "subscriptionId", r.URL.Query(), &params.SubscriptionId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subscriptionId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subscriptionId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "provider" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "provider", r.URL.Query(), &params.Provider, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "provider"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "feedbackLabel" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "feedbackLabel", r.URL.Query(), &params.FeedbackLabel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "feedbackLabel"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "feedbackLabel", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMessageFeedbackTrainingSnapshot(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7464,6 +18931,78 @@ func (siw *ServerInterfaceWrapper) PostMessageSubscriptionsCollect(w http.Respon
 	handler.ServeHTTP(w, r)
 }
 
+// GetMessageSubscriptionDiagnostics operation middleware
+func (siw *ServerInterfaceWrapper) GetMessageSubscriptionDiagnostics(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMessageSubscriptionDiagnosticsParams
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessageSubscriptionDiagnostics(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostMessageSubscriptionsMaintenance operation middleware
+func (siw *ServerInterfaceWrapper) PostMessageSubscriptionsMaintenance(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMessageSubscriptionsMaintenance(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PostMessageSubscriptionTelegramLoginStart operation middleware
 func (siw *ServerInterfaceWrapper) PostMessageSubscriptionTelegramLoginStart(w http.ResponseWriter, r *http.Request) {
 
@@ -7611,6 +19150,257 @@ func (siw *ServerInterfaceWrapper) PostMessageSubscriptionTest(w http.ResponseWr
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostMessageSubscriptionTest(w, r, subscriptionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOpsBackups operation middleware
+func (siw *ServerInterfaceWrapper) GetOpsBackups(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOpsBackups(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostOpsBackups operation middleware
+func (siw *ServerInterfaceWrapper) PostOpsBackups(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostOpsBackups(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostOpsBackupRestoreDryRun operation middleware
+func (siw *ServerInterfaceWrapper) PostOpsBackupRestoreDryRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "backupName" -------------
+	var backupName BackupName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "backupName", chi.URLParam(r, "backupName"), &backupName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "backupName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostOpsBackupRestoreDryRun(w, r, backupName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOpsJobs operation middleware
+func (siw *ServerInterfaceWrapper) GetOpsJobs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOpsJobsParams
+
+	// ------------- Optional query parameter "queue" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "queue", r.URL.Query(), &params.Queue, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "queue"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "queue", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "type", r.URL.Query(), &params.Type, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "state", r.URL.Query(), &params.State, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "state"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "failedLimit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "failedLimit", r.URL.Query(), &params.FailedLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "failedLimit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "failedLimit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOpsJobs(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostOpsJobsRetryFailed operation middleware
+func (siw *ServerInterfaceWrapper) PostOpsJobsRetryFailed(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostOpsJobsRetryFailed(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostOpsJobTaskRun operation middleware
+func (siw *ServerInterfaceWrapper) PostOpsJobTaskRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "queue" -------------
+	var queue Queue
+
+	err = runtime.BindStyledParameterWithOptions("simple", "queue", chi.URLParam(r, "queue"), &queue, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "queue", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId TaskId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostOpsJobTaskRun(w, r, queue, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOpsMetrics operation middleware
+func (siw *ServerInterfaceWrapper) GetOpsMetrics(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOpsMetrics(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOpsProviderHealth operation middleware
+func (siw *ServerInterfaceWrapper) GetOpsProviderHealth(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOpsProviderHealth(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7779,6 +19569,131 @@ func (siw *ServerInterfaceWrapper) PostPaperAccountActivate(w http.ResponseWrite
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostPaperAccountActivate(w, r, accountId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPaperAccountBacktests operation middleware
+func (siw *ServerInterfaceWrapper) PostPaperAccountBacktests(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId AccountId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPaperAccountBacktests(w, r, accountId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPaperAccountCorporateActions operation middleware
+func (siw *ServerInterfaceWrapper) GetPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId AccountId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPaperAccountCorporateActionsParams
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPaperAccountCorporateActions(w, r, accountId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPaperAccountCorporateActions operation middleware
+func (siw *ServerInterfaceWrapper) PostPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId AccountId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPaperAccountCorporateActions(w, r, accountId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8048,6 +19963,38 @@ func (siw *ServerInterfaceWrapper) GetPaperAccountPositions(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// GetPaperAccountReplay operation middleware
+func (siw *ServerInterfaceWrapper) GetPaperAccountReplay(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId AccountId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPaperAccountReplay(w, r, accountId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPaperOrders operation middleware
 func (siw *ServerInterfaceWrapper) GetPaperOrders(w http.ResponseWriter, r *http.Request) {
 
@@ -8152,6 +20099,38 @@ func (siw *ServerInterfaceWrapper) DeletePaperOrder(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// PostPaperOrderApprove operation middleware
+func (siw *ServerInterfaceWrapper) PostPaperOrderApprove(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "orderId" -------------
+	var orderId OrderId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "orderId", chi.URLParam(r, "orderId"), &orderId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "orderId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPaperOrderApprove(w, r, orderId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PostPaperOrderCancel operation middleware
 func (siw *ServerInterfaceWrapper) PostPaperOrderCancel(w http.ResponseWriter, r *http.Request) {
 
@@ -8207,6 +20186,38 @@ func (siw *ServerInterfaceWrapper) PostPaperOrderFill(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostPaperOrderFill(w, r, orderId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPaperOrderReject operation middleware
+func (siw *ServerInterfaceWrapper) PostPaperOrderReject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "orderId" -------------
+	var orderId OrderId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "orderId", chi.URLParam(r, "orderId"), &orderId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "orderId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPaperOrderReject(w, r, orderId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9078,6 +21089,58 @@ func (siw *ServerInterfaceWrapper) PostSettingsSecrets(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// PostSetupAction operation middleware
+func (siw *ServerInterfaceWrapper) PostSetupAction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "key" -------------
+	var key Key
+
+	err = runtime.BindStyledParameterWithOptions("simple", "key", chi.URLParam(r, "key"), &key, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "key", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostSetupAction(w, r, key)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSetupReadiness operation middleware
+func (siw *ServerInterfaceWrapper) GetSetupReadiness(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSetupReadiness(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetWakePlans operation middleware
 func (siw *ServerInterfaceWrapper) GetWakePlans(w http.ResponseWriter, r *http.Request) {
 
@@ -9212,6 +21275,38 @@ func (siw *ServerInterfaceWrapper) DeleteWakePlan(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteWakePlan(w, r, planId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutWakePlan operation middleware
+func (siw *ServerInterfaceWrapper) PutWakePlan(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "planId" -------------
+	var planId PlanId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "planId", chi.URLParam(r, "planId"), &planId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "planId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutWakePlan(w, r, planId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9463,6 +21558,24 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/sessions", wrapper.GetAdminSessions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/sessions/{sessionId}/revoke", wrapper.PostAdminSessionRevoke)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/users", wrapper.GetAdminUsers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/users", wrapper.PostAdminUsers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/admin/users/{userId}", wrapper.PutAdminUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/users/{userId}/password-reset", wrapper.PostAdminUserPasswordReset)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/ai/providers", wrapper.GetAiProviders)
 	})
 	r.Group(func(r chi.Router) {
@@ -9493,6 +21606,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/ai/tool-definitions", wrapper.GetAiToolDefinitions)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/audit-events", wrapper.GetAuditEvents)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/bootstrap", wrapper.PostAuthBootstrap)
 	})
 	r.Group(func(r chi.Router) {
@@ -9500,6 +21616,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/login", wrapper.PostAuthLogin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/logout", wrapper.PostAuthLogout)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/dashboard", wrapper.GetDashboard)
@@ -9514,6 +21633,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/ingested-messages", wrapper.PostIngestedMessages)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/ingested-messages/feedback/batch", wrapper.PostIngestedMessagesFeedbackBatch)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/ingested-messages/refilter", wrapper.PostIngestedMessagesRefilter)
 	})
 	r.Group(func(r chi.Router) {
@@ -9521,6 +21643,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/ingested-messages/{messageId}", wrapper.PutIngestedMessage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/ingested-messages/{messageId}/feedback", wrapper.PostIngestedMessageFeedback)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/ingested-messages/{messageId}/filter", wrapper.PostIngestedMessageFilter)
@@ -9554,6 +21679,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/market/symbols/{code}", wrapper.PutMarketSymbol)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/market/tasks", wrapper.PostMarketTasks)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/market/tools/query", wrapper.PostMarketToolsQuery)
@@ -9595,6 +21723,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/meetings/{meetingId}/recap", wrapper.PostMeetingRecap)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/meetings/{meetingId}/recap-action-reviews", wrapper.PostMeetingRecapActionReview)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/meetings/{meetingId}/references", wrapper.GetMeetingReferences)
 	})
 	r.Group(func(r chi.Router) {
@@ -9608,6 +21739,36 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/meetings/{meetingId}/stream", wrapper.GetMeetingStream)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/meetings/{meetingId}/trust-reviews", wrapper.PostMeetingTrustReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/message-feedback/evaluation", wrapper.GetMessageFeedbackEvaluation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/message-feedback/source-trust", wrapper.GetMessageFeedbackSourceTrust)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/message-feedback/source-trust/recompute", wrapper.PostMessageFeedbackSourceTrustRecompute)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/message-feedback/training-exports", wrapper.GetMessageFeedbackTrainingExports)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/message-feedback/training-exports", wrapper.PostMessageFeedbackTrainingExport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/message-feedback/training-exports/{exportVersion}", wrapper.GetMessageFeedbackTrainingExport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/message-feedback/training-samples", wrapper.GetMessageFeedbackTrainingSamples)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/message-feedback/training-snapshots", wrapper.GetMessageFeedbackTrainingSnapshots)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/message-feedback/training-snapshots", wrapper.PostMessageFeedbackTrainingSnapshot)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/message-subscription-filters", wrapper.GetMessageSubscriptionFilters)
@@ -9634,6 +21795,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/message-subscriptions/collect", wrapper.PostMessageSubscriptionsCollect)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/message-subscriptions/diagnostics", wrapper.GetMessageSubscriptionDiagnostics)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/message-subscriptions/maintenance", wrapper.PostMessageSubscriptionsMaintenance)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/message-subscriptions/telegram/login/start", wrapper.PostMessageSubscriptionTelegramLoginStart)
 	})
 	r.Group(func(r chi.Router) {
@@ -9652,6 +21819,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/message-subscriptions/{subscriptionId}/test", wrapper.PostMessageSubscriptionTest)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/ops/backups", wrapper.GetOpsBackups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/ops/backups", wrapper.PostOpsBackups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/ops/backups/{backupName}/restore-dry-run", wrapper.PostOpsBackupRestoreDryRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/ops/jobs", wrapper.GetOpsJobs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/ops/jobs/retry-failed", wrapper.PostOpsJobsRetryFailed)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/ops/jobs/{queue}/tasks/{taskId}/run", wrapper.PostOpsJobTaskRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/ops/metrics", wrapper.GetOpsMetrics)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/ops/provider-health", wrapper.GetOpsProviderHealth)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/paper/accounts", wrapper.GetPaperAccounts)
 	})
 	r.Group(func(r chi.Router) {
@@ -9665,6 +21856,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/paper/accounts/{accountId}/activate", wrapper.PostPaperAccountActivate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/paper/accounts/{accountId}/backtests", wrapper.PostPaperAccountBacktests)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/paper/accounts/{accountId}/corporate-actions", wrapper.GetPaperAccountCorporateActions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/paper/accounts/{accountId}/corporate-actions", wrapper.PostPaperAccountCorporateActions)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/paper/accounts/{accountId}/deactivate", wrapper.PostPaperAccountDeactivate)
@@ -9682,6 +21882,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/paper/accounts/{accountId}/positions", wrapper.GetPaperAccountPositions)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/paper/accounts/{accountId}/replay", wrapper.GetPaperAccountReplay)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/paper/orders", wrapper.GetPaperOrders)
 	})
 	r.Group(func(r chi.Router) {
@@ -9691,10 +21894,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/paper/orders/{orderId}", wrapper.DeletePaperOrder)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/paper/orders/{orderId}/approve", wrapper.PostPaperOrderApprove)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/paper/orders/{orderId}/cancel", wrapper.PostPaperOrderCancel)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/paper/orders/{orderId}/fill", wrapper.PostPaperOrderFill)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/paper/orders/{orderId}/reject", wrapper.PostPaperOrderReject)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/paper/overview", wrapper.GetPaperOverview)
@@ -9778,6 +21987,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/settings/secrets", wrapper.PostSettingsSecrets)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/setup/actions/{key}", wrapper.PostSetupAction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/setup/readiness", wrapper.GetSetupReadiness)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/wake-plans", wrapper.GetWakePlans)
 	})
 	r.Group(func(r chi.Router) {
@@ -9785,6 +22000,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/wake-plans/{planId}", wrapper.DeleteWakePlan)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/wake-plans/{planId}", wrapper.PutWakePlan)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/wake-plans/{planId}/cancel", wrapper.PostWakePlanCancel)

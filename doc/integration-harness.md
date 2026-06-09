@@ -87,6 +87,36 @@ go test ./internal/integration -run TestAIProviderIntegrationHarness -v -count=1
 
 该检查会发送一个非流式的 OpenAI 兼容 chat 请求，并验证响应解析、重试行为、模型选择，以及会议流程所需的 JSON 输出可用性。
 
+## 备份对象存储归档
+
+S3/S3-compatible 归档检查会在配置的 prefix 下追加唯一的 `integration/s3/<timestamp>` 子前缀，创建真实备份 zip、执行列表/stat/恢复 dry-run，然后删除本次创建的对象。不要把测试前缀配置为生产根目录。
+
+```bash
+TC_INTEGRATION_BACKUP_S3=1 \
+TC_BACKUP_ARCHIVE_S3_BUCKET="<bucket>" \
+TC_BACKUP_ARCHIVE_S3_REGION="<region>" \
+TC_BACKUP_ARCHIVE_S3_ENDPOINT="<optional-s3-compatible-endpoint>" \
+TC_BACKUP_ARCHIVE_S3_ACCESS_KEY_ID="<access-key-id>" \
+TC_BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY="<secret-access-key>" \
+TC_BACKUP_ARCHIVE_S3_PREFIX="tradingcopilot-test" \
+go test ./internal/integration -run TestS3BackupArchiveIntegrationHarness -v -count=1
+```
+
+OSS 归档检查会在配置的 prefix 下追加唯一的 `integration/oss/<timestamp>` 子前缀，创建真实备份 zip、执行列表/stat/恢复 dry-run，然后删除本次创建的对象。
+
+```bash
+TC_INTEGRATION_BACKUP_OSS=1 \
+TC_BACKUP_ARCHIVE_OSS_BUCKET="<bucket>" \
+TC_BACKUP_ARCHIVE_OSS_REGION="cn-hangzhou" \
+TC_BACKUP_ARCHIVE_OSS_ENDPOINT="https://oss-cn-hangzhou.aliyuncs.com" \
+TC_BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID="<access-key-id>" \
+TC_BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET="<access-key-secret>" \
+TC_BACKUP_ARCHIVE_OSS_PREFIX="tradingcopilot-test" \
+go test ./internal/integration -run TestOSSBackupArchiveIntegrationHarness -v -count=1
+```
+
+如果未设置 `TC_BACKUP_ARCHIVE_*` 变量，测试会回退读取运行时 `BACKUP_ARCHIVE_*` 变量。集成测试只清理本次生成的 zip；若清理失败，会在测试日志中输出远端对象名，需人工删除。
+
 ## Telegram MTProto
 
 使用 CLI 两步登录流程，将 Telegram app 凭据和 MTProto session 存入已配置的应用数据库：

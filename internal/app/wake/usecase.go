@@ -197,6 +197,44 @@ func (u Usecase) Create(ctx context.Context, row domainwake.Plan) (*domainwake.P
 	return &row, nil
 }
 
+func (u Usecase) Update(ctx context.Context, id uint, input domainwake.Plan) (*domainwake.Plan, bool, error) {
+	var row *domainwake.Plan
+	found := false
+	if err := u.withTx(ctx, func(repo Repository) error {
+		var err error
+		row, found, err = repo.Find(ctx, id)
+		if err != nil || !found {
+			return err
+		}
+		if input.ResearchTeamID == 0 {
+			return fmt.Errorf("research team is required")
+		}
+		if input.Status == "" {
+			input.Status = domainkernel.WakeActive
+		}
+		if input.TriggerConfig == nil {
+			input.TriggerConfig = u.service.JSON(map[string]any{})
+		}
+		input.ID = row.ID
+		input.CreatedAt = row.CreatedAt
+		if err := ValidatePlan(&input); err != nil {
+			return err
+		}
+		ready, reason, err := repo.ResearchTeamReady(ctx, input.ResearchTeamID)
+		if err != nil {
+			return err
+		}
+		if !ready {
+			return fmt.Errorf("%s", reason)
+		}
+		row = &input
+		return repo.Save(ctx, row)
+	}); err != nil {
+		return nil, found, err
+	}
+	return row, found, nil
+}
+
 func (u Usecase) Fire(ctx context.Context, id uint) (*FireResult, bool, error) {
 	var row *domainwake.Plan
 	var meeting *domainmeeting.Meeting
@@ -307,7 +345,7 @@ func (u Usecase) evaluateIndicatorCondition(ctx context.Context, repo Repository
 	}
 	field := normalizeIndicatorField(firstNonEmptyString(stringFromConfig(cfg["field"]), stringFromConfig(cfg["metric"]), "price"))
 	operator := strings.TrimSpace(firstNonEmptyString(stringFromConfig(cfg["operator"]), stringFromConfig(cfg["op"]), ">="))
-	thresholdText := firstNonEmptyString(stringFromConfig(cfg["threshold"]), stringFromConfig(cfg["target"]), stringFromConfig(cfg["target_price"]), stringFromConfig(cfg["value"]), stringFromConfig(cfg["target_value"]))
+	thresholdText := firstNonEmptyString(stringFromConfig(cfg["threshold"]), stringFromConfig(cfg["target"]), stringFromConfig(cfg["targetPrice"]), stringFromConfig(cfg["target_price"]), stringFromConfig(cfg["value"]), stringFromConfig(cfg["targetValue"]), stringFromConfig(cfg["target_value"]))
 	threshold, err := decimal.NewFromString(thresholdText)
 	if strings.TrimSpace(normalizedCode) == "" || err != nil {
 		return false, "", fmt.Errorf("indicator wake requires code and numeric threshold")
@@ -350,8 +388,8 @@ func (u Usecase) evaluateEventWake(ctx context.Context, repo Repository, plan *d
 	}
 	rows, err := repo.RecentTelegramMessages(ctx, MessageFilter{
 		Since:      since,
-		Decisions:  stringsFromConfig(firstNonNil(cfg["decisions"], cfg["decision"], cfg["filter_decision"])),
-		ChannelIDs: stringsFromConfig(firstNonNil(cfg["channel_ids"], cfg["channels"], cfg["channel_id"])),
+		Decisions:  stringsFromConfig(firstNonNil(cfg["decisions"], cfg["decision"], cfg["filterDecision"], cfg["filter_decision"])),
+		ChannelIDs: stringsFromConfig(firstNonNil(cfg["channelIds"], cfg["channelID"], cfg["channel_ids"], cfg["channels"], cfg["channel_id"])),
 		Limit:      50,
 	})
 	if err != nil {
@@ -359,9 +397,9 @@ func (u Usecase) evaluateEventWake(ctx context.Context, repo Repository, plan *d
 	}
 	keywords := stringsFromConfig(firstNonNil(cfg["keywords"], cfg["keyword"], cfg["contains"], cfg["text_contains"]))
 	excludes := stringsFromConfig(firstNonNil(cfg["exclude_keywords"], cfg["not_contains"]))
-	symbols := stringsFromConfig(firstNonNil(cfg["related_symbols"], cfg["symbols"], cfg["codes"]))
-	keywordMode := strings.ToLower(firstNonEmptyString(stringFromConfig(cfg["keyword_mode"]), stringFromConfig(cfg["match_mode"]), "any"))
-	symbolMode := strings.ToLower(firstNonEmptyString(stringFromConfig(cfg["symbol_mode"]), "any"))
+	symbols := stringsFromConfig(firstNonNil(cfg["relatedSymbols"], cfg["related_symbols"], cfg["symbols"], cfg["codes"]))
+	keywordMode := strings.ToLower(firstNonEmptyString(stringFromConfig(cfg["keywordMode"]), stringFromConfig(cfg["keyword_mode"]), stringFromConfig(cfg["matchMode"]), stringFromConfig(cfg["match_mode"]), "any"))
+	symbolMode := strings.ToLower(firstNonEmptyString(stringFromConfig(cfg["symbolMode"]), stringFromConfig(cfg["symbol_mode"]), "any"))
 	regexText := strings.TrimSpace(firstNonEmptyString(stringFromConfig(cfg["regex"]), stringFromConfig(cfg["pattern"])))
 	var compiled *regexp.Regexp
 	if regexText != "" {
@@ -448,7 +486,7 @@ func (u Usecase) firePlan(ctx context.Context, repo Repository, plan *domainwake
 func (u Usecase) reschedulePlan(ctx context.Context, repo Repository, plan *domainwake.Plan, resultSummary string) error {
 	now := time.Now()
 	cfg := wakeConfig(plan)
-	interval := intFromConfig(cfg["interval_seconds"], 300)
+	interval := intFromConfig(firstNonNil(cfg["intervalSeconds"], cfg["interval_seconds"]), 300)
 	if interval < 30 {
 		interval = 30
 	}

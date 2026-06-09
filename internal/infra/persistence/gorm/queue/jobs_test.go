@@ -6,9 +6,12 @@ import (
 	"fmt"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	appops "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ops"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/connect"
 	"github.com/glebarez/sqlite"
@@ -79,6 +82,51 @@ func TestWorkerServeMuxConsumesRecoverQueuedMeetingsTask(t *testing.T) {
 	}
 	if meeting.Status != domainkernel.MeetingFailed {
 		t.Fatalf("expected worker-consumed recovery task to fail stale meeting, got %+v", meeting)
+	}
+}
+
+func TestWorkerServeMuxConsumesBackupRestoreDrillTask(t *testing.T) {
+	db := newJobsTestDB(t)
+	root := t.TempDir()
+	dbPath := filepath.Join(root, "local-dev.db")
+	if err := os.WriteFile(dbPath, []byte("sqlite snapshot"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings := config.Settings{
+		AppName:                    "TradingCopilot",
+		AppEnv:                     "test",
+		DatabaseURL:                "sqlite:///" + dbPath,
+		BackupRetentionCopies:      7,
+		BackupRetentionDays:        30,
+		BackupRestoreDrillInterval: time.Hour,
+	}
+	service := appops.NewBackupService(opsBackupSettings(settings), func(context.Context) (appops.DatabaseSummary, error) {
+		return appops.DatabaseSummary{Backend: "SQLite", Target: dbPath}, nil
+	})
+	if _, err := service.CreateArchive(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	mux := NewServeMux(db, settings)
+	if err := mux.ProcessTask(context.Background(), asynq.NewTask(TypeRunBackupRestoreDrill, nil)); err != nil {
+		t.Fatal(err)
+	}
+	report, err := service.Report(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report["restoreDrill"] != "drilled" && report["restoreDrill"] != "drill_warning" {
+		t.Fatalf("restore drill status = %#v", report["restoreDrill"])
+	}
+}
+
+func TestWorkerServeMuxReturnsMarketTaskErrorForRetry(t *testing.T) {
+	db := newJobsTestDB(t)
+	mux := NewServeMux(db, config.Settings{DefaultMarketProvider: "fixture-unsupported"})
+	payload, _ := json.Marshal(MarketTask{Action: "sync_symbols"})
+
+	if err := mux.ProcessTask(context.Background(), asynq.NewTask(TypeRunMarketTask, payload)); err == nil {
+		t.Fatal("expected market provider error to be returned for queue retry")
 	}
 }
 

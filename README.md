@@ -13,9 +13,10 @@ TradingCopilot 是一个自托管的 AI 投研会议与 A 股模拟交易系统�
 - **AI 投研会议**：围绕主题启动多角色讨论，支持事件流、上下文、工具调用、复盘和会议重启。
 - **消息订阅与过滤**：支持 Telegram 与 RSS/Atom 来源，使用 AI 对消息做忽略、观察、触发会议等分诊。
 - **A 股行情与自选**：集成 A 股代码识别、实时行情、历史数据和自选列表。
-- **模拟交易系统**：支持账户、风控配置、订单、成交、持仓、权益快照和交易时段处理。
+- **模拟交易系统**：支持账户、风控配置、订单审批、成交量约束的部分成交、成交量参与率价格冲击、剩余撤单、持仓、权益快照、公司行为、复盘时间线和交易时段处理。
 - **唤醒计划**：按价格、涨跌幅、行情条件或消息事件触发后续投研。
 - **运行时配置**：在界面中管理模型提供商、密钥、代理、角色能力和系统设置。
+- **运维与恢复**：提供 provider health、队列治理、Prometheus 指标、本地/S3/OSS 备份归档 provider、恢复 dry-run 和保留策略。
 - **一体化部署**：Docker Compose 启动 PostgreSQL/TimescaleDB、Redis 和一个 TradingCopilot 应用容器。
 
 ## 快速开始
@@ -76,6 +77,12 @@ Compose 默认启动 3 个服务：
 | `REDIS_URL` | `redis://redis:6379/0` | Redis 连接 |
 | `MEETING_DISPATCH_MODE` | `redis` | 会议任务分发模式 |
 | `MESSAGE_TASK_QUEUE_MODE` | `redis` | 消息过滤任务队列模式 |
+| `BACKUP_ARCHIVE_PROVIDER` | `local` | 备份归档 provider，可选 `local`、`s3` 或 `oss`；S3/OSS 配置完整后会真实写入对应对象存储 |
+| `BACKUP_ARCHIVE_S3_*` | 空 | S3 归档配置：bucket、region、可选 endpoint、access key、secret key 和 prefix |
+| `BACKUP_ARCHIVE_OSS_*` | 空 | OSS 归档配置：bucket、region、endpoint、access key、secret key 和 prefix |
+| `BACKUP_RETENTION_COPIES` | `7` | 至少保留的最新备份归档数量 |
+| `BACKUP_RETENTION_DAYS` | `30` | 备份归档和恢复演练沙箱至少保留的天数 |
+| `BACKUP_RESTORE_DRILL_INTERVAL_HOURS` | `168` | Redis scheduler 周期性恢复 dry-run 间隔小时数，`0` 表示禁用 |
 | `TC_RUN_MIGRATIONS` | `true` | 启动时是否执行数据库迁移 |
 | `TC_RUN_MESSAGE_SUBSCRIPTION_LISTENER` | `true` | 是否启动消息订阅监听进程 |
 
@@ -185,6 +192,7 @@ internal/transport/  HTTP API 与前端静态资源服务
 - `doc/api-contract.md`：HTTP API 与 JSON:API 契约说明
 - `doc/database-contract.md`：数据库表与持久化约束
 - `doc/integration-harness.md`：集成测试环境说明
+- `doc/upgrade-migration.md`：自托管升级、迁移、回滚和验收说明
 - `doc/test-matrix.md`：测试矩阵
 - `doc/adr/`：架构决策记录
 

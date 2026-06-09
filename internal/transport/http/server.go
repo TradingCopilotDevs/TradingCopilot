@@ -3,6 +3,7 @@ package httptransport
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	appai "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ai"
 	appauth "github.com/TradingCopilotDevs/TradingCopilot/internal/app/auth"
@@ -11,6 +12,7 @@ import (
 	appmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/app/market"
 	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
 	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
+	appops "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ops"
 	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
 	appresearch "github.com/TradingCopilotDevs/TradingCopilot/internal/app/research"
 	appsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/app/settings"
@@ -35,13 +37,35 @@ type Dependencies struct {
 	Research  appresearch.Usecase
 	AppConfig appsettings.Usecase
 	Wake      appwake.Usecase
+	Backup    appops.BackupArchiveStore
 }
 
 type Settings struct {
-	AppName      string
-	AppEnv       string
-	CORSOrigins  []string
-	FrontendDist string
+	AppName                    string
+	AppEnv                     string
+	CORSOrigins                []string
+	FrontendDist               string
+	DatabaseURL                string
+	RedisURL                   string
+	MeetingMode                string
+	LogDir                     string
+	RuntimeEnvFile             string
+	BackupArchiveProvider      string
+	BackupArchiveS3Bucket      string
+	BackupArchiveS3Region      string
+	BackupArchiveS3Endpoint    string
+	BackupArchiveS3AccessKeyID string
+	BackupArchiveS3SecretKey   string
+	BackupArchiveS3Prefix      string
+	BackupArchiveOSSBucket     string
+	BackupArchiveOSSRegion     string
+	BackupArchiveOSSEndpoint   string
+	BackupArchiveOSSAccessKey  string
+	BackupArchiveOSSSecretKey  string
+	BackupArchiveOSSPrefix     string
+	BackupCopies               int
+	BackupDays                 int
+	BackupRestoreDrillInterval time.Duration
 }
 
 type Server struct {
@@ -57,6 +81,7 @@ type Server struct {
 	researchUsecase  appresearch.Usecase
 	settingsUsecase  appsettings.Usecase
 	wakeUsecase      appwake.Usecase
+	backupStore      appops.BackupArchiveStore
 }
 
 func New(deps Dependencies) *Server {
@@ -73,6 +98,7 @@ func New(deps Dependencies) *Server {
 		researchUsecase:  deps.Research,
 		settingsUsecase:  deps.AppConfig,
 		wakeUsecase:      deps.Wake,
+		backupStore:      deps.Backup,
 	}
 }
 
@@ -104,6 +130,7 @@ func (s *Server) middleware() []func(http.Handler) http.Handler {
 		middleware.RequestID,
 		middleware.RealIP,
 		recoverLogger,
+		traceRequests,
 		requestLogger,
 		cors.Handler(cors.Options{
 			AllowedOrigins:   s.settings.CORSOrigins,
@@ -120,7 +147,7 @@ func (s *Server) requireProtectedAPI(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		s.requireAdmin(next).ServeHTTP(w, r)
+		s.requireAdmin(s.auditProtectedMutation(next)).ServeHTTP(w, r)
 	})
 }
 

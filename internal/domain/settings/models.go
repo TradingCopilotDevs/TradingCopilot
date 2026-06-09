@@ -21,3 +21,8 @@ type AppSetting struct {
 	Description *string
 	UpdatedAt   time.Time
 }
+
+const (
+	SettingAICostRates       = "AI_COST_RATES"
+	SettingAIDailyCostBudget = "AI_DAILY_COST_BUDGET"
+)

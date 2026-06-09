@@ -192,6 +192,7 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { api, apiErrorText, unwrapJsonApiCollection, type LogConfigSummary, type LogEntry, type LogFile } from '../api'
 import { useAutoRefresh } from '../composables/useAutoRefresh'
 import { nextCursorFromDocument, useCursorPagination } from '../composables/useCursorPagination'
@@ -199,6 +200,7 @@ import { useResponsive } from '../composables/useResponsive'
 import { formatDateTimeUtc8 } from '../utils/datetime'
 
 const { isMobile, isTablet } = useResponsive()
+const route = useRoute()
 const logFiles = ref<LogFile[]>([])
 const config = ref<LogConfigSummary>({})
 const selectedEntry = ref<LogEntry | null>(null)
@@ -389,6 +391,33 @@ function prettyJSON(value: unknown) {
   return JSON.stringify(value || {}, null, 2)
 }
 
+function applyRouteFilters() {
+  for (const key of ['level', 'event', 'group', 'method', 'path', 'status', 'role', 'file', 'q'] as const) {
+    const value = routeQueryString(key)
+    if (value) query[key] = value
+  }
+  const includeNoise = routeQueryString('includeNoise')
+  if (includeNoise) query.includeNoise = includeNoise === 'true'
+  const slowOnly = routeQueryString('slowOnly')
+  if (slowOnly) query.slowOnly = slowOnly === 'true'
+  const from = routeQueryDate('from')
+  const to = routeQueryDate('to')
+  if (from && to) query.timeRange = [from, to]
+}
+
+function routeQueryString(key: string) {
+  const value = route.query[key]
+  const raw = Array.isArray(value) ? value[0] : value
+  return typeof raw === 'string' ? raw : ''
+}
+
+function routeQueryDate(key: string) {
+  const value = routeQueryString(key)
+  if (!value) return null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
 async function copyEntry() {
   if (!selectedEntry.value) return
   await navigator.clipboard.writeText(prettyJSON(selectedEntry.value.raw))
@@ -396,6 +425,7 @@ async function copyEntry() {
 }
 
 onMounted(() => {
+  applyRouteFilters()
   void loadLogs()
 })
 </script>

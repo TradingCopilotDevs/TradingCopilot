@@ -12,6 +12,11 @@
   "role_system": [
     "Return JSON only",
     "tool_request",
+    "\"facts\"",
+    "\"assumptions\"",
+    "\"inferences\"",
+    "\"evidence_gaps\"",
+    "Facts must be directly supported",
     "Do not produce the final meeting recap"
   ],
   "role_user": [
@@ -28,6 +33,11 @@
     "market.realtime_quote"
   ],
   "recap_system": [
+    "\"facts\"",
+    "\"inferences\"",
+    "\"evidence_gaps\"",
+    "\"citations\"",
+    "Facts and inferences must be traceable",
     "\"watchlist_actions\"",
     "position_pct must be a decimal fraction",
     "Do not output US stocks"

@@ -36,7 +36,7 @@ func (q RedisMessageTaskQueue) EnqueueCollect(ctx context.Context, task appmessa
 	start := time.Now()
 	client := asynq.NewClient(RedisClientOpt(q.settings.RedisURL))
 	defer client.Close()
-	payload, _ := json.Marshal(task)
+	payload := encodeTaskPayload(ctx, task)
 	id := "message_subscription_collect:all"
 	if task.SubscriptionID != 0 {
 		id = "message_subscription_collect:" + itoa(task.SubscriptionID)
@@ -62,7 +62,7 @@ func (q RedisMessageTaskQueue) EnqueueFilter(ctx context.Context, task appmessag
 	start := time.Now()
 	client := asynq.NewClient(RedisClientOpt(q.settings.RedisURL))
 	defer client.Close()
-	payload, _ := json.Marshal(task)
+	payload := encodeTaskPayload(ctx, task)
 	id := "message_filter_message:" + itoa(task.MessageID)
 	if task.Force {
 		id += ":force"
@@ -100,33 +100,43 @@ func (q RedisMessageTaskQueue) filterTimeout() time.Duration {
 func RegisterMessageTaskHandlers(mux *asynq.ServeMux, handlers MessageTaskHandlers) {
 	mux.HandleFunc(TypeCollectMessageSubscription, func(ctx context.Context, task *asynq.Task) error {
 		start := time.Now()
+		ctx, raw, span := beginTaskSpan(ctx, TypeCollectMessageSubscription, task.Payload())
+		defer span.End()
 		if handlers.Collect == nil {
 			err := errors.New("message collect handler is not configured")
+			finishTaskSpan(span, err)
 			infralogging.LogOperation(start, "queue.task", "messaging", "collect", "message collect task failed", err, zap.String("taskType", TypeCollectMessageSubscription))
 			return err
 		}
 		var payload appmessaging.CollectTask
-		if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+		if err := json.Unmarshal(raw, &payload); err != nil {
+			finishTaskSpan(span, err)
 			infralogging.LogOperation(start, "queue.task", "messaging", "collect", "message collect task failed", err, zap.String("taskType", TypeCollectMessageSubscription))
 			return err
 		}
 		err := handlers.Collect(ctx, payload)
+		finishTaskSpan(span, err)
 		infralogging.LogOperation(start, "queue.task", "messaging", "collect", "message collect task completed", err, zap.String("taskType", TypeCollectMessageSubscription), zap.Uint("subscriptionId", payload.SubscriptionID))
 		return err
 	})
 	mux.HandleFunc(TypeFilterIngestedMessage, func(ctx context.Context, task *asynq.Task) error {
 		start := time.Now()
+		ctx, raw, span := beginTaskSpan(ctx, TypeFilterIngestedMessage, task.Payload())
+		defer span.End()
 		if handlers.Filter == nil {
 			err := errors.New("message filter handler is not configured")
+			finishTaskSpan(span, err)
 			infralogging.LogOperation(start, "queue.task", "messaging", "filter", "message filter task failed", err, zap.String("taskType", TypeFilterIngestedMessage))
 			return err
 		}
 		var payload appmessaging.FilterTask
-		if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+		if err := json.Unmarshal(raw, &payload); err != nil {
+			finishTaskSpan(span, err)
 			infralogging.LogOperation(start, "queue.task", "messaging", "filter", "message filter task failed", err, zap.String("taskType", TypeFilterIngestedMessage))
 			return err
 		}
 		err := handlers.Filter(ctx, payload)
+		finishTaskSpan(span, err)
 		infralogging.LogOperation(start, "queue.task", "messaging", "filter", "message filter task completed", err, zap.String("taskType", TypeFilterIngestedMessage), zap.Uint("messageId", payload.MessageID), zap.Bool("force", payload.Force))
 		return err
 	})
@@ -140,10 +150,11 @@ type LocalMessageTaskQueue struct {
 }
 
 type localMessageTask struct {
-	kind    string
-	collect appmessaging.CollectTask
-	filter  appmessaging.FilterTask
-	key     string
+	kind         string
+	collect      appmessaging.CollectTask
+	filter       appmessaging.FilterTask
+	key          string
+	tracePayload []byte
 }
 
 func NewLocalMessageTaskQueue(buffer int) *LocalMessageTaskQueue {
@@ -162,7 +173,7 @@ func (q *LocalMessageTaskQueue) EnqueueCollect(ctx context.Context, task appmess
 	if task.SubscriptionID != 0 {
 		key = "collect:" + itoa(task.SubscriptionID)
 	}
-	return q.enqueue(ctx, localMessageTask{kind: TypeCollectMessageSubscription, collect: task, key: key})
+	return q.enqueue(ctx, localMessageTask{kind: TypeCollectMessageSubscription, collect: task, key: key, tracePayload: encodeTaskPayloadBytes(ctx, nil)})
 }
 
 func (q *LocalMessageTaskQueue) EnqueueFilter(ctx context.Context, task appmessaging.FilterTask) error {
@@ -170,7 +181,7 @@ func (q *LocalMessageTaskQueue) EnqueueFilter(ctx context.Context, task appmessa
 	if task.Force {
 		key += ":force"
 	}
-	return q.enqueue(ctx, localMessageTask{kind: TypeFilterIngestedMessage, filter: task, key: key})
+	return q.enqueue(ctx, localMessageTask{kind: TypeFilterIngestedMessage, filter: task, key: key, tracePayload: encodeTaskPayloadBytes(ctx, nil)})
 }
 
 func (q *LocalMessageTaskQueue) Run(ctx context.Context, workers int) {
@@ -228,6 +239,8 @@ func (q *LocalMessageTaskQueue) enqueue(ctx context.Context, task localMessageTa
 
 func (q *LocalMessageTaskQueue) runTask(ctx context.Context, task localMessageTask) {
 	start := time.Now()
+	ctx, _, span := beginTaskSpan(ctx, task.kind, task.tracePayload)
+	defer span.End()
 	var err error
 	switch task.kind {
 	case TypeCollectMessageSubscription:
@@ -239,6 +252,7 @@ func (q *LocalMessageTaskQueue) runTask(ctx context.Context, task localMessageTa
 			err = q.handlers.Filter(ctx, task.filter)
 		}
 	}
+	finishTaskSpan(span, err)
 	infralogging.LogOperation(start, "queue.task", "messaging", taskMethod(task.kind), "local message task completed", err, zap.String("taskType", task.kind), zap.String("taskKey", task.key))
 }
 

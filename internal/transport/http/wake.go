@@ -43,6 +43,23 @@ func (s *Server) createWakePlan(w http.ResponseWriter, r *http.Request) {
 	jsonapi.WriteData(w, http.StatusOK, wakePlanResource(*saved))
 }
 
+func (s *Server) updateWakePlan(w http.ResponseWriter, r *http.Request) {
+	row, ok := decodeWakePlanPayload(w, r)
+	if !ok {
+		return
+	}
+	saved, found, err := s.wakeUsecase.Update(r.Context(), uintParam(r, "planId"), row)
+	if err != nil {
+		writeJSONAPIError(w, http.StatusBadRequest, "wake-plan-update-failed", "Wake plan update failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "wake-plan-not-found", "Wake plan not found", "wake plan not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, wakePlanResource(*saved))
+}
+
 func (s *Server) fireWakePlan(w http.ResponseWriter, r *http.Request) {
 	result, found, err := s.wakeUsecase.Fire(r.Context(), uintParam(r, "planId"))
 	if err != nil {

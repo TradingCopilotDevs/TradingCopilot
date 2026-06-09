@@ -28,6 +28,7 @@ type Settings struct {
 	MeetingDispatchMode                 string
 	MeetingMaxRounds                    int
 	MeetingDailyTokenBudget             int
+	AIDailyCostBudget                   float64
 	MeetingStaleAfter                   time.Duration
 	MeetingAutoRequeueLimit             int
 	MeetingRunTimeout                   time.Duration
@@ -46,6 +47,28 @@ type Settings struct {
 	LogRotationSizeMB                   int
 	LogRotationTotalSizeMB              int
 	LogRotationMaxAgeDays               int
+	BackupArchiveProvider               string
+	BackupArchiveS3Bucket               string
+	BackupArchiveS3Region               string
+	BackupArchiveS3Endpoint             string
+	BackupArchiveS3AccessKeyID          string
+	BackupArchiveS3SecretAccessKey      string
+	BackupArchiveS3Prefix               string
+	BackupArchiveOSSBucket              string
+	BackupArchiveOSSRegion              string
+	BackupArchiveOSSEndpoint            string
+	BackupArchiveOSSAccessKeyID         string
+	BackupArchiveOSSAccessKeySecret     string
+	BackupArchiveOSSPrefix              string
+	BackupRetentionCopies               int
+	BackupRetentionDays                 int
+	BackupRestoreDrillInterval          time.Duration
+	OTELServiceName                     string
+	OTELTracesExporter                  string
+	OTELExporterOTLPEndpoint            string
+	OTELExporterOTLPProtocol            string
+	OTELTracesSampler                   string
+	OTELTracesSamplerArg                string
 	FrontendDist                        string
 	RuntimeEnvFile                      string
 	HTTPAddr                            string
@@ -73,6 +96,7 @@ func Load() Settings {
 		MeetingDispatchMode:                 env("MEETING_DISPATCH_MODE", "local"),
 		MeetingMaxRounds:                    envInt("MEETING_MAX_ROUNDS", 6),
 		MeetingDailyTokenBudget:             envMeetingDailyTokenBudget(),
+		AIDailyCostBudget:                   envAIDailyCostBudget(),
 		MeetingStaleAfter:                   time.Duration(envInt("MEETING_STALE_AFTER_SECONDS", 1800)) * time.Second,
 		MeetingAutoRequeueLimit:             envInt("MEETING_AUTO_REQUEUE_LIMIT", 2),
 		MeetingRunTimeout:                   time.Duration(envInt("MEETING_RUN_TIMEOUT_SECONDS", 7200)) * time.Second,
@@ -91,6 +115,28 @@ func Load() Settings {
 		LogRotationSizeMB:                   envInt("LOG_ROTATION_SIZE_MB", 5),
 		LogRotationTotalSizeMB:              envInt("LOG_ROTATION_TOTAL_SIZE_MB", 100),
 		LogRotationMaxAgeDays:               envInt("LOG_ROTATION_MAX_AGE_DAYS", 7),
+		BackupArchiveProvider:               env("BACKUP_ARCHIVE_PROVIDER", "local"),
+		BackupArchiveS3Bucket:               env("BACKUP_ARCHIVE_S3_BUCKET", ""),
+		BackupArchiveS3Region:               env("BACKUP_ARCHIVE_S3_REGION", ""),
+		BackupArchiveS3Endpoint:             env("BACKUP_ARCHIVE_S3_ENDPOINT", ""),
+		BackupArchiveS3AccessKeyID:          env("BACKUP_ARCHIVE_S3_ACCESS_KEY_ID", ""),
+		BackupArchiveS3SecretAccessKey:      env("BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY", ""),
+		BackupArchiveS3Prefix:               env("BACKUP_ARCHIVE_S3_PREFIX", ""),
+		BackupArchiveOSSBucket:              env("BACKUP_ARCHIVE_OSS_BUCKET", ""),
+		BackupArchiveOSSRegion:              env("BACKUP_ARCHIVE_OSS_REGION", ""),
+		BackupArchiveOSSEndpoint:            env("BACKUP_ARCHIVE_OSS_ENDPOINT", ""),
+		BackupArchiveOSSAccessKeyID:         env("BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID", ""),
+		BackupArchiveOSSAccessKeySecret:     env("BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET", ""),
+		BackupArchiveOSSPrefix:              env("BACKUP_ARCHIVE_OSS_PREFIX", ""),
+		BackupRetentionCopies:               envPositiveInt("BACKUP_RETENTION_COPIES", 7),
+		BackupRetentionDays:                 envPositiveInt("BACKUP_RETENTION_DAYS", 30),
+		BackupRestoreDrillInterval:          time.Duration(envNonNegativeInt("BACKUP_RESTORE_DRILL_INTERVAL_HOURS", 168)) * time.Hour,
+		OTELServiceName:                     env("OTEL_SERVICE_NAME", ""),
+		OTELTracesExporter:                  env("OTEL_TRACES_EXPORTER", "none"),
+		OTELExporterOTLPEndpoint:            env("OTEL_EXPORTER_OTLP_ENDPOINT", ""),
+		OTELExporterOTLPProtocol:            env("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"),
+		OTELTracesSampler:                   env("OTEL_TRACES_SAMPLER", "always_on"),
+		OTELTracesSamplerArg:                env("OTEL_TRACES_SAMPLER_ARG", ""),
 		FrontendDist:                        env("TC_FRONTEND_DIST", "frontend/dist"),
 		RuntimeEnvFile:                      env("TC_ENV_FILE", ".env"),
 		HTTPAddr:                            env("HTTP_ADDR", ":8000"),
@@ -116,6 +162,22 @@ func envInt(key string, fallback int) int {
 	return parsed
 }
 
+func envPositiveInt(key string, fallback int) int {
+	parsed := envInt(key, fallback)
+	if parsed <= 0 {
+		return fallback
+	}
+	return parsed
+}
+
+func envNonNegativeInt(key string, fallback int) int {
+	parsed := envInt(key, fallback)
+	if parsed < 0 {
+		return fallback
+	}
+	return parsed
+}
+
 func envMeetingDailyTokenBudget() int {
 	parsed := envInt("MEETING_DAILY_TOKEN_BUDGET", -1)
 	if parsed == -1 || parsed > 0 {
@@ -124,7 +186,15 @@ func envMeetingDailyTokenBudget() int {
 	return -1
 }
 
-func envFloatMillis(key string, fallback float64) float64 {
+func envAIDailyCostBudget() float64 {
+	parsed := envFloat("AI_DAILY_COST_BUDGET", -1)
+	if parsed == -1 || parsed > 0 {
+		return parsed
+	}
+	return -1
+}
+
+func envFloat(key string, fallback float64) float64 {
 	value := strings.TrimSpace(os.Getenv(key))
 	if value == "" {
 		return fallback
@@ -134,6 +204,10 @@ func envFloatMillis(key string, fallback float64) float64 {
 		return fallback
 	}
 	return parsed
+}
+
+func envFloatMillis(key string, fallback float64) float64 {
+	return envFloat(key, fallback)
 }
 
 func envBool(key string, fallback bool) bool {

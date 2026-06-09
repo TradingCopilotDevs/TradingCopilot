@@ -78,6 +78,147 @@ func TestAutoMigrateCreatesSchemaTables(t *testing.T) {
 	}
 }
 
+func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(
+		&previousVersionAdminUser{},
+		&previousVersionMessageSubscription{},
+		&previousVersionIngestedMessage{},
+		&previousVersionPaperAccount{},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now().UTC().Truncate(time.Second)
+	admin := previousVersionAdminUser{Username: "admin", PasswordHash: "hash", CreatedAt: now, UpdatedAt: now}
+	if err := db.Create(&admin).Error; err != nil {
+		t.Fatal(err)
+	}
+	emptySubscription := previousVersionMessageSubscription{
+		Provider:    "rss_feed",
+		Title:       "empty",
+		SourceRef:   "https://example.test/empty.xml",
+		Enabled:     true,
+		CollectFrom: now,
+		Config:      datatypes.JSON([]byte(`{}`)),
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	withMessageSubscription := previousVersionMessageSubscription{
+		Provider:    "rss_feed",
+		Title:       "with-message",
+		SourceRef:   "https://example.test/feed.xml",
+		Enabled:     true,
+		CollectFrom: now,
+		Config:      datatypes.JSON([]byte(`{}`)),
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	if err := db.Create(&emptySubscription).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&withMessageSubscription).Error; err != nil {
+		t.Fatal(err)
+	}
+	filteredAt := now
+	message := previousVersionIngestedMessage{
+		SubscriptionID:  withMessageSubscription.ID,
+		Provider:        "rss_feed",
+		SourceMessageID: "legacy-1",
+		MessageTime:     now,
+		Text:            "legacy message",
+		Raw:             datatypes.JSON([]byte(`{}`)),
+		RelatedSymbols:  datatypes.JSON([]byte(`[]`)),
+		FilteredAt:      &filteredAt,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+	if err := db.Create(&message).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec("UPDATE ingested_messages SET filter_status = '' WHERE id = ?", message.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	account := previousVersionPaperAccount{
+		Name:        "legacy paper",
+		InitialCash: decimal.NewFromInt(100000),
+		Cash:        decimal.NewFromInt(100000),
+		Active:      true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := AutoMigrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, table := range []string{"auth_sessions", "audit_events", "paper_corporate_actions"} {
+		if !db.Migrator().HasTable(table) {
+			t.Fatalf("expected upgraded schema to contain %s", table)
+		}
+	}
+	for _, column := range []string{"display_name", "role", "active", "last_login_at"} {
+		if !db.Migrator().HasColumn(&persistmodel.AdminUser{}, column) {
+			t.Fatalf("expected upgraded admin_users to contain %s", column)
+		}
+	}
+	for _, column := range []string{"feedback_label", "feedback_comment", "feedback_at"} {
+		if !db.Migrator().HasColumn(&persistmodel.IngestedMessage{}, column) {
+			t.Fatalf("expected upgraded ingested_messages to contain %s", column)
+		}
+	}
+
+	var upgradedAdmin persistmodel.AdminUser
+	if err := db.First(&upgradedAdmin, "username = ?", admin.Username).Error; err != nil {
+		t.Fatal(err)
+	}
+	if upgradedAdmin.PasswordHash != admin.PasswordHash || upgradedAdmin.Role != "admin" || !upgradedAdmin.Active {
+		t.Fatalf("legacy admin was not preserved with safe defaults: %+v", upgradedAdmin)
+	}
+
+	var upgradedEmpty persistmodel.MessageSubscription
+	if err := db.First(&upgradedEmpty, emptySubscription.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if !upgradedEmpty.CollectFrom.IsZero() {
+		t.Fatalf("empty legacy subscription collect_from should be cleared, got %s", upgradedEmpty.CollectFrom)
+	}
+	var upgradedWithMessage persistmodel.MessageSubscription
+	if err := db.First(&upgradedWithMessage, withMessageSubscription.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if upgradedWithMessage.CollectFrom.IsZero() {
+		t.Fatal("legacy subscription with messages should preserve collect_from")
+	}
+
+	var upgradedMessage persistmodel.IngestedMessage
+	if err := db.First(&upgradedMessage, message.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if upgradedMessage.Text != message.Text || upgradedMessage.FilterStatus != "failed" {
+		t.Fatalf("legacy message was not preserved and normalized: %+v", upgradedMessage)
+	}
+
+	action := persistmodel.PaperCorporateAction{
+		AccountID:      account.ID,
+		Code:           "600519",
+		ActionType:     "cash_dividend",
+		ExDate:         now,
+		CashPerShare:   decimal.NewFromFloat(1.23),
+		AffectedShares: 100,
+		CashAmount:     decimal.NewFromInt(123),
+	}
+	if err := db.Create(&action).Error; err != nil {
+		t.Fatalf("expected upgraded paper_corporate_actions table to accept rows: %v", err)
+	}
+}
+
 func TestAutoMigrateClearsCollectFromForEmptyMessageSubscriptions(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
@@ -180,6 +321,8 @@ func TestGORMTableSurfaceMatchesPersistenceModels(t *testing.T) {
 		"ai_provider_models",
 		"ai_providers",
 		"app_settings",
+		"audit_events",
+		"auth_sessions",
 		"daily_bars",
 		"market_symbols",
 		"message_subscription_research_teams",
@@ -190,6 +333,7 @@ func TestGORMTableSurfaceMatchesPersistenceModels(t *testing.T) {
 		"meetings",
 		"ingested_messages",
 		"paper_accounts",
+		"paper_corporate_actions",
 		"paper_equity_snapshots",
 		"paper_fills",
 		"paper_orders",
@@ -424,6 +568,69 @@ func assertJSONKind(t *testing.T, raw []byte, want any) {
 		t.Fatalf("unsupported JSON kind %T", want)
 	}
 }
+
+type previousVersionAdminUser struct {
+	ID           uint   `gorm:"primaryKey"`
+	Username     string `gorm:"size:64;uniqueIndex"`
+	PasswordHash string `gorm:"size:255"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (previousVersionAdminUser) TableName() string { return "admin_users" }
+
+type previousVersionMessageSubscription struct {
+	ID                  uint   `gorm:"primaryKey"`
+	Provider            string `gorm:"size:64;index;uniqueIndex:uq_message_subscription_provider_ref"`
+	Title               string `gorm:"size:160"`
+	SourceRef           string `gorm:"size:255;index;uniqueIndex:uq_message_subscription_provider_ref"`
+	Enabled             bool   `gorm:"default:true"`
+	FilterID            uint   `gorm:"index"`
+	BackfillLimit       int    `gorm:"default:0"`
+	PollIntervalSeconds int    `gorm:"default:0"`
+	CollectFrom         time.Time
+	LastCollectedAt     *time.Time
+	NextCollectAt       *time.Time     `gorm:"index"`
+	LastCollectError    *string        `gorm:"type:text"`
+	Config              datatypes.JSON `gorm:"type:json;default:'{}'"`
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
+func (previousVersionMessageSubscription) TableName() string { return "message_subscriptions" }
+
+type previousVersionIngestedMessage struct {
+	ID              uint                       `gorm:"primaryKey"`
+	SubscriptionID  uint                       `gorm:"index;uniqueIndex:uq_ingested_subscription_message"`
+	Provider        string                     `gorm:"size:64;index"`
+	SourceMessageID string                     `gorm:"size:255;uniqueIndex:uq_ingested_subscription_message"`
+	MessageTime     time.Time                  `gorm:"index"`
+	Text            string                     `gorm:"type:text"`
+	Raw             datatypes.JSON             `gorm:"type:json;default:'{}'"`
+	FilterDecision  *domainkernel.NewsDecision `gorm:"size:32"`
+	FilterReason    *string                    `gorm:"type:text"`
+	FilterStatus    string                     `gorm:"size:32;default:unfiltered;index"`
+	RelatedSymbols  datatypes.JSON             `gorm:"type:json;default:'[]'"`
+	FilteredAt      *time.Time
+	FilterID        *uint `gorm:"index"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (previousVersionIngestedMessage) TableName() string { return "ingested_messages" }
+
+type previousVersionPaperAccount struct {
+	ID           uint            `gorm:"primaryKey"`
+	Name         string          `gorm:"size:128;uniqueIndex"`
+	InitialCash  decimal.Decimal `gorm:"type:numeric(18,2)"`
+	Cash         decimal.Decimal `gorm:"type:numeric(18,2)"`
+	RiskConfigID *uint
+	Active       bool `gorm:"default:true"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (previousVersionPaperAccount) TableName() string { return "paper_accounts" }
 
 func diffStrings(left []string, right []string) []string {
 	rightSet := make(map[string]bool, len(right))

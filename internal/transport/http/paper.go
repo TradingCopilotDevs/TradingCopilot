@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
@@ -184,6 +185,16 @@ func (s *Server) listFills(w http.ResponseWriter, r *http.Request) {
 	jsonapi.Write(w, http.StatusOK, jsonapi.Document{Data: paperFillResources(result.Rows), Links: jsonapi.PageLinks(r, result.NextCursor), Meta: jsonapi.PageMeta(len(result.Rows), result.NextCursor)})
 }
 
+func (s *Server) listCorporateActions(w http.ResponseWriter, r *http.Request) {
+	page := jsonapi.ParsePage(r, 100, 500)
+	result, err := s.paperUsecase.ListCorporateActions(r.Context(), uintParam(r, "accountId"), apppaper.Page{Limit: page.Limit, Cursor: page.Cursor})
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "paper-corporate-actions-load-failed", "Paper corporate actions load failed", err.Error(), "")
+		return
+	}
+	jsonapi.Write(w, http.StatusOK, jsonapi.Document{Data: paperCorporateActionResources(result.Rows), Links: jsonapi.PageLinks(r, result.NextCursor), Meta: jsonapi.PageMeta(len(result.Rows), result.NextCursor)})
+}
+
 func (s *Server) paperPerformance(w http.ResponseWriter, r *http.Request) {
 	performance, found, err := s.paperUsecase.Performance(r.Context(), uintParam(r, "accountId"))
 	if err != nil {
@@ -195,6 +206,38 @@ func (s *Server) paperPerformance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonapi.WriteData(w, http.StatusOK, paperPerformanceResource(uintParam(r, "accountId"), performance))
+}
+
+func (s *Server) paperReplay(w http.ResponseWriter, r *http.Request) {
+	report, found, err := s.paperUsecase.Replay(r.Context(), uintParam(r, "accountId"))
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "paper-replay-load-failed", "Paper replay load failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "paper-account-not-found", "Paper account not found", "paper account not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, paperReplayResource(*report))
+}
+
+func (s *Server) paperBacktest(w http.ResponseWriter, r *http.Request) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return
+	}
+	input := paperBacktestInput(attrs)
+	input.AccountID = uintParam(r, "accountId")
+	report, found, err := s.paperUsecase.Backtest(r.Context(), input)
+	if err != nil {
+		writeJSONAPIError(w, http.StatusBadRequest, "paper-backtest-run-failed", "Paper backtest run failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "paper-account-not-found", "Paper account not found", "paper account not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, paperBacktestResource(*report))
 }
 
 func (s *Server) listOrders(w http.ResponseWriter, r *http.Request) {
@@ -224,6 +267,63 @@ func (s *Server) createOrder(w http.ResponseWriter, r *http.Request) {
 	jsonapi.WriteData(w, http.StatusOK, paperOrderResource(*row))
 }
 
+func (s *Server) createCorporateAction(w http.ResponseWriter, r *http.Request) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return
+	}
+	input := paperCorporateActionInput(attrs)
+	input.AccountID = uintParam(r, "accountId")
+	row, err := s.paperUsecase.CreateCorporateAction(r.Context(), input)
+	if err != nil {
+		status := http.StatusBadRequest
+		if strings.Contains(err.Error(), "not found") {
+			status = http.StatusNotFound
+		}
+		writeJSONAPIError(w, status, "paper-corporate-action-create-failed", "Paper corporate action create failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, paperCorporateActionResource(*row))
+}
+
+func (s *Server) approveOrder(w http.ResponseWriter, r *http.Request) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return
+	}
+	row, found, err := s.paperUsecase.ApproveOrder(r.Context(), uintParam(r, "orderId"), apppaper.OrderApproveInput{
+		ConfirmHighRisk: boolAttr(attrs, "confirmHighRisk"),
+	})
+	if err != nil {
+		writeJSONAPIError(w, http.StatusConflict, "paper-order-approve-failed", "Paper order approve failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "paper-order-not-found", "Paper order not found", "order not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, paperOrderResource(*row))
+}
+
+func (s *Server) rejectOrder(w http.ResponseWriter, r *http.Request) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return
+	}
+	row, found, err := s.paperUsecase.RejectOrder(r.Context(), uintParam(r, "orderId"), apppaper.OrderRejectInput{
+		Reason: stringAttr(attrs, "reason"),
+	})
+	if err != nil {
+		writeJSONAPIError(w, http.StatusConflict, "paper-order-reject-failed", "Paper order reject failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "paper-order-not-found", "Paper order not found", "order not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, paperOrderResource(*row))
+}
+
 func (s *Server) cancelOrder(w http.ResponseWriter, r *http.Request) {
 	row, found, err := s.paperUsecase.CancelOrder(r.Context(), uintParam(r, "orderId"))
 	if err != nil {
@@ -239,12 +339,13 @@ func (s *Server) cancelOrder(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) fillOrder(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
-		Price decimal.Decimal `json:"price"`
+		Price    decimal.Decimal `json:"price"`
+		Quantity int             `json:"quantity"`
 	}
 	if !decodeJSONAPIRequest(w, r, &payload) {
 		return
 	}
-	row, found, err := s.paperUsecase.FillOrder(r.Context(), uintParam(r, "orderId"), payload.Price)
+	row, found, err := s.paperUsecase.FillOrder(r.Context(), uintParam(r, "orderId"), domainpaper.OrderFillInput{Price: payload.Price, Quantity: payload.Quantity})
 	if err != nil {
 		writeJSONAPIError(w, http.StatusConflict, "paper-order-fill-failed", "Paper order fill failed", err.Error(), "")
 		return
@@ -325,6 +426,43 @@ func paperOrderInput(attrs map[string]any) domainpaper.OrderInput {
 		AllocationPct:        decimalAttr(attrs, "allocationPct"),
 		MeetingSummary:       stringAttr(attrs, "meetingSummary"),
 		MeetingConclusion:    stringAttr(attrs, "meetingConclusion"),
+	}
+}
+
+func paperCorporateActionInput(attrs map[string]any) domainpaper.CorporateActionInput {
+	var exDate time.Time
+	if parsed := timePtrAttr(attrs, "exDate"); parsed != nil {
+		exDate = *parsed
+	}
+	return domainpaper.CorporateActionInput{
+		AccountID:    uintAttr(attrs, "accountId"),
+		Code:         stringAttr(attrs, "code"),
+		ActionType:   stringAttr(attrs, "actionType"),
+		ExDate:       exDate,
+		CashPerShare: decimalAttr(attrs, "cashPerShare"),
+		ShareRatio:   decimalAttr(attrs, "shareRatio"),
+		Note:         stringPtrAttr(attrs, "note"),
+	}
+}
+
+func paperBacktestInput(attrs map[string]any) apppaper.BacktestInput {
+	var startDate time.Time
+	var endDate time.Time
+	if parsed := timePtrAttr(attrs, "startDate"); parsed != nil {
+		startDate = *parsed
+	}
+	if parsed := timePtrAttr(attrs, "endDate"); parsed != nil {
+		endDate = *parsed
+	}
+	return apppaper.BacktestInput{
+		Code:             stringAttr(attrs, "code"),
+		StartDate:        startDate,
+		EndDate:          endDate,
+		InitialCash:      decimalAttr(attrs, "initialCash"),
+		BuyThresholdPct:  decimalAttr(attrs, "buyThresholdPct"),
+		SellThresholdPct: decimalAttr(attrs, "sellThresholdPct"),
+		OrderPct:         decimalAttr(attrs, "orderPct"),
+		SlippageBps:      decimalAttr(attrs, "slippageBps"),
 	}
 }
 
@@ -528,4 +666,124 @@ func paperFillResources(rows []apppaper.FillRow) []jsonapi.Resource {
 		out = append(out, resource)
 	}
 	return out
+}
+
+func paperCorporateActionResources(rows []apppaper.CorporateActionRow) []jsonapi.Resource {
+	out := make([]jsonapi.Resource, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, paperCorporateActionResource(row))
+	}
+	return out
+}
+
+func paperCorporateActionResource(row apppaper.CorporateActionRow) jsonapi.Resource {
+	resource := jsonapi.NewResource("paper-corporate-actions", strconv.FormatUint(uint64(row.Action.ID), 10), jsonResourceAttributes(row.Public))
+	resource.Relationships = map[string]jsonapi.Relationship{
+		"account": {Data: map[string]string{"type": "paper-accounts", "id": strconv.FormatUint(uint64(row.Action.AccountID), 10)}},
+	}
+	return resource
+}
+
+func paperReplayResource(report apppaper.ReplayReport) jsonapi.Resource {
+	events := make([]map[string]any, 0, len(report.Events))
+	for _, event := range report.Events {
+		events = append(events, map[string]any{
+			"id":         event.ID,
+			"type":       event.Type,
+			"time":       event.Time,
+			"code":       event.Code,
+			"summary":    event.Summary,
+			"attributes": camelizeJSONKeys(event.Attributes),
+		})
+	}
+	resource := jsonapi.NewResource("paper-replays", strconv.FormatUint(uint64(report.AccountID), 10), map[string]any{
+		"accountId":   report.AccountID,
+		"generatedAt": report.GeneratedAt,
+		"modelPolicy": camelizeJSONKeys(report.ModelPolicy),
+		"summary":     camelizeJSONKeys(report.Summary),
+		"events":      events,
+	})
+	resource.Relationships = map[string]jsonapi.Relationship{
+		"account": {Data: map[string]string{"type": "paper-accounts", "id": strconv.FormatUint(uint64(report.AccountID), 10)}},
+	}
+	return resource
+}
+
+func paperBacktestResource(report apppaper.BacktestReport) jsonapi.Resource {
+	series := make([]map[string]any, 0, len(report.Series))
+	for _, point := range report.Series {
+		series = append(series, map[string]any{
+			"tradeDate":      point.TradeDate,
+			"close":          point.Close,
+			"signalPct":      point.SignalPct,
+			"cash":           point.Cash,
+			"quantity":       point.Quantity,
+			"marketValue":    point.MarketValue,
+			"totalEquity":    point.TotalEquity,
+			"dailyReturnPct": point.DailyReturnPct,
+			"drawdownPct":    point.DrawdownPct,
+		})
+	}
+	orders := make([]map[string]any, 0, len(report.Orders))
+	for _, order := range report.Orders {
+		orders = append(orders, map[string]any{
+			"id":             order.ID,
+			"tradeDate":      order.TradeDate,
+			"code":           order.Code,
+			"side":           order.Side,
+			"quantity":       order.Quantity,
+			"signalPct":      order.SignalPct,
+			"referencePrice": order.ReferencePrice,
+			"filledPrice":    order.FilledPrice,
+			"status":         order.Status,
+			"reason":         order.Reason,
+			"grossAmount":    order.GrossAmount,
+			"fees":           order.Fees,
+			"cashAfter":      order.CashAfter,
+			"positionAfter":  order.PositionAfter,
+		})
+	}
+	attrs := map[string]any{
+		"accountId":   report.AccountID,
+		"generatedAt": report.GeneratedAt,
+		"input": map[string]any{
+			"accountId":        report.Input.AccountID,
+			"code":             report.Input.Code,
+			"startDate":        report.Input.StartDate,
+			"endDate":          report.Input.EndDate,
+			"initialCash":      report.Input.InitialCash,
+			"buyThresholdPct":  report.Input.BuyThresholdPct,
+			"sellThresholdPct": report.Input.SellThresholdPct,
+			"orderPct":         report.Input.OrderPct,
+			"slippageBps":      report.Input.SlippageBps,
+		},
+		"policy": map[string]any{
+			"executionModel":    report.Policy.ExecutionModel,
+			"riskModel":         report.Policy.RiskModel,
+			"brokerIntegration": report.Policy.BrokerIntegration,
+			"dataSource":        report.Policy.DataSource,
+			"limitBandPct":      report.Policy.LimitBandPct,
+			"slippageBps":       report.Policy.SlippageBps,
+			"lotSize":           report.Policy.LotSize,
+			"rules":             report.Policy.Rules,
+		},
+		"summary": map[string]any{
+			"barCount":         report.Summary.BarCount,
+			"tradeCount":       report.Summary.TradeCount,
+			"rejectedCount":    report.Summary.RejectedCount,
+			"initialCash":      report.Summary.InitialCash,
+			"finalCash":        report.Summary.FinalCash,
+			"finalMarketValue": report.Summary.FinalMarketValue,
+			"finalEquity":      report.Summary.FinalEquity,
+			"totalReturnPct":   report.Summary.TotalReturnPct,
+			"maxDrawdownPct":   report.Summary.MaxDrawdownPct,
+		},
+		"series": series,
+		"orders": orders,
+	}
+	resource := jsonapi.NewResource("paper-backtests", strconv.FormatUint(uint64(report.AccountID), 10), attrs)
+	resource.Relationships = map[string]jsonapi.Relationship{
+		"account": {Data: map[string]string{"type": "paper-accounts", "id": strconv.FormatUint(uint64(report.AccountID), 10)}},
+	}
+	return resource
 }

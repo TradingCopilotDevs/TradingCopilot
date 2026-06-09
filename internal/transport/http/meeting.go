@@ -2,6 +2,7 @@ package httptransport
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	"io"
@@ -61,7 +62,12 @@ func (s *Server) getMeeting(w http.ResponseWriter, r *http.Request) {
 		writeJSONAPIError(w, http.StatusNotFound, "meeting-not-found", "Meeting not found", "meeting not found", "")
 		return
 	}
-	jsonapi.WriteData(w, http.StatusOK, meetingResource(*row))
+	events, err := s.meetingUsecase.ListEvents(r.Context(), row.ID, appmeeting.Page{Limit: 500})
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "meeting-events-load-failed", "Meeting events load failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, meetingResourceWithTrust(*row, events.Rows))
 }
 
 func (s *Server) updateMeeting(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +110,51 @@ func (s *Server) recapMeeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonapi.WriteData(w, http.StatusOK, meetingResource(*row))
+}
+
+func (s *Server) reviewMeetingTrustSentence(w http.ResponseWriter, r *http.Request) {
+	payload, ok := decodeMeetingTrustReviewPayload(w, r)
+	if !ok {
+		return
+	}
+	event, found, err := s.meetingUsecase.ReviewTrustSentence(r.Context(), uintParam(r, "meetingId"), appmeeting.TrustReviewInput(payload), currentPrincipal(r).Username)
+	if err != nil {
+		if errors.Is(err, appmeeting.ErrInvalidTrustReview) {
+			writeJSONAPIError(w, http.StatusBadRequest, "meeting-trust-review-invalid", "Meeting trust review invalid", err.Error(), "")
+			return
+		}
+		writeJSONAPIError(w, http.StatusInternalServerError, "meeting-trust-review-failed", "Meeting trust review failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "meeting-not-found", "Meeting not found", "meeting not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, meetingTrustReviewResource(*event))
+}
+
+func (s *Server) reviewMeetingRecapAction(w http.ResponseWriter, r *http.Request) {
+	payload, ok := decodeMeetingRecapActionReviewPayload(w, r)
+	if !ok {
+		return
+	}
+	event, found, err := s.meetingUsecase.ReviewRecapAction(r.Context(), uintParam(r, "meetingId"), appmeeting.RecapActionReviewInput(payload), currentPrincipal(r).Username)
+	if err != nil {
+		switch {
+		case errors.Is(err, appmeeting.ErrInvalidRecapActionReview):
+			writeJSONAPIError(w, http.StatusBadRequest, "meeting-recap-action-review-invalid", "Meeting recap action review invalid", err.Error(), "")
+		case errors.Is(err, appmeeting.ErrRecapActionReviewConfirmationRequired):
+			writeJSONAPIError(w, http.StatusBadRequest, "confirmation-required", "Confirmation required", err.Error(), "confirm")
+		default:
+			writeJSONAPIError(w, http.StatusInternalServerError, "meeting-recap-action-review-failed", "Meeting recap action review failed", err.Error(), "")
+		}
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "meeting-not-found", "Meeting not found", "meeting not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, meetingRecapActionReviewResource(*event))
 }
 
 func (s *Server) deleteMeeting(w http.ResponseWriter, r *http.Request) {
@@ -274,6 +325,27 @@ type meetingReferencePayload struct {
 	Note            *string
 }
 
+type meetingTrustReviewPayload struct {
+	SentenceID       string
+	Sentence         string
+	Verdict          string
+	CitationIDs      []string
+	EvidenceEventIDs []uint
+	Comment          string
+}
+
+type meetingRecapActionReviewPayload struct {
+	SuggestionID     string
+	SourceEventID    uint
+	ActionIndex      *int
+	ActionType       string
+	Decision         string
+	CitationIDs      []string
+	EvidenceEventIDs []uint
+	Comment          string
+	Confirm          bool
+}
+
 func decodeMeetingReferencePayload(w http.ResponseWriter, r *http.Request) (meetingReferencePayload, bool) {
 	attrs, ok := decodeJSONAPIAttributesMap(w, r)
 	if !ok {
@@ -284,6 +356,52 @@ func decodeMeetingReferencePayload(w http.ResponseWriter, r *http.Request) (meet
 		targetID = *id
 	}
 	return meetingReferencePayload{TargetMeetingID: targetID, Note: nullableStringAttr(attrs, "note")}, true
+}
+
+func decodeMeetingTrustReviewPayload(w http.ResponseWriter, r *http.Request) (meetingTrustReviewPayload, bool) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return meetingTrustReviewPayload{}, false
+	}
+	payload := meetingTrustReviewPayload{
+		SentenceID: stringAttr(attrs, "sentenceId"),
+		Sentence:   stringAttr(attrs, "sentence"),
+		Verdict:    stringAttr(attrs, "verdict"),
+		Comment:    stringAttr(attrs, "comment"),
+	}
+	if values, ok := stringSliceAttr(attrs, "citationIds"); ok {
+		payload.CitationIDs = values
+	}
+	if values, ok := uintSliceAttr(attrs, "evidenceEventIds"); ok {
+		payload.EvidenceEventIDs = values
+	}
+	return payload, true
+}
+
+func decodeMeetingRecapActionReviewPayload(w http.ResponseWriter, r *http.Request) (meetingRecapActionReviewPayload, bool) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return meetingRecapActionReviewPayload{}, false
+	}
+	payload := meetingRecapActionReviewPayload{
+		SuggestionID:  stringAttr(attrs, "suggestionId"),
+		SourceEventID: uintAttr(attrs, "sourceEventId"),
+		ActionType:    stringAttr(attrs, "actionType"),
+		Decision:      stringAttr(attrs, "decision"),
+		Comment:       stringAttr(attrs, "comment"),
+		Confirm:       boolAttr(attrs, "confirm"),
+	}
+	if _, ok := attrValue(attrs, "actionIndex"); ok {
+		index := intAttr(attrs, "actionIndex")
+		payload.ActionIndex = &index
+	}
+	if values, ok := stringSliceAttr(attrs, "citationIds"); ok {
+		payload.CitationIDs = values
+	}
+	if values, ok := uintSliceAttr(attrs, "evidenceEventIds"); ok {
+		payload.EvidenceEventIDs = values
+	}
+	return payload, true
 }
 
 func meetingResource(row domainmeeting.Meeting) jsonapi.Resource {
@@ -320,6 +438,64 @@ func meetingEventResource(row domainmeeting.Event) jsonapi.Resource {
 	})
 	resource.Relationships = map[string]jsonapi.Relationship{
 		"meeting": {Data: map[string]string{"type": "meetings", "id": strconv.FormatUint(uint64(row.MeetingID), 10)}},
+	}
+	return resource
+}
+
+func meetingTrustReviewResource(row domainmeeting.Event) jsonapi.Resource {
+	payload := payloadMap(row)
+	resource := jsonapi.NewResource("meeting-trust-reviews", strconv.FormatUint(uint64(row.ID), 10), map[string]any{
+		"meetingId":        row.MeetingID,
+		"eventId":          row.ID,
+		"sequence":         row.Sequence,
+		"sentenceId":       firstNonEmptyAnyString(payload["sentence_id"], payload["sentenceId"]),
+		"sentence":         firstNonEmptyAnyString(payload["sentence"]),
+		"verdict":          firstNonEmptyAnyString(payload["verdict"]),
+		"citationIds":      stringListFromAny(trustFirstNonNil(payload["citation_ids"], payload["citationIds"])),
+		"evidenceEventIds": uintListFromAnyTrust(trustFirstNonNil(payload["evidence_event_ids"], payload["evidenceEventIds"])),
+		"comment":          firstNonEmptyAnyString(payload["comment"]),
+		"reviewer":         firstNonEmptyAnyString(payload["reviewer"]),
+		"reviewedAt":       trustFirstNonNil(payload["reviewed_at"], payload["reviewedAt"], row.CreatedAt),
+		"createdAt":        row.CreatedAt,
+	})
+	resource.Relationships = map[string]jsonapi.Relationship{
+		"meeting": {Data: map[string]string{"type": "meetings", "id": strconv.FormatUint(uint64(row.MeetingID), 10)}},
+		"event":   {Data: map[string]string{"type": "meeting-events", "id": strconv.FormatUint(uint64(row.ID), 10)}},
+	}
+	return resource
+}
+
+func meetingRecapActionReviewResource(row domainmeeting.Event) jsonapi.Resource {
+	payload := payloadMap(row)
+	sourceEventID, _ := numericUint(payload["source_event_id"])
+	sourceSequence, _ := numericUint(payload["source_sequence"])
+	actionIndex, _ := numericUint(payload["action_index"])
+	resource := jsonapi.NewResource("meeting-recap-action-reviews", strconv.FormatUint(uint64(row.ID), 10), map[string]any{
+		"meetingId":            row.MeetingID,
+		"eventId":              row.ID,
+		"sequence":             row.Sequence,
+		"suggestionId":         firstNonEmptyAnyString(payload["suggestion_id"], payload["suggestionId"]),
+		"sourceEventId":        sourceEventID,
+		"sourceSequence":       sourceSequence,
+		"actionIndex":          actionIndex,
+		"actionType":           firstNonEmptyAnyString(payload["action_type"], payload["actionType"]),
+		"decision":             firstNonEmptyAnyString(payload["decision"]),
+		"executionDisposition": firstNonEmptyAnyString(payload["execution_disposition"], payload["executionDisposition"]),
+		"citationIds":          stringListFromAny(trustFirstNonNil(payload["citation_ids"], payload["citationIds"])),
+		"evidenceEventIds":     uintListFromAnyTrust(trustFirstNonNil(payload["evidence_event_ids"], payload["evidenceEventIds"])),
+		"comment":              firstNonEmptyAnyString(payload["comment"]),
+		"reviewer":             firstNonEmptyAnyString(payload["reviewer"]),
+		"reviewedAt":           trustFirstNonNil(payload["reviewed_at"], payload["reviewedAt"], row.CreatedAt),
+		"actionSpec":           mapFromAnyTrust(trustFirstNonNil(payload["action_spec"], payload["actionSpec"])),
+		"originalStatus":       firstNonEmptyAnyString(payload["original_status"], payload["originalStatus"]),
+		"originalPolicy":       firstNonEmptyAnyString(payload["original_policy"], payload["originalPolicy"]),
+		"originalDisposition":  firstNonEmptyAnyString(payload["original_disposition"], payload["originalDisposition"]),
+		"originalReason":       firstNonEmptyAnyString(payload["original_reason"], payload["originalReason"]),
+		"createdAt":            row.CreatedAt,
+	})
+	resource.Relationships = map[string]jsonapi.Relationship{
+		"meeting": {Data: map[string]string{"type": "meetings", "id": strconv.FormatUint(uint64(row.MeetingID), 10)}},
+		"event":   {Data: map[string]string{"type": "meeting-events", "id": strconv.FormatUint(uint64(row.ID), 10)}},
 	}
 	return resource
 }

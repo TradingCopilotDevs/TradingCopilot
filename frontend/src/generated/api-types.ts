@@ -68,6 +68,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postAuthLogout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminUsers"];
+        put?: never;
+        post: operations["postAdminUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putAdminUser"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{userId}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postAdminUserPasswordReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/sessions/{sessionId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postAdminSessionRevoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAuditEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboard": {
         parameters: {
             query?: never;
@@ -78,6 +190,150 @@ export interface paths {
         get: operations["getDashboard"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/setup/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSetupReadiness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/setup/actions/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postSetupAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/provider-health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOpsProviderHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOpsJobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/jobs/retry-failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postOpsJobsRetryFailed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/jobs/{queue}/tasks/{taskId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postOpsJobTaskRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOpsMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/backups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOpsBackups"];
+        put?: never;
+        post: operations["postOpsBackups"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/backups/{backupName}/restore-dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postOpsBackupRestoreDryRun"];
         delete?: never;
         options?: never;
         head?: never;
@@ -484,6 +740,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/market/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postMarketTasks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/market/symbols/{code}": {
         parameters: {
             query?: never;
@@ -628,6 +900,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/message-subscriptions/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageSubscriptionDiagnostics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/message-subscription-filters": {
         parameters: {
             query?: never;
@@ -686,6 +974,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["postMessageSubscriptionsCollect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-subscriptions/maintenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postMessageSubscriptionsMaintenance"];
         delete?: never;
         options?: never;
         head?: never;
@@ -836,6 +1140,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ingested-messages/feedback/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postIngestedMessagesFeedbackBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ingested-messages/{messageId}": {
         parameters: {
             query?: never;
@@ -852,6 +1172,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ingested-messages/{messageId}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postIngestedMessageFeedback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ingested-messages/{messageId}/filter": {
         parameters: {
             query?: never;
@@ -862,6 +1198,118 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["postIngestedMessageFilter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-feedback/training-samples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageFeedbackTrainingSamples"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-feedback/evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageFeedbackEvaluation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-feedback/training-snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageFeedbackTrainingSnapshots"];
+        put?: never;
+        post: operations["postMessageFeedbackTrainingSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-feedback/training-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageFeedbackTrainingExports"];
+        put?: never;
+        post: operations["postMessageFeedbackTrainingExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-feedback/training-exports/{exportVersion}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageFeedbackTrainingExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-feedback/source-trust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageFeedbackSourceTrust"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/message-feedback/source-trust/recompute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postMessageFeedbackSourceTrustRecompute"];
         delete?: never;
         options?: never;
         head?: never;
@@ -910,6 +1358,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["postMeetingRecap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meetings/{meetingId}/trust-reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postMeetingTrustReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meetings/{meetingId}/recap-action-reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postMeetingRecapActionReview"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1100,7 +1580,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        put: operations["putWakePlan"];
         post?: never;
         delete: operations["deleteWakePlan"];
         options?: never;
@@ -1268,6 +1748,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/paper/accounts/{accountId}/corporate-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPaperAccountCorporateActions"];
+        put?: never;
+        post: operations["postPaperAccountCorporateActions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/paper/accounts/{accountId}/backtests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPaperAccountBacktests"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/paper/accounts/{accountId}/performance": {
         parameters: {
             query?: never;
@@ -1276,6 +1788,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getPaperAccountPerformance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/paper/accounts/{accountId}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPaperAccountReplay"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1310,6 +1838,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["postPaperOrderCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/paper/orders/{orderId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPaperOrderApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/paper/orders/{orderId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPaperOrderReject"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1405,6 +1965,147 @@ export interface components {
             /** @enum {string} */
             tokenType: "bearer";
         };
+        AdminUserCollectionDocument: {
+            data: components["schemas"]["AdminUserResource"][];
+            links?: components["schemas"]["Links"];
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        AdminUserDocument: {
+            data: components["schemas"]["AdminUserResource"];
+        };
+        AdminUserResource: {
+            /** @enum {string} */
+            type: "admin-users";
+            id: string;
+            attributes: components["schemas"]["AdminUserAttributes"];
+        };
+        AdminUserAttributes: {
+            username?: string;
+            displayName?: string;
+            /** @enum {string} */
+            role?: "owner" | "admin" | "operator" | "viewer";
+            active?: boolean;
+            /** Format: date-time */
+            lastLoginAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        AdminUserCreateDocument: {
+            data: {
+                /** @enum {string} */
+                type: "admin-users";
+                attributes: {
+                    username: string;
+                    displayName?: string;
+                    /**
+                     * @default admin
+                     * @enum {string}
+                     */
+                    role: "owner" | "admin" | "operator" | "viewer";
+                    /** Format: password */
+                    password: string;
+                    /** @default true */
+                    active: boolean;
+                };
+            };
+        };
+        AdminUserUpdateDocument: {
+            data: {
+                /** @enum {string} */
+                type: "admin-users";
+                attributes: {
+                    displayName?: string;
+                    /** @enum {string} */
+                    role?: "owner" | "admin" | "operator" | "viewer";
+                    active?: boolean;
+                };
+            };
+        };
+        AdminUserPasswordResetDocument: {
+            data: {
+                /** @enum {string} */
+                type: "admin-user-password-resets";
+                attributes: {
+                    /** Format: password */
+                    password: string;
+                    confirm: boolean;
+                };
+            };
+        };
+        AuthSessionCollectionDocument: {
+            data: components["schemas"]["AuthSessionResource"][];
+            links?: components["schemas"]["Links"];
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        AuthSessionDocument: {
+            data: components["schemas"]["AuthSessionResource"];
+        };
+        AuthSessionResource: {
+            /** @enum {string} */
+            type: "auth-sessions";
+            id: string;
+            attributes: components["schemas"]["AuthSessionAttributes"];
+        };
+        AuthSessionAttributes: {
+            username?: string;
+            userId?: number;
+            role?: string;
+            ip?: string;
+            userAgent?: string;
+            /** @enum {string} */
+            status?: "active" | "revoked" | "expired";
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            revokedAt?: string | null;
+            revokedBy?: string;
+            revokeReason?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        AuthSessionRevokeDocument: {
+            data: {
+                /** @enum {string} */
+                type: "auth-session-revokes";
+                attributes: {
+                    reason?: string;
+                    confirm: boolean;
+                };
+            };
+        };
+        AuditEventCollectionDocument: {
+            data: components["schemas"]["AuditEventResource"][];
+            links?: components["schemas"]["Links"];
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        AuditEventResource: {
+            /** @enum {string} */
+            type: "audit-events";
+            id: string;
+            attributes: components["schemas"]["AuditEventAttributes"];
+        };
+        AuditEventAttributes: {
+            actor?: string;
+            action?: string;
+            resourceType?: string;
+            resourceId?: string;
+            outcome?: string;
+            detail?: string;
+            ip?: string;
+            userAgent?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         DashboardDocument: {
             data: components["schemas"]["DashboardResource"];
         };
@@ -1416,24 +2117,680 @@ export interface components {
             attributes: components["schemas"]["DashboardAttributes"];
         };
         DashboardAttributes: {
-            summary: {
-                [key: string]: unknown;
-            };
-            systemStatus: {
-                [key: string]: unknown;
-            };
-            businessMetrics: {
-                [key: string]: unknown;
-            };
-            recentActivity: {
-                [key: string]: unknown;
-            };
+            summary: components["schemas"]["DashboardSummary"];
+            systemStatus: components["schemas"]["DashboardSystemStatus"];
+            businessMetrics: components["schemas"]["DashboardBusinessMetrics"];
+            recentActivity: components["schemas"]["DashboardRecentActivity"];
             dependencyDiagnostics?: {
                 [key: string]: unknown;
             };
-            alerts: {
+            alerts: components["schemas"]["DashboardAlert"][];
+        };
+        DashboardSummary: {
+            appName: string;
+            appEnv: string;
+            deploymentModeLabel: string;
+            meetingDispatchMode: string;
+            databaseBackend: string;
+            databaseTarget?: string;
+            paperExecutionMode: string;
+        } & {
+            [key: string]: unknown;
+        };
+        DashboardStatusItem: {
+            key: string;
+            title: string;
+            /** @enum {string} */
+            status: "ok" | "warning" | "error" | "disabled";
+            summary: string;
+            detail: string;
+            /** Format: date-time */
+            checkedAt: string;
+        } & {
+            [key: string]: unknown;
+        };
+        DashboardSystemStatus: {
+            database: components["schemas"]["DashboardStatusItem"];
+            redis: components["schemas"]["DashboardStatusItem"];
+            worker: components["schemas"]["DashboardStatusItem"];
+            scheduler: components["schemas"]["DashboardStatusItem"];
+            messageSubscriptionListener: components["schemas"]["DashboardStatusItem"];
+            platformAdapter: components["schemas"]["DashboardStatusItem"];
+            paperEngine: components["schemas"]["DashboardStatusItem"];
+        } & {
+            [key: string]: components["schemas"]["DashboardStatusItem"];
+        };
+        DashboardBusinessMetrics: {
+            meetingsTotal: number;
+            meetingsRunning: number;
+            meetingsFailed24h: number;
+            messageSubscriptionEnabledCount: number;
+            ingestedMessages24h: number;
+            ingestedUnfilteredCount: number;
+            platformAdapterEnabledCount: number;
+            paperAccountCount: number;
+            paperActiveAccountCount: number;
+            paperTotalEquity: unknown;
+            paperPendingOrderCount: number;
+            wakeActiveCount: number;
+            wakeOverdueCount: number;
+            aiEnabledProviderCount: number;
+            aiReadyProviderCount: number;
+            newsFilterReady: boolean;
+            aiModelCalls24h?: number;
+            aiPromptTokens24h?: number;
+            aiCompletionTokens24h?: number;
+            aiTotalTokens24h?: number;
+            aiTotalTokensTotal?: number;
+            aiCostAmount24h?: unknown;
+            aiCostBudgetStatus?: string;
+            meetingRunAvgSeconds24h?: number;
+            meetingRunP95Seconds24h?: number;
+            meetingQueueWaitAvgSeconds24h?: number;
+            marketSymbolCount: number;
+            marketWatchlistCount: number;
+            marketActiveWatchlistCount: number;
+            paperIsTradingTime: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        DashboardRecentActivity: {
+            recentMeetings: components["schemas"]["DashboardRecentMeeting"][];
+            recentIngestedMessages: components["schemas"]["DashboardRecentIngestedMessage"][];
+        };
+        DashboardRecentMeeting: {
+            id: number;
+            topic: string;
+            status: string;
+            triggerSource: string;
+            summary?: string | null;
+            conclusion?: string | null;
+            tags: string[];
+            recapStatus?: string | null;
+            /** Format: date-time */
+            recapUpdatedAt?: string | null;
+            runAttempt?: number;
+            /** Format: date-time */
+            heartbeatAt?: string | null;
+            autoRequeueCount?: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        DashboardRecentIngestedMessage: {
+            id: number;
+            subscriptionId: number;
+            subscriptionTitle?: string | null;
+            sourceRef?: string | null;
+            /** Format: date-time */
+            messageTime: string;
+            text: string;
+            filterDecision?: string | null;
+            filterStatus?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        DashboardAlert: {
+            /** @enum {string} */
+            level: "warning" | "error";
+            title: string;
+            detail: string;
+            link: string;
+        } & {
+            [key: string]: unknown;
+        };
+        SetupReadinessDocument: {
+            data: components["schemas"]["SetupReadinessResource"];
+        };
+        SetupReadinessResource: {
+            /** @enum {string} */
+            type: "setup-readinesses";
+            /** @enum {string} */
+            id: "current";
+            attributes: components["schemas"]["SetupReadinessAttributes"];
+        };
+        SetupReadinessAttributes: {
+            completed: number;
+            total: number;
+            completionPct: number;
+            /** Format: date-time */
+            generatedAt: string;
+            steps: components["schemas"]["SetupStep"][];
+        };
+        SetupStep: {
+            key: string;
+            title: string;
+            category: string;
+            ready: boolean;
+            /** @enum {string} */
+            status: "ready" | "warning" | "missing" | "error";
+            summary: string;
+            detail: string;
+            actionKey?: string;
+            route?: string;
+            optional?: boolean;
+        };
+        SetupActionResultDocument: {
+            data: components["schemas"]["SetupActionResultResource"];
+        };
+        SetupActionResultResource: {
+            /** @enum {string} */
+            type: "setup-action-results";
+            id: string;
+            attributes: components["schemas"]["SetupActionResultAttributes"];
+        };
+        SetupActionResultAttributes: {
+            key: string;
+            /** @enum {string} */
+            status: "ok" | "warning" | "error";
+            summary: string;
+            detail?: string;
+            output?: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            ranAt: string;
+        };
+        OpsProviderHealthDocument: {
+            data: components["schemas"]["OpsProviderHealthResource"];
+        };
+        OpsProviderHealthResource: {
+            /** @enum {string} */
+            type: "provider-health-reports";
+            /** @enum {string} */
+            id: "current";
+            attributes: {
+                /** Format: date-time */
+                generatedAt?: string;
+                ai?: components["schemas"]["OpsAIProviderHealth"];
+                meeting?: {
+                    [key: string]: unknown;
+                };
+                market?: {
+                    [key: string]: unknown;
+                };
+                messaging?: {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        OpsAIProviderHealth: {
+            enabledProviders?: number;
+            readyProviders?: number;
+            newsFilterReady?: boolean;
+            providers?: components["schemas"]["OpsAIProviderDiagnostics"][];
+            usage?: components["schemas"]["OpsAIUsageDiagnostics"];
+        } & {
+            [key: string]: unknown;
+        };
+        OpsAIProviderDiagnostics: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            /** @enum {string} */
+            status?: "ok" | "warning" | "disabled";
+            summary?: string;
+            enabled?: boolean;
+            hasApiKey?: boolean;
+            defaultModel?: string;
+            ready?: boolean;
+            modelCount?: number;
+            enabledModelCount?: number;
+            roleCount?: number;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsAIUsageDiagnostics: {
+            /** @enum {string} */
+            status?: "empty" | "observed";
+            summary?: string;
+            /** Format: int64 */
+            windowSeconds?: number;
+            /** Format: int64 */
+            modelCallsTotal?: number;
+            /** Format: int64 */
+            modelCalls24h?: number;
+            /** Format: int64 */
+            promptTokensTotal?: number;
+            /** Format: int64 */
+            promptTokens24h?: number;
+            /** Format: int64 */
+            completionTokensTotal?: number;
+            /** Format: int64 */
+            completionTokens24h?: number;
+            /** Format: int64 */
+            totalTokensTotal?: number;
+            /** Format: int64 */
+            totalTokens24h?: number;
+            costAmountTotal?: number | null;
+            costAmount24h?: number | null;
+            /** @enum {string} */
+            costAmountSource?: "provider_payload" | "configured_rates" | "mixed" | "not_configured";
+            costCurrency?: string;
+            /** @enum {string} */
+            costBudgetStatus?: "ok" | "warning" | "exceeded" | "no_cost_data" | "not_configured";
+            costBudgetAmount?: number | null;
+            costBudgetUsedPct?: number | null;
+            costRatesConfigured?: boolean;
+            costRateCoverage?: components["schemas"]["OpsAICostRateCoverage"];
+            /** Format: int64 */
+            costMissingCallsTotal?: number;
+            /** Format: int64 */
+            costMissingCalls24h?: number;
+            /** Format: int64 */
+            costEstimatedCallsTotal?: number;
+            /** Format: int64 */
+            costEstimatedCalls24h?: number;
+            /** Format: int64 */
+            latencyObservedCallsTotal?: number;
+            /** Format: int64 */
+            latencyObservedCalls24h?: number;
+            latencyAvgMsTotal?: number | null;
+            latencyAvgMs24h?: number | null;
+            latencyP95Ms24h?: number | null;
+            byProviderModel?: components["schemas"]["OpsAIUsageProviderModel"][];
+        } & {
+            [key: string]: unknown;
+        };
+        OpsAICostRateCoverage: {
+            /** @enum {string} */
+            status?: "empty" | "ok" | "warning";
+            currency?: string;
+            ratesConfigured?: boolean;
+            modelCount?: number;
+            coveredModelCount?: number;
+            missingModelCount?: number;
+            coveragePct?: number | null;
+            missingModels?: components["schemas"]["OpsAICostRateMissingModel"][];
+        } & {
+            [key: string]: unknown;
+        };
+        OpsAICostRateMissingModel: {
+            /** Format: int64 */
+            providerId?: number;
+            providerName?: string;
+            model?: string;
+            source?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsAIUsageProviderModel: {
+            /** Format: int64 */
+            providerId?: number;
+            providerName?: string;
+            model?: string;
+            /** Format: int64 */
+            modelCallsTotal?: number;
+            /** Format: int64 */
+            modelCalls24h?: number;
+            /** Format: int64 */
+            promptTokensTotal?: number;
+            /** Format: int64 */
+            promptTokens24h?: number;
+            /** Format: int64 */
+            completionTokensTotal?: number;
+            /** Format: int64 */
+            completionTokens24h?: number;
+            /** Format: int64 */
+            totalTokensTotal?: number;
+            /** Format: int64 */
+            totalTokens24h?: number;
+            costAmountTotal?: number | null;
+            costAmount24h?: number | null;
+            /** @enum {string} */
+            costAmountSource?: "provider_payload" | "configured_rates" | "mixed" | "not_configured";
+            /** Format: int64 */
+            costMissingCallsTotal?: number;
+            /** Format: int64 */
+            costMissingCalls24h?: number;
+            /** Format: int64 */
+            costEstimatedCallsTotal?: number;
+            /** Format: int64 */
+            costEstimatedCalls24h?: number;
+            /** Format: int64 */
+            latencyObservedCallsTotal?: number;
+            /** Format: int64 */
+            latencyObservedCalls24h?: number;
+            latencyAvgMsTotal?: number | null;
+            latencyAvgMs24h?: number | null;
+            latencyP95Ms24h?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsJobsDocument: {
+            data: components["schemas"]["OpsJobsResource"];
+        };
+        OpsJobsResource: {
+            /** @enum {string} */
+            type: "ops-job-reports";
+            /** @enum {string} */
+            id: "current";
+            attributes: {
+                /** Format: date-time */
+                generatedAt?: string;
+                meetingDispatchMode?: string;
+                paperExecutionMode?: string;
+                queue?: components["schemas"]["OpsQueueDiagnostics"];
+                recentErrors?: components["schemas"]["OpsRecentErrors"];
+                redis?: {
+                    [key: string]: unknown;
+                };
+                worker?: {
+                    [key: string]: unknown;
+                };
+                scheduler?: {
+                    [key: string]: unknown;
+                };
+                messageListener?: {
+                    [key: string]: unknown;
+                };
+                paperEngine?: {
+                    [key: string]: unknown;
+                };
+            } & {
+                [key: string]: unknown;
+            };
+        };
+        OpsJobActionDocument: {
+            data: components["schemas"]["OpsJobActionResource"];
+        };
+        OpsJobActionResource: {
+            /** @enum {string} */
+            type: "ops-job-actions";
+            /** @enum {string} */
+            id: "retry-failed";
+            attributes: {
+                status?: string;
+                action?: string;
+                retriedRetryCount?: number;
+                retriedArchiveCount?: number;
+                totalSubmitted?: number;
+                queues?: {
+                    [key: string]: unknown;
+                }[];
+                /** Format: date-time */
+                ranAt?: string;
+                destructive?: boolean;
+                detail?: string;
+            } & {
+                [key: string]: unknown;
+            };
+        };
+        OpsQueueDiagnostics: {
+            /** @enum {string} */
+            status?: "ok" | "warning" | "error" | "disabled";
+            summary?: string;
+            detail?: string;
+            queueCount?: number;
+            /** Format: date-time */
+            generatedAt?: string;
+            queues?: components["schemas"]["OpsQueueInfo"][];
+            totals?: components["schemas"]["OpsQueueTotals"];
+            failedTasks?: components["schemas"]["OpsQueueFailedTask"][];
+            backlogRisk?: components["schemas"]["OpsQueueBacklogRisk"];
+            actions?: {
+                [key: string]: unknown;
+            };
+        };
+        OpsQueueInfo: {
+            name?: string;
+            status?: string;
+            detail?: string;
+            paused?: boolean;
+            size?: number;
+            pending?: number;
+            active?: number;
+            scheduled?: number;
+            retry?: number;
+            archived?: number;
+            completed?: number;
+            aggregating?: number;
+            processedToday?: number;
+            failedToday?: number;
+            processedTotal?: number;
+            failedTotal?: number;
+            latencySeconds?: number;
+            /** Format: int64 */
+            memoryUsageBytes?: number;
+            /** Format: date-time */
+            snapshotTimestamp?: string;
+        };
+        OpsQueueTotals: {
+            size?: number;
+            pending?: number;
+            active?: number;
+            scheduled?: number;
+            retry?: number;
+            archived?: number;
+            completed?: number;
+            aggregating?: number;
+            processedToday?: number;
+            failedToday?: number;
+            processedTotal?: number;
+            failedTotal?: number;
+            /** Format: int64 */
+            memoryUsageBytes?: number;
+        };
+        OpsQueueFailedTask: {
+            id?: string;
+            queue?: string;
+            type?: string;
+            /** @enum {string} */
+            state?: "retry" | "archived";
+            maxRetry?: number;
+            retried?: number;
+            lastError?: string;
+            /** Format: date-time */
+            lastFailedAt?: string | null;
+            /** Format: date-time */
+            nextProcessAt?: string | null;
+            timeoutSeconds?: number;
+            payloadPreview?: string;
+            status?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsQueueBacklogRisk: {
+            /** @enum {string} */
+            level?: "ok" | "warning" | "danger";
+            reason?: string;
+            backlogCount?: number;
+            pendingCount?: number;
+            scheduledCount?: number;
+            retryCount?: number;
+            archivedCount?: number;
+        };
+        OpsRecentErrors: {
+            /** @enum {string} */
+            status?: "ok" | "warning";
+            summary?: string;
+            detail?: string;
+            windowHours?: number;
+            count?: number;
+            entries?: components["schemas"]["OpsRecentErrorEntry"][];
+        };
+        OpsRecentErrorEntry: {
+            id?: string;
+            /** Format: date-time */
+            time?: string | null;
+            level?: string;
+            role?: string;
+            source?: string;
+            event?: string;
+            group?: string;
+            method?: string;
+            path?: string;
+            status?: string;
+            message?: string;
+            caller?: string;
+            durationMs?: number | null;
+            file?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsBackupsDocument: {
+            data: components["schemas"]["OpsBackupsResource"];
+        };
+        OpsBackupsResource: {
+            /** @enum {string} */
+            type: "ops-backup-reports";
+            /** @enum {string} */
+            id: "current";
+            attributes: components["schemas"]["OpsBackupsAttributes"];
+        };
+        OpsBackupsAttributes: {
+            /** Format: date-time */
+            generatedAt: string;
+            status: string;
+            databaseBackend?: unknown;
+            databaseTarget?: unknown;
+            backupDir: string;
+            backupMetadataDir: string;
+            archiveProvider: string;
+            archiveProviderDetail: components["schemas"]["OpsBackupArchiveProvider"];
+            latestBackup?: components["schemas"]["OpsBackupArchive"] | null;
+            backups: components["schemas"]["OpsBackupArchive"][];
+            retentionPolicy: string;
+            retentionPolicyDetail?: {
+                [key: string]: unknown;
+            };
+            retentionLastRun?: {
+                [key: string]: unknown;
+            } | null;
+            restoreDrill: string;
+            restoreDrillDetail?: {
+                [key: string]: unknown;
+            };
+            restoreDrillSchedule?: {
+                [key: string]: unknown;
+            };
+            restoreDrillScheduleHint?: string;
+            supportedActions: string[];
+        } & {
+            [key: string]: unknown;
+        };
+        OpsBackupArchive: {
+            name: string;
+            path: string;
+            /** Format: int64 */
+            sizeBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        OpsBackupArchiveProvider: {
+            key: string;
+            kind: string;
+            status: string;
+            root: string;
+            external: boolean;
+            supportsList: boolean;
+            supportsWrite: boolean;
+            supportsRead: boolean;
+            supportsDelete: boolean;
+            configuredProvider: string;
+            configuredExternalProvider: string;
+            externalReady: boolean;
+            missingExternalConfig: string[];
+            setupHint: string;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsBackupRunDocument: {
+            data: components["schemas"]["OpsBackupRunResource"];
+        };
+        OpsBackupRunResource: {
+            /** @enum {string} */
+            type: "ops-backup-runs";
+            id: string;
+            attributes: components["schemas"]["OpsBackupRunAttributes"];
+        };
+        OpsBackupRunAttributes: {
+            /** @enum {string} */
+            status: "created" | "failed";
+            backupName: string;
+            backupPath: string;
+            backupDir: string;
+            backupMetadataDir: string;
+            archiveProvider: string;
+            archiveProviderDetail: components["schemas"]["OpsBackupArchiveProvider"];
+            /** Format: int64 */
+            sizeBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+            included: {
                 [key: string]: unknown;
             }[];
+            notes: string[];
+            databaseBackend?: unknown;
+            databaseTarget?: unknown;
+            retentionRun?: {
+                [key: string]: unknown;
+            } | null;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsBackupRestoreDryRunDocument: {
+            data: components["schemas"]["OpsBackupRestoreDryRunResource"];
+        };
+        OpsBackupRestoreDryRunResource: {
+            /** @enum {string} */
+            type: "ops-backup-restore-dry-runs";
+            id: string;
+            attributes: components["schemas"]["OpsBackupRestoreDryRunAttributes"];
+        };
+        OpsBackupRestoreDryRunAttributes: {
+            /** @enum {string} */
+            status: "valid" | "warning";
+            backupName: string;
+            backupPath: string;
+            backupDir: string;
+            backupMetadataDir: string;
+            archiveProvider: string;
+            archiveProviderDetail: components["schemas"]["OpsBackupArchiveProvider"];
+            /** Format: date-time */
+            checkedAt: string;
+            manifest?: {
+                [key: string]: unknown;
+            };
+            manifestVersion?: string | number;
+            entryCount: number;
+            databaseEntryCount: number;
+            logEntryCount: number;
+            entries: {
+                [key: string]: unknown;
+            }[];
+            notes: string[];
+            /** @enum {string} */
+            sandboxStatus: "extracted" | "warning";
+            /** @description Directory under the backup directory where the archive was safely extracted for operator inspection. */
+            sandboxDir: string;
+            sandboxFileCount: number;
+            /** Format: int64 */
+            sandboxSizeBytes: number;
+            sandboxDatabaseFiles?: string[];
+            sandboxLogFiles?: string[];
+            sandboxRuntimeFiles?: string[];
+            sandboxChecks: components["schemas"]["OpsBackupSandboxCheck"][];
+            restorePlan: string[];
+            /** @enum {boolean} */
+            destructive: false;
+            operatorAction: string;
+            retentionPolicyHint?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        OpsBackupSandboxCheck: {
+            name: string;
+            /** @enum {string} */
+            status: "pass" | "warning";
+            detail: string;
+        } & {
+            [key: string]: unknown;
         };
         LogEntryCollectionDocument: {
             data: components["schemas"]["LogEntryResource"][];
@@ -1916,6 +3273,39 @@ export interface components {
                 synced: number;
             };
         };
+        MarketTaskRequestDocument: {
+            data: components["schemas"]["MarketTaskRequestResource"];
+        };
+        MarketTaskRequestResource: {
+            /** @enum {string} */
+            type: "market-tasks";
+            id?: string;
+            attributes: components["schemas"]["MarketTaskRequestAttributes"];
+        };
+        MarketTaskRequestAttributes: {
+            /** @enum {string} */
+            action: "sync_symbols" | "refresh_quote" | "refresh_daily_bars";
+            code?: string | null;
+        };
+        MarketTaskDocument: {
+            data: components["schemas"]["MarketTaskResource"];
+        };
+        MarketTaskResource: {
+            /** @enum {string} */
+            type: "market-tasks";
+            id: string;
+            attributes: components["schemas"]["MarketTaskAttributes"];
+        };
+        MarketTaskAttributes: {
+            /** @enum {string} */
+            action: "sync_symbols" | "refresh_quote" | "refresh_daily_bars";
+            code?: string | null;
+            /** @enum {string} */
+            status: "queued" | "completed";
+            provider?: string | null;
+            count: number;
+            taskId?: string;
+        };
         MarketQuoteDocument: {
             data: components["schemas"]["MarketQuoteResource"];
         };
@@ -2098,8 +3488,24 @@ export interface components {
                 /** @enum {string} */
                 type: "wake-plans";
                 id?: string;
-                attributes: components["schemas"]["WakePlanAttributes"];
+                attributes: components["schemas"]["WakePlanInputAttributes"];
             };
+        };
+        WakePlanInputAttributes: {
+            researchTeamId: number;
+            meetingId?: number | null;
+            /** @enum {string} */
+            triggerType: "time" | "indicator" | "event";
+            triggerConfig: {
+                [key: string]: unknown;
+            };
+            reason: string;
+            sourceMeetingEventId?: number | null;
+            sourceRoleKey?: string | null;
+            /** @enum {string} */
+            status?: "active" | "paused" | "fired" | "cancelled";
+            /** Format: date-time */
+            nextCheckAt?: string | null;
         };
         MeetingCollectionDocument: {
             data: components["schemas"]["MeetingResource"][];
@@ -2140,6 +3546,102 @@ export interface components {
             completedAt?: string | null;
             /** Format: date-time */
             createdAt?: string;
+            trustReport?: components["schemas"]["MeetingTrustReport"];
+        };
+        MeetingTrustReport: {
+            /** Format: date-time */
+            generatedAt?: string;
+            eventCount?: number;
+            evidenceCount?: number;
+            citationCount?: number;
+            modelSnapshotCount?: number;
+            promptSnapshotCount?: number;
+            /** @enum {string} */
+            confidence?: "unknown" | "low" | "medium" | "high";
+            evidence?: {
+                [key: string]: unknown;
+            }[];
+            citations?: {
+                [key: string]: unknown;
+            }[];
+            modelSnapshots?: {
+                [key: string]: unknown;
+            }[];
+            promptSnapshots?: {
+                [key: string]: unknown;
+            }[];
+            claimEvidenceBindings?: {
+                [key: string]: unknown;
+            }[];
+            /** @enum {string} */
+            evidenceGateStatus?: "pass" | "warning" | "blocked";
+            unsupportedClaimCount?: number;
+            unsupportedClaims?: components["schemas"]["MeetingTrustUnsupportedClaim"][];
+            evidenceGate?: components["schemas"]["MeetingTrustEvidenceGate"];
+            conclusionHistory?: {
+                [key: string]: unknown;
+            }[];
+            conclusionDiffs?: {
+                [key: string]: unknown;
+            }[];
+            sentenceReviews?: components["schemas"]["MeetingTrustReviewAttributes"][];
+            /** @enum {string} */
+            recapActionReviewStatus?: "clear" | "needs_review" | "blocked";
+            recapActionSuggestionCount?: number;
+            recapActionSuggestions?: components["schemas"]["MeetingRecapActionSuggestion"][];
+            recapActionReviewCount?: number;
+            recapActionReviews?: components["schemas"]["MeetingRecapActionReviewAttributes"][];
+            claimBreakdown?: {
+                facts?: string[];
+                assumptions?: string[];
+                inferences?: string[];
+            };
+            evidenceGaps?: string[];
+            gaps?: string[];
+        };
+        MeetingTrustEvidenceGate: {
+            /** @enum {string} */
+            status?: "pass" | "warning" | "blocked";
+            policy?: string;
+            blockingClaimTypes?: string[];
+            checkedClaimCount?: number;
+            supportedClaimCount?: number;
+            unsupportedClaimCount?: number;
+            unsupportedClaims?: components["schemas"]["MeetingTrustUnsupportedClaim"][];
+        };
+        MeetingTrustUnsupportedClaim: {
+            id?: string;
+            eventId?: number;
+            sequence?: number;
+            roleKey?: string;
+            claimType?: string;
+            claim?: string;
+            evidenceEventIds?: number[];
+            citationIds?: string[];
+            reason?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        MeetingRecapActionSuggestion: {
+            id?: string;
+            eventId?: number;
+            sequence?: number;
+            roleKey?: string;
+            status?: string;
+            policy?: string;
+            disposition?: string;
+            reason?: string;
+            actionType?: string;
+            actionIndex?: number;
+            spec?: {
+                [key: string]: unknown;
+            };
+            evidenceSummary?: {
+                [key: string]: unknown;
+            };
+            latestReview?: components["schemas"]["MeetingRecapActionReviewAttributes"];
+            /** Format: date-time */
+            createdAt?: string;
         };
         MeetingEventCollectionDocument: {
             data: components["schemas"]["MeetingEventResource"][];
@@ -2163,6 +3665,77 @@ export interface components {
             relationships?: {
                 meeting?: components["schemas"]["Relationship"];
             };
+        };
+        MeetingTrustReviewDocument: {
+            data: components["schemas"]["MeetingTrustReviewResource"];
+        };
+        MeetingTrustReviewResource: {
+            /** @enum {string} */
+            type: "meeting-trust-reviews";
+            id: string;
+            attributes: components["schemas"]["MeetingTrustReviewAttributes"];
+            relationships?: {
+                meeting?: components["schemas"]["Relationship"];
+                event?: components["schemas"]["Relationship"];
+            };
+        };
+        MeetingTrustReviewAttributes: {
+            meetingId?: number;
+            eventId?: number;
+            sequence?: number;
+            sentenceId?: string;
+            sentence?: string;
+            /** @enum {string} */
+            verdict?: "confirmed" | "needs_evidence" | "rejected" | "superseded";
+            citationIds?: string[];
+            evidenceEventIds?: number[];
+            comment?: string | null;
+            reviewer?: string;
+            /** Format: date-time */
+            reviewedAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        MeetingRecapActionReviewDocument: {
+            data: components["schemas"]["MeetingRecapActionReviewResource"];
+        };
+        MeetingRecapActionReviewResource: {
+            /** @enum {string} */
+            type: "meeting-recap-action-reviews";
+            id: string;
+            attributes: components["schemas"]["MeetingRecapActionReviewAttributes"];
+            relationships?: {
+                meeting?: components["schemas"]["Relationship"];
+                event?: components["schemas"]["Relationship"];
+            };
+        };
+        MeetingRecapActionReviewAttributes: {
+            meetingId?: number;
+            eventId?: number;
+            sequence?: number;
+            suggestionId?: string;
+            sourceEventId?: number;
+            sourceSequence?: number;
+            actionIndex?: number;
+            actionType?: string;
+            /** @enum {string} */
+            decision?: "approved" | "needs_evidence" | "rejected" | "superseded";
+            executionDisposition?: string;
+            citationIds?: string[];
+            evidenceEventIds?: number[];
+            comment?: string | null;
+            reviewer?: string;
+            /** Format: date-time */
+            reviewedAt?: string;
+            actionSpec?: {
+                [key: string]: unknown;
+            };
+            originalStatus?: string;
+            originalPolicy?: string;
+            originalDisposition?: string;
+            originalReason?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
         MeetingReferenceCollectionDocument: {
             data: components["schemas"]["MeetingReferenceResource"][];
@@ -2225,6 +3798,41 @@ export interface components {
                     note?: string | null;
                 };
             };
+        };
+        MeetingTrustReviewCreateDocument: {
+            data: {
+                /** @enum {string} */
+                type: "meeting-trust-reviews";
+                attributes: components["schemas"]["MeetingTrustReviewCreateAttributes"];
+            };
+        };
+        MeetingTrustReviewCreateAttributes: {
+            sentenceId?: string;
+            sentence: string;
+            /** @enum {string} */
+            verdict: "confirmed" | "needs_evidence" | "rejected" | "superseded";
+            citationIds?: string[];
+            evidenceEventIds?: number[];
+            comment?: string | null;
+        };
+        MeetingRecapActionReviewCreateDocument: {
+            data: {
+                /** @enum {string} */
+                type: "meeting-recap-action-reviews";
+                attributes: components["schemas"]["MeetingRecapActionReviewCreateAttributes"];
+            };
+        };
+        MeetingRecapActionReviewCreateAttributes: {
+            suggestionId: string;
+            sourceEventId?: number;
+            actionIndex?: number;
+            actionType?: string;
+            /** @enum {string} */
+            decision: "approved" | "needs_evidence" | "rejected" | "superseded";
+            citationIds?: string[];
+            evidenceEventIds?: number[];
+            comment?: string | null;
+            confirm?: boolean;
         };
         MessageSubscriptionAppConfigDocument: {
             data: {
@@ -2301,6 +3909,50 @@ export interface components {
         MessageSubscriptionDocument: {
             data: components["schemas"]["MessageSubscriptionResource"];
         };
+        MessageSubscriptionDiagnosticCollectionDocument: {
+            data: components["schemas"]["MessageSubscriptionDiagnosticResource"][];
+        };
+        MessageSubscriptionDiagnosticResource: {
+            /** @enum {string} */
+            type: "message-subscription-diagnostics";
+            id: string;
+            attributes: components["schemas"]["MessageSubscriptionDiagnosticAttributes"];
+        };
+        MessageSubscriptionDiagnosticAttributes: {
+            subscriptionId?: number;
+            /** @enum {string} */
+            provider?: "telegram_channel" | "rss_feed";
+            title?: string;
+            sourceRef?: string;
+            enabled?: boolean;
+            /** @description Normalized source type, for example telegram_private_numeric, telegram_public_handle, rss_public_feed, rss_private_auth, or rss_url_credentials. */
+            sourceKind?: string;
+            /** @enum {string} */
+            status?: "ready" | "warning" | "blocked" | "disabled";
+            /** @enum {string} */
+            severity?: "ready" | "warning" | "blocked" | "disabled";
+            ready?: boolean;
+            privateCapable?: boolean;
+            /** @description direct, proxy:telegram, proxy:web, or proxy_configured_but_not_enabled. */
+            proxyRoute?: string;
+            lastCollectError?: string | null;
+            /** Format: date-time */
+            nextCollectAt?: string | null;
+            /** Format: date-time */
+            lastCollectedAt?: string | null;
+            checks?: components["schemas"]["MessageSubscriptionDiagnosticCheck"][];
+            recommendedActions?: string[];
+        };
+        MessageSubscriptionDiagnosticCheck: {
+            key?: string;
+            /** @enum {string} */
+            status?: "ok" | "info" | "warning" | "blocked";
+            title?: string;
+            detail?: string;
+            action?: string;
+            route?: string;
+            depends?: string;
+        };
         MessageSubscriptionResource: {
             /** @enum {string} */
             type: "message-subscriptions";
@@ -2309,7 +3961,7 @@ export interface components {
                 /** @enum {string} */
                 provider?: "telegram_channel" | "rss_feed";
                 title?: string;
-                /** @description RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials. */
+                /** @description RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds. */
                 sourceRef?: string;
                 enabled?: boolean;
                 filterId?: number;
@@ -2327,6 +3979,10 @@ export interface components {
                 config?: {
                     [key: string]: unknown;
                 };
+                /** @enum {string} */
+                rssAuthType?: "none" | "basic" | "bearer";
+                rssUsername?: string;
+                hasRssPassword?: boolean;
                 /** Format: date-time */
                 createdAt?: string;
                 /** Format: date-time */
@@ -2342,7 +3998,7 @@ export interface components {
                     /** @enum {string} */
                     provider?: "telegram_channel" | "rss_feed";
                     title: string;
-                    /** @description RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials. */
+                    /** @description RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds. */
                     sourceRef: string;
                     enabled?: boolean;
                     filterId?: number;
@@ -2352,6 +4008,12 @@ export interface components {
                     config?: {
                         [key: string]: unknown;
                     };
+                    /** @enum {string} */
+                    rssAuthType?: "none" | "basic" | "bearer";
+                    /** @description Username for RSS Basic auth. Ignored for Bearer unless a provider needs a label. */
+                    rssUsername?: string;
+                    /** @description RSS Basic password or Bearer token. Stored as an encrypted secret and never returned. */
+                    rssPassword?: string;
                 };
             };
         };
@@ -2419,8 +4081,14 @@ export interface components {
                 attributes: {
                     /** @enum {string} */
                     provider?: "telegram_channel" | "rss_feed";
-                    /** @description RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials. */
+                    /** @description RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds. */
                     sourceRef: string;
+                    /** @enum {string} */
+                    rssAuthType?: "none" | "basic" | "bearer";
+                    /** @description Username for RSS Basic auth draft tests. */
+                    rssUsername?: string;
+                    /** @description RSS Basic password or Bearer token used only for this draft test. */
+                    rssPassword?: string;
                 };
             };
         };
@@ -2438,6 +4106,54 @@ export interface components {
                     filtered?: number;
                 };
             };
+        };
+        MessageSubscriptionMaintenanceRequestDocument: {
+            data: {
+                /** @enum {string} */
+                type: "message-subscription-maintenance-results";
+                /** @enum {string} */
+                id?: "current";
+                attributes: {
+                    /** @enum {string} */
+                    action: "repair_defaults" | "clear_collect_error" | "queue_collect" | "rotate_rss_auth" | "audit_telegram_access" | "apply_source_trust_governance";
+                    subscriptionIds?: number[];
+                    /** @enum {string} */
+                    provider?: "telegram_channel" | "rss_feed";
+                    onlyBlocked?: boolean;
+                    onlyWarnings?: boolean;
+                    /** @enum {string} */
+                    rssAuthType?: "none" | "basic" | "bearer";
+                    /** @description Username to apply when rotating RSS Basic auth credentials. */
+                    rssUsername?: string;
+                    /** @description RSS Basic password or Bearer token to rotate into selected RSS subscriptions; stored as encrypted secrets and never returned. */
+                    rssPassword?: string;
+                };
+            };
+        };
+        MessageSubscriptionMaintenanceDocument: {
+            data: {
+                /** @enum {string} */
+                type: "message-subscription-maintenance-results";
+                /** @enum {string} */
+                id: "current";
+                attributes: components["schemas"]["MessageSubscriptionMaintenanceAttributes"];
+            };
+        };
+        MessageSubscriptionMaintenanceAttributes: {
+            action?: string;
+            matched?: number;
+            checked?: number;
+            passed?: number;
+            failed?: number;
+            updated?: number;
+            queued?: number;
+            paused?: number;
+            skipped?: components["schemas"]["MessageSubscriptionMaintenanceSkip"][];
+        };
+        MessageSubscriptionMaintenanceSkip: {
+            subscriptionId?: number;
+            title?: string;
+            reason?: string;
         };
         MessageSubscriptionLoginSessionDocument: {
             data: {
@@ -2520,6 +4236,11 @@ export interface components {
             /** Format: date-time */
             filteredAt?: string | null;
             filterId?: number | null;
+            /** @enum {string|null} */
+            feedbackLabel?: "helpful" | "noise" | "misclassified" | "neutral" | null;
+            feedbackComment?: string | null;
+            /** Format: date-time */
+            feedbackAt?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -2542,6 +4263,46 @@ export interface components {
                 };
             };
         };
+        IngestedMessageFeedbackDocument: {
+            data: {
+                /** @enum {string} */
+                type: "ingested-message-feedbacks";
+                attributes: {
+                    /** @enum {string} */
+                    label: "helpful" | "noise" | "misclassified" | "neutral";
+                    comment?: string;
+                };
+            };
+        };
+        IngestedMessageFeedbackBatchRequestDocument: {
+            data: {
+                /** @enum {string} */
+                type: "ingested-message-feedback-batches";
+                attributes: {
+                    messageIds: number[];
+                    /** @enum {string} */
+                    label: "helpful" | "noise" | "misclassified" | "neutral";
+                    comment?: string;
+                };
+            };
+        };
+        IngestedMessageFeedbackBatchDocument: {
+            data: {
+                /** @enum {string} */
+                type: "ingested-message-feedback-batches";
+                /** @enum {string} */
+                id: "current";
+                attributes: {
+                    requestedCount?: number;
+                    updatedCount?: number;
+                    updatedIds?: number[];
+                    missingIds?: number[];
+                    /** @enum {string} */
+                    label?: "helpful" | "noise" | "misclassified" | "neutral";
+                    comment?: string | null;
+                };
+            };
+        };
         IngestedMessageRefilterDocument: {
             data: {
                 /** @enum {string} */
@@ -2552,6 +4313,259 @@ export interface components {
                     onlyUnfiltered?: boolean;
                 };
             };
+        };
+        MessageFeedbackTrainingSampleCollectionDocument: {
+            data: components["schemas"]["MessageFeedbackTrainingSampleResource"][];
+            links?: components["schemas"]["Links"];
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        MessageFeedbackTrainingSampleResource: {
+            /** @enum {string} */
+            type: "message-feedback-training-samples";
+            id: string;
+            attributes: components["schemas"]["MessageFeedbackTrainingSampleAttributes"];
+        };
+        MessageFeedbackTrainingSampleAttributes: {
+            messageId?: number;
+            subscriptionId?: number;
+            subscriptionTitle?: string;
+            provider?: string;
+            sourceRef?: string;
+            sourceMessageId?: string;
+            /** Format: date-time */
+            messageTime?: string;
+            text?: string;
+            filterDecision?: string | null;
+            filterReason?: string | null;
+            /** @enum {string} */
+            filterStatus?: "unfiltered" | "filtering" | "filtered" | "failed";
+            relatedSymbols?: string[];
+            /** @enum {string} */
+            feedbackLabel?: "helpful" | "noise" | "misclassified" | "neutral";
+            feedbackComment?: string | null;
+            /** Format: date-time */
+            feedbackAt?: string | null;
+            /** @enum {string} */
+            split?: "train" | "validation";
+            /** Format: double */
+            sampleWeight?: number;
+            trainingUse?: string;
+            dedupeKey?: string;
+        };
+        MessageFeedbackEvaluationDocument: {
+            data: components["schemas"]["MessageFeedbackEvaluationResource"];
+        };
+        MessageFeedbackEvaluationResource: {
+            /** @enum {string} */
+            type: "message-feedback-evaluations";
+            /** @enum {string} */
+            id: "current";
+            attributes: components["schemas"]["MessageFeedbackEvaluationAttributes"];
+        };
+        MessageFeedbackEvaluationAttributes: {
+            /** Format: date-time */
+            generatedAt?: string;
+            /** @enum {string} */
+            status?: "empty" | "needs_more_feedback" | "healthy" | "noisy" | "needs_review";
+            sampleCount?: number;
+            trainCount?: number;
+            validationCount?: number;
+            helpfulCount?: number;
+            noiseCount?: number;
+            misclassifiedCount?: number;
+            neutralCount?: number;
+            agreementEligibleCount?: number;
+            agreementCount?: number;
+            positiveSignalCount?: number;
+            noiseSuppressionCount?: number;
+            falseMeetingFromNoiseCount?: number;
+            needsDecisionCorrectionCount?: number;
+            /** Format: double */
+            agreementRate?: number;
+            /** Format: double */
+            noiseRate?: number;
+            /** Format: double */
+            misclassificationRate?: number;
+            labelBreakdown?: {
+                [key: string]: number;
+            };
+            decisionBreakdown?: {
+                [key: string]: number;
+            };
+            recommendations?: string[];
+            truncated?: boolean;
+            sampleLimit?: number;
+        };
+        MessageFeedbackTrainingSnapshotCollectionDocument: {
+            data: components["schemas"]["MessageFeedbackTrainingSnapshotResource"][];
+            links?: components["schemas"]["Links"];
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        MessageFeedbackTrainingSnapshotDocument: {
+            data: components["schemas"]["MessageFeedbackTrainingSnapshotResource"];
+        };
+        MessageFeedbackTrainingSnapshotResource: {
+            /** @enum {string} */
+            type: "message-feedback-training-snapshots";
+            id: string;
+            attributes: components["schemas"]["MessageFeedbackTrainingSnapshotAttributes"];
+        };
+        MessageFeedbackTrainingSnapshotAttributes: {
+            version?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            filter?: components["schemas"]["MessageFeedbackTrainingSnapshotFilter"];
+            sampleCount?: number;
+            trainCount?: number;
+            validationCount?: number;
+            sourceCount?: number;
+            fingerprint?: string;
+            labelBreakdown?: {
+                [key: string]: number;
+            };
+            decisionBreakdown?: {
+                [key: string]: number;
+            };
+            sourceStatusBreakdown?: {
+                [key: string]: number;
+            };
+            sourceTrustSummary?: components["schemas"]["MessageFeedbackTrainingSnapshotSourceTrustSummary"];
+            evaluation?: components["schemas"]["MessageFeedbackEvaluationAttributes"];
+            sampleRefCount?: number;
+            sampleRefsTruncated?: boolean;
+            sampleRefs?: components["schemas"]["MessageFeedbackTrainingSnapshotSampleRef"][];
+        };
+        MessageFeedbackTrainingSnapshotFilter: {
+            subscriptionId?: string;
+            provider?: string;
+            /** @enum {string} */
+            feedbackLabel?: "helpful" | "noise" | "misclassified" | "neutral";
+        };
+        MessageFeedbackTrainingSnapshotSourceTrustSummary: {
+            trusted?: number;
+            watch?: number;
+            lowConfidence?: number;
+            insufficientFeedback?: number;
+        };
+        MessageFeedbackTrainingSnapshotSampleRef: {
+            messageId?: number;
+            dedupeKey?: string;
+            /** @enum {string} */
+            feedbackLabel?: "helpful" | "noise" | "misclassified" | "neutral";
+            /** @enum {string} */
+            split?: "train" | "validation";
+            /** Format: double */
+            sampleWeight?: number;
+        };
+        MessageFeedbackTrainingExportCollectionDocument: {
+            data: components["schemas"]["MessageFeedbackTrainingExportResource"][];
+            links?: components["schemas"]["Links"];
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        MessageFeedbackTrainingExportDocument: {
+            data: components["schemas"]["MessageFeedbackTrainingExportResource"];
+        };
+        MessageFeedbackTrainingExportResource: {
+            /** @enum {string} */
+            type: "message-feedback-training-exports";
+            id: string;
+            attributes: components["schemas"]["MessageFeedbackTrainingExportAttributes"];
+        };
+        MessageFeedbackTrainingExportAttributes: {
+            version?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            filter?: components["schemas"]["MessageFeedbackTrainingSnapshotFilter"];
+            /** @enum {string} */
+            format?: "jsonl";
+            contentType?: string;
+            sampleCount?: number;
+            trainCount?: number;
+            validationCount?: number;
+            sourceCount?: number;
+            fingerprint?: string;
+            contentSha256?: string;
+            byteCount?: number;
+            lineCount?: number;
+            truncated?: boolean;
+            sampleLimit?: number;
+            labelBreakdown?: {
+                [key: string]: number;
+            };
+            decisionBreakdown?: {
+                [key: string]: number;
+            };
+            sourceStatusBreakdown?: {
+                [key: string]: number;
+            };
+            sourceTrustSummary?: components["schemas"]["MessageFeedbackTrainingSnapshotSourceTrustSummary"];
+            evaluation?: components["schemas"]["MessageFeedbackEvaluationAttributes"];
+            content?: string;
+        };
+        MessageSourceTrustCollectionDocument: {
+            data: components["schemas"]["MessageSourceTrustResource"][];
+            links?: components["schemas"]["Links"];
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        MessageSourceTrustReportDocument: {
+            data: components["schemas"]["MessageSourceTrustReportResource"];
+        };
+        MessageSourceTrustReportResource: {
+            /** @enum {string} */
+            type: "message-source-trust-reports";
+            /** @enum {string} */
+            id: "current";
+            attributes: components["schemas"]["MessageSourceTrustReportAttributes"];
+        };
+        MessageSourceTrustReportAttributes: {
+            /** Format: date-time */
+            generatedAt?: string;
+            status?: string;
+            sampleCount?: number;
+            sourceCount?: number;
+            sampleLimit?: number;
+            truncated?: boolean;
+            items?: components["schemas"]["MessageSourceTrustResource"][];
+        };
+        MessageSourceTrustResource: {
+            /** @enum {string} */
+            type: "message-source-trust-sources";
+            id: string;
+            attributes: components["schemas"]["MessageSourceTrustAttributes"];
+        };
+        MessageSourceTrustAttributes: {
+            subscriptionId?: number;
+            subscriptionTitle?: string;
+            provider?: string;
+            sourceRef?: string;
+            feedbackCount?: number;
+            helpfulCount?: number;
+            noiseCount?: number;
+            misclassifiedCount?: number;
+            neutralCount?: number;
+            trustScore?: number;
+            /** @enum {string} */
+            status?: "trusted" | "watch" | "low_confidence" | "insufficient_feedback";
+            explanation?: string;
+            recommendedActions?: string[];
+            /** Format: date-time */
+            lastFeedbackAt?: string | null;
+            /** Format: double */
+            positiveRate?: number;
+            /** Format: double */
+            negativeRate?: number;
+            /** Format: double */
+            sampleWeight?: number;
+            autoAction?: string;
+            autoActionReason?: string;
         };
         PaperOverviewDocument: {
             data: {
@@ -2717,7 +4731,21 @@ export interface components {
             /** @enum {string} */
             side?: "buy" | "sell";
             quantity?: number;
+            filledQuantity?: number;
+            remainingQuantity?: number;
+            partialFillCount?: number;
             status?: string;
+            approvalRequired?: boolean;
+            /** @enum {string} */
+            approvalStatus?: "waiting" | "approved" | "rejected" | "closed" | "unknown";
+            approvalReviewRequired?: boolean;
+            approvalConfirmRequired?: boolean;
+            /** @enum {string} */
+            approvalRiskLevel?: "low" | "medium" | "high";
+            approvalRiskReasons?: string[];
+            approvalRiskMetrics?: {
+                [key: string]: unknown;
+            };
             suggestedPrice?: unknown;
             filledPrice?: unknown;
             reason?: string | null;
@@ -2759,12 +4787,32 @@ export interface components {
                 };
             };
         };
+        PaperOrderApproveDocument: {
+            data: {
+                /** @enum {string} */
+                type: "paper-order-approvals";
+                attributes: {
+                    confirmHighRisk?: boolean;
+                };
+            };
+        };
+        PaperOrderRejectDocument: {
+            data: {
+                /** @enum {string} */
+                type: "paper-order-rejections";
+                attributes: {
+                    reason?: string | null;
+                };
+            };
+        };
         PaperOrderFillDocument: {
             data: {
                 /** @enum {string} */
                 type: "paper-order-fills";
                 attributes: {
                     price: unknown;
+                    /** @description Optional fill quantity. Omit or set to 0 to fill the remaining order quantity. */
+                    quantity?: number;
                 };
             };
         };
@@ -2798,6 +4846,171 @@ export interface components {
             /** Format: date-time */
             filledAt?: string;
         };
+        PaperCorporateActionCollectionDocument: {
+            data: components["schemas"]["PaperCorporateActionResource"][];
+        };
+        PaperCorporateActionDocument: {
+            data: components["schemas"]["PaperCorporateActionResource"];
+        };
+        PaperCorporateActionResource: {
+            /** @enum {string} */
+            type: "paper-corporate-actions";
+            id: string;
+            attributes: components["schemas"]["PaperCorporateActionAttributes"];
+            relationships?: {
+                account?: components["schemas"]["Relationship"];
+            };
+        };
+        PaperCorporateActionAttributes: {
+            accountId?: number;
+            code?: string;
+            /** @enum {string} */
+            actionType?: "cash_dividend" | "bonus_share" | "split";
+            /** Format: date-time */
+            exDate?: string;
+            /** @description Cash dividend per held share. Required for cash_dividend. */
+            cashPerShare?: unknown;
+            /** @description For bonus_share, additional shares per held share. For split, final split multiplier, e.g. 2 means 1-for-2. */
+            shareRatio?: unknown;
+            affectedShares?: number;
+            cashAmount?: unknown;
+            /** @enum {string} */
+            status?: "applied";
+            note?: string | null;
+            /** Format: date-time */
+            appliedAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PaperCorporateActionCreateDocument: {
+            data: {
+                /** @enum {string} */
+                type: "paper-corporate-actions";
+                attributes: {
+                    code: string;
+                    /** @enum {string} */
+                    actionType: "cash_dividend" | "bonus_share" | "split";
+                    /** Format: date-time */
+                    exDate?: string | null;
+                    /** @description Required for cash_dividend. */
+                    cashPerShare?: unknown;
+                    /** @description Required for bonus_share and split. For split, use the final multiplier, e.g. 2. */
+                    shareRatio?: unknown;
+                    note?: string | null;
+                };
+            };
+        };
+        PaperBacktestRunDocument: {
+            data: {
+                /** @enum {string} */
+                type: "paper-backtests";
+                attributes: {
+                    code: string;
+                    /** Format: date-time */
+                    startDate?: string | null;
+                    /** Format: date-time */
+                    endDate?: string | null;
+                    /** @description Optional simulated starting cash. Defaults to the account cash/initial cash. */
+                    initialCash?: unknown;
+                    /** @description Close-to-previous-close percentage threshold for buys. Defaults to -3. */
+                    buyThresholdPct?: unknown;
+                    /** @description Close-to-previous-close percentage threshold for sells. Defaults to 3. */
+                    sellThresholdPct?: unknown;
+                    /** @description Fraction of equity per buy order, for example 0.1 for 10%. Defaults to 0.1. */
+                    orderPct?: unknown;
+                    /** @description Simulated one-way slippage in basis points. Defaults to 5. */
+                    slippageBps?: unknown;
+                };
+            };
+        };
+        PaperBacktestDocument: {
+            data: {
+                /** @enum {string} */
+                type: "paper-backtests";
+                id: string;
+                attributes: components["schemas"]["PaperBacktestAttributes"];
+                relationships?: {
+                    account?: components["schemas"]["Relationship"];
+                };
+            };
+        };
+        PaperBacktestAttributes: {
+            accountId?: number;
+            /** Format: date-time */
+            generatedAt?: string;
+            input?: components["schemas"]["PaperBacktestInput"];
+            policy?: components["schemas"]["PaperBacktestPolicy"];
+            summary?: components["schemas"]["PaperBacktestSummary"];
+            series?: components["schemas"]["PaperBacktestPoint"][];
+            orders?: components["schemas"]["PaperBacktestOrder"][];
+        };
+        PaperBacktestInput: {
+            accountId?: number;
+            code?: string;
+            /** Format: date-time */
+            startDate?: string;
+            /** Format: date-time */
+            endDate?: string;
+            initialCash?: unknown;
+            buyThresholdPct?: unknown;
+            sellThresholdPct?: unknown;
+            orderPct?: unknown;
+            slippageBps?: unknown;
+        };
+        PaperBacktestPolicy: {
+            executionModel?: string;
+            riskModel?: string;
+            /** @enum {string} */
+            brokerIntegration?: "disabled";
+            /** @enum {string} */
+            dataSource?: "daily_bars";
+            limitBandPct?: unknown;
+            slippageBps?: unknown;
+            lotSize?: number;
+            rules?: string[];
+        };
+        PaperBacktestSummary: {
+            barCount?: number;
+            tradeCount?: number;
+            rejectedCount?: number;
+            initialCash?: unknown;
+            finalCash?: unknown;
+            finalMarketValue?: unknown;
+            finalEquity?: unknown;
+            totalReturnPct?: unknown;
+            maxDrawdownPct?: unknown;
+        };
+        PaperBacktestPoint: {
+            /** Format: date-time */
+            tradeDate?: string;
+            close?: unknown;
+            signalPct?: unknown;
+            cash?: unknown;
+            quantity?: number;
+            marketValue?: unknown;
+            totalEquity?: unknown;
+            dailyReturnPct?: unknown;
+            drawdownPct?: unknown;
+        };
+        PaperBacktestOrder: {
+            id?: string;
+            /** Format: date-time */
+            tradeDate?: string;
+            code?: string;
+            /** @enum {string} */
+            side?: "buy" | "sell";
+            quantity?: number;
+            signalPct?: unknown;
+            referencePrice?: unknown;
+            filledPrice?: unknown;
+            /** @enum {string} */
+            status?: "suggested" | "filled" | "rejected";
+            reason?: string;
+            grossAmount?: unknown;
+            fees?: unknown;
+            cashAfter?: unknown;
+            positionAfter?: number;
+        };
         PaperPerformanceDocument: {
             data: {
                 /** @enum {string} */
@@ -2818,9 +5031,94 @@ export interface components {
             maxDrawdownPct?: unknown;
             winRatePct?: unknown;
             fillsCount?: number;
-            series?: {
+            series?: components["schemas"]["PaperPerformancePoint"][];
+            attribution?: components["schemas"]["PaperAttributionItem"][];
+            riskAlerts?: components["schemas"]["PaperRiskAlert"][];
+            riskSummary?: components["schemas"]["PaperRiskSummary"];
+        };
+        PaperPerformancePoint: {
+            id: number;
+            accountId: number;
+            /** Format: date-time */
+            snapshotTime: string;
+            cash: unknown;
+            marketValue: unknown;
+            totalEquity: unknown;
+            unrealizedPnl: unknown;
+            realizedPnl: unknown;
+            dailyPnl: unknown;
+        };
+        PaperAttributionItem: {
+            code?: string;
+            symbolName?: string | null;
+            quantity?: number;
+            costAmount?: unknown;
+            marketValue?: unknown;
+            weightPct?: unknown;
+            unrealizedPnl?: unknown;
+            realizedPnl?: unknown;
+            totalPnl?: unknown;
+            returnPct?: unknown;
+            contributionPct?: unknown;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** @enum {string} */
+            source?: "open_position" | "closed_realized" | "mixed";
+        };
+        PaperRiskAlert: {
+            key: string;
+            /** @enum {string} */
+            severity: "critical" | "warning" | "info";
+            title: string;
+            detail: string;
+            code?: string | null;
+            metric?: unknown;
+            threshold?: unknown;
+        };
+        PaperRiskSummary: {
+            /** @enum {string} */
+            status?: "ok" | "watch" | "critical";
+            /** @enum {string} */
+            maxSeverity?: "ok" | "info" | "warning" | "critical";
+            alertCount?: number;
+            criticalCount?: number;
+            warningCount?: number;
+            infoCount?: number;
+        };
+        PaperReplayDocument: {
+            data: {
+                /** @enum {string} */
+                type: "paper-replays";
+                id: string;
+                attributes: components["schemas"]["PaperReplayAttributes"];
+                relationships?: {
+                    account?: components["schemas"]["Relationship"];
+                };
+            };
+        };
+        PaperReplayAttributes: {
+            accountId?: number;
+            /** Format: date-time */
+            generatedAt?: string;
+            modelPolicy?: {
                 [key: string]: unknown;
-            }[];
+            };
+            summary?: {
+                [key: string]: unknown;
+            };
+            events?: components["schemas"]["PaperReplayEvent"][];
+        };
+        PaperReplayEvent: {
+            id?: string;
+            /** @enum {string} */
+            type?: "order" | "fill" | "corporate_action";
+            /** Format: date-time */
+            time?: string;
+            code?: string;
+            summary?: string;
+            attributes?: {
+                [key: string]: unknown;
+            };
         };
         HealthDocument: {
             data: components["schemas"]["HealthResource"];
@@ -2897,6 +5195,51 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["AuthTokenDocument"];
             };
         };
+        /** @description Admin user JSON:API collection. */
+        AdminUserCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["AdminUserCollectionDocument"];
+            };
+        };
+        /** @description Admin user JSON:API document. */
+        AdminUserDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["AdminUserDocument"];
+            };
+        };
+        /** @description Auth session JSON:API collection. */
+        AuthSessionCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["AuthSessionCollectionDocument"];
+            };
+        };
+        /** @description Auth session JSON:API document. */
+        AuthSessionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["AuthSessionDocument"];
+            };
+        };
+        /** @description Audit event JSON:API collection. */
+        AuditEventCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["AuditEventCollectionDocument"];
+            };
+        };
         /** @description Dashboard JSON:API document. */
         DashboardDocument: {
             headers: {
@@ -2904,6 +5247,78 @@ export interface components {
             };
             content: {
                 "application/vnd.api+json": components["schemas"]["DashboardDocument"];
+            };
+        };
+        /** @description Setup readiness JSON:API document. */
+        SetupReadinessDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["SetupReadinessDocument"];
+            };
+        };
+        /** @description Setup action result JSON:API document. */
+        SetupActionResultDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["SetupActionResultDocument"];
+            };
+        };
+        /** @description Provider health JSON:API document. */
+        OpsProviderHealthDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["OpsProviderHealthDocument"];
+            };
+        };
+        /** @description Ops jobs JSON:API document. */
+        OpsJobsDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["OpsJobsDocument"];
+            };
+        };
+        /** @description Ops job action JSON:API document. */
+        OpsJobActionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["OpsJobActionDocument"];
+            };
+        };
+        /** @description Ops backups JSON:API document. */
+        OpsBackupsDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["OpsBackupsDocument"];
+            };
+        };
+        /** @description Ops backup run JSON:API document. */
+        OpsBackupRunDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["OpsBackupRunDocument"];
+            };
+        };
+        /** @description Ops backup restore dry-run JSON:API document. */
+        OpsBackupRestoreDryRunDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["OpsBackupRestoreDryRunDocument"];
             };
         };
         /** @description Log entry JSON:API collection. */
@@ -3149,6 +5564,15 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["MarketSymbolSyncDocument"];
             };
         };
+        /** @description Market background task JSON:API document. */
+        MarketTaskDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MarketTaskDocument"];
+            };
+        };
         /** @description Market quote JSON:API document. */
         MarketQuoteDocument: {
             headers: {
@@ -3257,6 +5681,24 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["MeetingEventCollectionDocument"];
             };
         };
+        /** @description Meeting trust review JSON:API document. */
+        MeetingTrustReviewDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MeetingTrustReviewDocument"];
+            };
+        };
+        /** @description Meeting recap action review JSON:API document. */
+        MeetingRecapActionReviewDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MeetingRecapActionReviewDocument"];
+            };
+        };
         /** @description Meeting reference JSON:API collection. */
         MeetingReferenceCollectionDocument: {
             headers: {
@@ -3311,6 +5753,15 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["MessageSubscriptionCollectionDocument"];
             };
         };
+        /** @description Message subscription diagnostics JSON:API collection. */
+        MessageSubscriptionDiagnosticCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageSubscriptionDiagnosticCollectionDocument"];
+            };
+        };
         /** @description Message subscription JSON:API document. */
         MessageSubscriptionDocument: {
             headers: {
@@ -3356,6 +5807,15 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["MessageSubscriptionCollectDocument"];
             };
         };
+        /** @description Message subscription maintenance JSON:API document. */
+        MessageSubscriptionMaintenanceDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageSubscriptionMaintenanceDocument"];
+            };
+        };
         /** @description Message subscription login session JSON:API document. */
         MessageSubscriptionLoginSessionDocument: {
             headers: {
@@ -3390,6 +5850,87 @@ export interface components {
             };
             content: {
                 "application/vnd.api+json": components["schemas"]["IngestedMessageDocument"];
+            };
+        };
+        /** @description Ingested message feedback batch JSON:API document. */
+        IngestedMessageFeedbackBatchDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["IngestedMessageFeedbackBatchDocument"];
+            };
+        };
+        /** @description Message feedback training sample JSON:API collection. */
+        MessageFeedbackTrainingSampleCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageFeedbackTrainingSampleCollectionDocument"];
+            };
+        };
+        /** @description Message feedback offline evaluation JSON:API document. */
+        MessageFeedbackEvaluationDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageFeedbackEvaluationDocument"];
+            };
+        };
+        /** @description Message feedback training snapshot JSON:API collection. */
+        MessageFeedbackTrainingSnapshotCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageFeedbackTrainingSnapshotCollectionDocument"];
+            };
+        };
+        /** @description Message feedback training snapshot JSON:API document. */
+        MessageFeedbackTrainingSnapshotDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageFeedbackTrainingSnapshotDocument"];
+            };
+        };
+        /** @description Message feedback training export JSON:API collection. */
+        MessageFeedbackTrainingExportCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageFeedbackTrainingExportCollectionDocument"];
+            };
+        };
+        /** @description Message feedback training export JSON:API document. */
+        MessageFeedbackTrainingExportDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageFeedbackTrainingExportDocument"];
+            };
+        };
+        /** @description Message source trust JSON:API collection. */
+        MessageSourceTrustCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageSourceTrustCollectionDocument"];
+            };
+        };
+        /** @description Message source trust recompute JSON:API document. */
+        MessageSourceTrustReportDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageSourceTrustReportDocument"];
             };
         };
         /** @description Paper overview JSON:API document. */
@@ -3473,6 +6014,24 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["PaperFillCollectionDocument"];
             };
         };
+        /** @description Paper corporate action JSON:API collection. */
+        PaperCorporateActionCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperCorporateActionCollectionDocument"];
+            };
+        };
+        /** @description Paper corporate action JSON:API document. */
+        PaperCorporateActionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperCorporateActionDocument"];
+            };
+        };
         /** @description Paper performance JSON:API document. */
         PaperPerformanceDocument: {
             headers: {
@@ -3480,6 +6039,24 @@ export interface components {
             };
             content: {
                 "application/vnd.api+json": components["schemas"]["PaperPerformanceDocument"];
+            };
+        };
+        /** @description Paper replay JSON:API document. */
+        PaperReplayDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperReplayDocument"];
+            };
+        };
+        /** @description Paper backtest JSON:API document. */
+        PaperBacktestDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperBacktestDocument"];
             };
         };
         /** @description JSON:API document. */
@@ -3503,6 +6080,8 @@ export interface components {
         ResearchTeamId: string;
         ChannelIdQuery: string;
         SubscriptionIdQuery: string;
+        ProviderQuery: string;
+        FeedbackLabelQuery: "helpful" | "noise" | "misclassified" | "neutral";
         OnlyUnfiltered: boolean;
         FilterDecision: string;
         FilterStatus: string;
@@ -3519,13 +6098,25 @@ export interface components {
         LogSlowOnly: boolean;
         LogIncludeNoise: boolean;
         LogFile: string;
+        Username: string;
+        IncludeRevoked: boolean;
+        /** @description Optional Redis/asynq queue name used to filter failed task samples. */
+        OpsQueueName: string;
+        /** @description Optional task type used to filter failed task samples. */
+        OpsTaskType: string;
+        /** @description Optional failed task state used to filter samples. */
+        OpsTaskState: "retry" | "archived";
+        /** @description Maximum number of failed task samples to return. Values above 50 are capped. */
+        OpsFailedLimit: number;
         PageLimit: number;
         PageCursor: string;
         AccountId: string;
         AdapterId: string;
+        BackupName: string;
         ChannelId: string;
         Code: string;
         ConfigId: string;
+        ExportVersion: string;
         ItemId: string;
         Key: string;
         MeetingId: string;
@@ -3534,15 +6125,39 @@ export interface components {
         OrderId: string;
         PlanId: string;
         ProviderId: string;
+        Queue: string;
         ReferenceId: string;
         RoleKey: string;
+        SessionId: string;
         SubscriptionId: string;
+        TaskId: string;
         TeamId: string;
+        UserId: string;
     };
     requestBodies: {
         AuthCredentialsRequest: {
             content: {
                 "application/vnd.api+json": components["schemas"]["AuthCredentialsDocument"];
+            };
+        };
+        AdminUserCreateRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["AdminUserCreateDocument"];
+            };
+        };
+        AdminUserUpdateRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["AdminUserUpdateDocument"];
+            };
+        };
+        AdminUserPasswordResetRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["AdminUserPasswordResetDocument"];
+            };
+        };
+        AuthSessionRevokeRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["AuthSessionRevokeDocument"];
             };
         };
         SecretUpsertRequest: {
@@ -3585,6 +6200,21 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["MarketSymbolUpsertDocument"];
             };
         };
+        MarketTaskRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["MarketTaskRequestDocument"];
+            };
+        };
+        MeetingTrustReviewRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["MeetingTrustReviewCreateDocument"];
+            };
+        };
+        MeetingRecapActionReviewRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["MeetingRecapActionReviewCreateDocument"];
+            };
+        };
         MarketWatchlistUpsertRequest: {
             content: {
                 "application/vnd.api+json": components["schemas"]["MarketWatchlistUpsertDocument"];
@@ -3620,6 +6250,11 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["MessageSubscriptionTestRequestDocument"];
             };
         };
+        MessageSubscriptionMaintenanceRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["MessageSubscriptionMaintenanceRequestDocument"];
+            };
+        };
         MessageSubscriptionLoginStartRequest: {
             content: {
                 "application/vnd.api+json": components["schemas"]["MessageSubscriptionLoginStartDocument"];
@@ -3638,6 +6273,16 @@ export interface components {
         IngestedMessageUpsertRequest: {
             content: {
                 "application/vnd.api+json": components["schemas"]["IngestedMessageUpsertDocument"];
+            };
+        };
+        IngestedMessageFeedbackRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["IngestedMessageFeedbackDocument"];
+            };
+        };
+        IngestedMessageFeedbackBatchRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["IngestedMessageFeedbackBatchRequestDocument"];
             };
         };
         IngestedMessageRefilterRequest: {
@@ -3675,9 +6320,29 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["PaperOrderCreateDocument"];
             };
         };
+        PaperOrderRejectRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperOrderRejectDocument"];
+            };
+        };
+        PaperOrderApproveRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperOrderApproveDocument"];
+            };
+        };
         PaperOrderFillRequest: {
             content: {
                 "application/vnd.api+json": components["schemas"]["PaperOrderFillDocument"];
+            };
+        };
+        PaperCorporateActionCreateRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperCorporateActionCreateDocument"];
+            };
+        };
+        PaperBacktestRunRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["PaperBacktestRunDocument"];
             };
         };
     };
@@ -3738,6 +6403,128 @@ export interface operations {
             401: components["responses"]["JsonApiErrorDocument"];
         };
     };
+    postAuthLogout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AuthSessionDocument"];
+            401: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getAdminUsers: {
+        parameters: {
+            query?: {
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AdminUserCollectionDocument"];
+        };
+    };
+    postAdminUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["AdminUserCreateRequest"];
+        responses: {
+            200: components["responses"]["AdminUserDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            409: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    putAdminUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["AdminUserUpdateRequest"];
+        responses: {
+            200: components["responses"]["AdminUserDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    postAdminUserPasswordReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["AdminUserPasswordResetRequest"];
+        responses: {
+            200: components["responses"]["AdminUserDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getAdminSessions: {
+        parameters: {
+            query?: {
+                username?: components["parameters"]["Username"];
+                includeRevoked?: components["parameters"]["IncludeRevoked"];
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AuthSessionCollectionDocument"];
+        };
+    };
+    postAdminSessionRevoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: components["parameters"]["SessionId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["AuthSessionRevokeRequest"];
+        responses: {
+            200: components["responses"]["AuthSessionDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getAuditEvents: {
+        parameters: {
+            query?: {
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AuditEventCollectionDocument"];
+        };
+    };
     getDashboard: {
         parameters: {
             query?: never;
@@ -3748,6 +6535,158 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["DashboardDocument"];
+        };
+    };
+    getSetupReadiness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["SetupReadinessDocument"];
+        };
+    };
+    postSetupAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: components["parameters"]["Key"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["SetupActionResultDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getOpsProviderHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OpsProviderHealthDocument"];
+        };
+    };
+    getOpsJobs: {
+        parameters: {
+            query?: {
+                /** @description Optional Redis/asynq queue name used to filter failed task samples. */
+                queue?: components["parameters"]["OpsQueueName"];
+                /** @description Optional task type used to filter failed task samples. */
+                type?: components["parameters"]["OpsTaskType"];
+                /** @description Optional failed task state used to filter samples. */
+                state?: components["parameters"]["OpsTaskState"];
+                /** @description Maximum number of failed task samples to return. Values above 50 are capped. */
+                failedLimit?: components["parameters"]["OpsFailedLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OpsJobsDocument"];
+        };
+    };
+    postOpsJobsRetryFailed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OpsJobActionDocument"];
+            409: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    postOpsJobTaskRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                queue: components["parameters"]["Queue"];
+                taskId: components["parameters"]["TaskId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OpsJobActionDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            409: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getOpsMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Prometheus text metrics for protected operational scraping. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+        };
+    };
+    getOpsBackups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OpsBackupsDocument"];
+        };
+    };
+    postOpsBackups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OpsBackupRunDocument"];
+            500: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    postOpsBackupRestoreDryRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backupName: components["parameters"]["BackupName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OpsBackupRestoreDryRunDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
         };
     };
     getLogs: {
@@ -4225,6 +7164,20 @@ export interface operations {
             400: components["responses"]["JsonApiErrorDocument"];
         };
     };
+    postMarketTasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["MarketTaskRequest"];
+        responses: {
+            202: components["responses"]["MarketTaskDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            409: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
     putMarketSymbol: {
         parameters: {
             query?: never;
@@ -4432,6 +7385,21 @@ export interface operations {
             200: components["responses"]["MessageSubscriptionDocument"];
         };
     };
+    getMessageSubscriptionDiagnostics: {
+        parameters: {
+            query?: {
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageSubscriptionDiagnosticCollectionDocument"];
+        };
+    };
     getMessageSubscriptionFilters: {
         parameters: {
             query?: {
@@ -4495,6 +7463,18 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["MessageSubscriptionCollectDocument"];
+        };
+    };
+    postMessageSubscriptionsMaintenance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["MessageSubscriptionMaintenanceRequest"];
+        responses: {
+            200: components["responses"]["MessageSubscriptionMaintenanceDocument"];
         };
     };
     putMessageSubscription: {
@@ -4674,6 +7654,18 @@ export interface operations {
             200: components["responses"]["IngestedMessageCollectionDocument"];
         };
     };
+    postIngestedMessagesFeedbackBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["IngestedMessageFeedbackBatchRequest"];
+        responses: {
+            200: components["responses"]["IngestedMessageFeedbackBatchDocument"];
+        };
+    };
     putIngestedMessage: {
         parameters: {
             query?: never;
@@ -4702,6 +7694,20 @@ export interface operations {
             200: components["responses"]["DeletionDocument"];
         };
     };
+    postIngestedMessageFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                messageId: components["parameters"]["MessageId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["IngestedMessageFeedbackRequest"];
+        responses: {
+            200: components["responses"]["IngestedMessageDocument"];
+        };
+    };
     postIngestedMessageFilter: {
         parameters: {
             query?: never;
@@ -4714,6 +7720,154 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["IngestedMessageDocument"];
+        };
+    };
+    getMessageFeedbackTrainingSamples: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+                feedbackLabel?: components["parameters"]["FeedbackLabelQuery"];
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageFeedbackTrainingSampleCollectionDocument"];
+        };
+    };
+    getMessageFeedbackEvaluation: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+                feedbackLabel?: components["parameters"]["FeedbackLabelQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageFeedbackEvaluationDocument"];
+        };
+    };
+    getMessageFeedbackTrainingSnapshots: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+                feedbackLabel?: components["parameters"]["FeedbackLabelQuery"];
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageFeedbackTrainingSnapshotCollectionDocument"];
+        };
+    };
+    postMessageFeedbackTrainingSnapshot: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+                feedbackLabel?: components["parameters"]["FeedbackLabelQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageFeedbackTrainingSnapshotDocument"];
+        };
+    };
+    getMessageFeedbackTrainingExports: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+                feedbackLabel?: components["parameters"]["FeedbackLabelQuery"];
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageFeedbackTrainingExportCollectionDocument"];
+        };
+    };
+    postMessageFeedbackTrainingExport: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+                feedbackLabel?: components["parameters"]["FeedbackLabelQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageFeedbackTrainingExportDocument"];
+        };
+    };
+    getMessageFeedbackTrainingExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exportVersion: components["parameters"]["ExportVersion"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageFeedbackTrainingExportDocument"];
+        };
+    };
+    getMessageFeedbackSourceTrust: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageSourceTrustCollectionDocument"];
+        };
+    };
+    postMessageFeedbackSourceTrustRecompute: {
+        parameters: {
+            query?: {
+                subscriptionId?: components["parameters"]["SubscriptionIdQuery"];
+                provider?: components["parameters"]["ProviderQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["MessageSourceTrustReportDocument"];
         };
     };
     getMeetings: {
@@ -4801,6 +7955,38 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["MeetingDocument"];
+        };
+    };
+    postMeetingTrustReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                meetingId: components["parameters"]["MeetingId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["MeetingTrustReviewRequest"];
+        responses: {
+            200: components["responses"]["MeetingTrustReviewDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    postMeetingRecapActionReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                meetingId: components["parameters"]["MeetingId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["MeetingRecapActionReviewRequest"];
+        responses: {
+            200: components["responses"]["MeetingRecapActionReviewDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
         };
     };
     postMeetingCancel: {
@@ -5004,6 +8190,22 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["WakePlanDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    putWakePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: components["parameters"]["PlanId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["WakePlanUpsertRequest"];
+        responses: {
+            200: components["responses"]["WakePlanDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
             404: components["responses"]["JsonApiErrorDocument"];
         };
     };
@@ -5223,6 +8425,55 @@ export interface operations {
             200: components["responses"]["PaperFillCollectionDocument"];
         };
     };
+    getPaperAccountCorporateActions: {
+        parameters: {
+            query?: {
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path: {
+                accountId: components["parameters"]["AccountId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PaperCorporateActionCollectionDocument"];
+        };
+    };
+    postPaperAccountCorporateActions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["parameters"]["AccountId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["PaperCorporateActionCreateRequest"];
+        responses: {
+            200: components["responses"]["PaperCorporateActionDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    postPaperAccountBacktests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["parameters"]["AccountId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["PaperBacktestRunRequest"];
+        responses: {
+            200: components["responses"]["PaperBacktestDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
     getPaperAccountPerformance: {
         parameters: {
             query?: never;
@@ -5235,6 +8486,21 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["PaperPerformanceDocument"];
+        };
+    };
+    getPaperAccountReplay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: components["parameters"]["AccountId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["PaperReplayDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
         };
     };
     getPaperOrders: {
@@ -5274,6 +8540,34 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: components["responses"]["PaperOrderDocument"];
+        };
+    };
+    postPaperOrderApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: components["parameters"]["OrderId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["PaperOrderApproveRequest"];
+        responses: {
+            200: components["responses"]["PaperOrderDocument"];
+        };
+    };
+    postPaperOrderReject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: components["parameters"]["OrderId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["PaperOrderRejectRequest"];
         responses: {
             200: components["responses"]["PaperOrderDocument"];
         };

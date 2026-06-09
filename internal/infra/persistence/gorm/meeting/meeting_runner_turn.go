@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
 	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
@@ -31,25 +32,32 @@ func runManagedRoleTurn(ctx context.Context, db *gorm.DB, meeting domainmeeting.
 	systemPrompt := managedRoleSystemPrompt(role, stage)
 	toolContextBlocks := []string{}
 	var finalData map[string]any
+	var finalPromptSnapshot map[string]any
 	finalRaw := ""
 	for toolIteration := 0; toolIteration < 3; toolIteration++ {
-		_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolCall, &role.Key, role.Name+" is calling model "+modelName+".", map[string]any{
-			"status": "model_call", "model_called": true, "model": modelName, "role_name": role.Name, "progress": progress,
-			"round": roundNumber, "stage": stage, "tool_iteration": toolIteration,
-		})
 		userPrompt := roleContext
 		if len(toolContextBlocks) > 0 {
 			userPrompt += "\n\nTool results already obtained:\n" + strings.Join(toolContextBlocks, "\n\n")
 		}
-		data, raw, err := callRoleModelJSON(ctx, db, meeting.ID, role, modelName, []map[string]string{
+		messages := []map[string]string{
 			{"role": "system", "content": systemPrompt},
 			{"role": "user", "content": userPrompt},
-		}, "Your previous response was not valid JSON. Return one JSON object only.", tokenLabel(role.Key, "analysis"))
+		}
+		promptSnapshot := rolePromptSnapshot(role, modelName, messages, tokenLabel(role.Key, "analysis"), managedMeetingPromptVersion)
+		finalPromptSnapshot = promptSnapshot
+		_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolCall, &role.Key, role.Name+" is calling model "+modelName+".", map[string]any{
+			"status": "model_call", "model_called": true, "model": modelName, "role_name": role.Name, "progress": progress,
+			"round": roundNumber, "stage": stage, "tool_iteration": toolIteration, "provider_id": providerIDForRole(role),
+			"provider_name": providerName(role), "prompt_version": managedMeetingPromptVersion, "prompt_snapshot": promptSnapshot,
+		})
+		data, raw, err := callRoleModelJSON(ctx, db, meeting.ID, role, modelName, messages, "Your previous response was not valid JSON. Return one JSON object only.", tokenLabel(role.Key, "analysis"))
 		if err != nil {
-			rawText, chatErr := chatRole(ctx, db, meeting.ID, role, modelName, []map[string]string{
+			fallbackMessages := []map[string]string{
 				{"role": "system", "content": systemPrompt},
 				{"role": "user", "content": userPrompt},
-			}, tokenLabel(role.Key, "analysis_fallback"))
+			}
+			finalPromptSnapshot = rolePromptSnapshot(role, modelName, fallbackMessages, tokenLabel(role.Key, "analysis_fallback"), managedMeetingPromptVersion)
+			rawText, chatErr := chatRole(ctx, db, meeting.ID, role, modelName, fallbackMessages, tokenLabel(role.Key, "analysis_fallback"))
 			if chatErr != nil {
 				return roleTurnResult{}, err
 			}
@@ -71,24 +79,11 @@ func runManagedRoleTurn(ctx context.Context, db *gorm.DB, meeting domainmeeting.
 	if finalData == nil {
 		finalData = map[string]any{"type": "analysis", "content": finalRaw}
 	}
-	content := strings.TrimSpace(stringFromAny(finalData["content"]))
-	if content == "" {
-		content = role.Name + " had no additional material contribution in this turn."
-	}
-	questions := sanitizeQuestions(finalData["questions"], validRoleKeys, "")
-	mentions := sanitizeMentions(finalData["mentions"], validRoleKeys)
-	citations := sanitizeCitations(finalData["citations"])
-	confidence := strings.ToLower(strings.TrimSpace(stringFromAny(finalData["confidence"])))
-	if confidence != "low" && confidence != "medium" && confidence != "high" {
-		confidence = "medium"
-	}
-	rawJSON := any(nil)
-	if strings.HasPrefix(strings.TrimSpace(finalRaw), "{") {
-		rawJSON = finalRaw
-	}
-	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventRoleMessage, &role.Key, content, map[string]any{
+	result := appmeeting.BuildRoleTurnResult(role.Name, finalRaw, finalData, validRoleKeys)
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventRoleMessage, &role.Key, result.Content, map[string]any{
 		"status": "role_completed", "model_called": true, "role_name": role.Name, "progress": progress, "round": roundNumber, "stage": stage,
-		"questions": questions, "mentions": mentions, "citations": citations, "confidence": confidence, "raw_json": rawJSON,
+		"questions": result.Questions, "mentions": result.Mentions, "citations": result.Citations, "facts": result.Facts, "assumptions": result.Assumptions, "inferences": result.Inferences, "evidence_gaps": result.EvidenceGaps, "confidence": result.Confidence, "raw_json": result.RawJSON,
+		"provider_id": providerIDForRole(role), "provider_name": providerName(role), "model": modelName, "prompt_version": managedMeetingPromptVersion, "prompt_snapshot": finalPromptSnapshot,
 	})
-	return roleTurnResult{Content: content, Raw: finalRaw, Questions: questions, Mentions: mentions, Citations: citations, Confidence: confidence}, nil
+	return result, nil
 }

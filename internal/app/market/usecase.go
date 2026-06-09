@@ -10,9 +10,10 @@ import (
 )
 
 type Usecase struct {
-	repo   Repository
-	market MarketDataService
-	tx     Transactor
+	repo      Repository
+	market    MarketDataService
+	tx        Transactor
+	taskQueue TaskQueue
 }
 
 func NewUsecase(repo Repository, market MarketDataService, tx ...Transactor) Usecase {
@@ -20,6 +21,11 @@ func NewUsecase(repo Repository, market MarketDataService, tx ...Transactor) Use
 	if len(tx) > 0 {
 		u.tx = tx[0]
 	}
+	return u
+}
+
+func (u Usecase) WithTaskQueue(queue TaskQueue) Usecase {
+	u.taskQueue = queue
 	return u
 }
 
@@ -57,6 +63,10 @@ type Transactor interface {
 	WithTx(ctx context.Context, fn func(Repository) error) error
 }
 
+type TaskQueue interface {
+	EnqueueMarketTask(ctx context.Context, task Task) (string, error)
+}
+
 type Page struct {
 	Limit  int
 	Cursor string
@@ -80,6 +90,25 @@ type WatchlistRow struct {
 type WatchlistList struct {
 	Rows       []WatchlistRow
 	NextCursor string
+}
+
+const (
+	TaskSyncSymbols      = "sync_symbols"
+	TaskRefreshQuote     = "refresh_quote"
+	TaskRefreshDailyBars = "refresh_daily_bars"
+)
+
+type Task struct {
+	Action string `json:"action"`
+	Code   string `json:"code,omitempty"`
+}
+
+type TaskResult struct {
+	Task     Task
+	TaskID   string
+	Status   string
+	Provider string
+	Count    int
 }
 
 func (u Usecase) ListSymbols(ctx context.Context, q string, page Page) (SymbolList, error) {
@@ -169,6 +198,77 @@ func (u Usecase) SyncSymbols(ctx context.Context) (string, int, error) {
 		return nil
 	})
 	return provider, synced, err
+}
+
+func (u Usecase) EnqueueTask(ctx context.Context, task Task) (TaskResult, error) {
+	normalized, err := u.normalizeTask(task)
+	if err != nil {
+		return TaskResult{}, err
+	}
+	if u.taskQueue == nil {
+		return TaskResult{}, fmt.Errorf("market task queue is not configured")
+	}
+	taskID, err := u.taskQueue.EnqueueMarketTask(ctx, normalized)
+	if err != nil {
+		return TaskResult{}, err
+	}
+	return TaskResult{Task: normalized, TaskID: taskID, Status: "queued"}, nil
+}
+
+func (u Usecase) ProcessTask(ctx context.Context, task Task) (TaskResult, error) {
+	normalized, err := u.normalizeTask(task)
+	if err != nil {
+		return TaskResult{}, err
+	}
+	result := TaskResult{Task: normalized, Status: "completed"}
+	switch normalized.Action {
+	case TaskSyncSymbols:
+		provider, synced, err := u.SyncSymbols(ctx)
+		result.Provider = provider
+		result.Count = synced
+		return result, err
+	case TaskRefreshQuote:
+		quotes, err := u.market.RefreshQuotes(ctx, []string{normalized.Code})
+		if err != nil {
+			return result, err
+		}
+		quote := quotes[normalized.Code]
+		if quote == nil {
+			return result, fmt.Errorf("market quote not returned for %s", normalized.Code)
+		}
+		if quote.ID == 0 {
+			if err := u.withTx(ctx, func(repo Repository) error {
+				return repo.CreateRealtimeQuote(ctx, quote)
+			}); err != nil {
+				return result, err
+			}
+		}
+		result.Provider = quote.Provider
+		result.Count = 1
+		return result, nil
+	case TaskRefreshDailyBars:
+		rows, err := u.market.FetchDailyBars(ctx, normalized.Code)
+		if err != nil {
+			return result, err
+		}
+		if err := u.withTx(ctx, func(repo Repository) error {
+			for _, row := range rows {
+				if err := repo.UpsertDailyBar(ctx, row); err != nil {
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			return result, err
+		}
+		result.Count = len(rows)
+		if len(rows) > 0 {
+			result.Provider = rows[0].Provider
+		}
+		return result, nil
+	default:
+		return TaskResult{}, fmt.Errorf("unknown market task action: %s", normalized.Action)
+	}
 }
 
 func (u Usecase) CurrentQuote(ctx context.Context, code string, refresh bool) (*domainmarket.RealtimeQuote, error) {
@@ -417,6 +517,25 @@ func uintFromToolArgs(value any) uint {
 		return 0
 	}
 	return parsed
+}
+
+func (u Usecase) normalizeTask(task Task) (Task, error) {
+	action := strings.ToLower(strings.TrimSpace(task.Action))
+	switch action {
+	case TaskSyncSymbols:
+		return Task{Action: TaskSyncSymbols}, nil
+	case TaskRefreshQuote, TaskRefreshDailyBars:
+		code, err := u.market.EnsureAShareCode(task.Code)
+		if err != nil {
+			return Task{}, err
+		}
+		return Task{Action: action, Code: code}, nil
+	default:
+		if action == "" {
+			return Task{}, fmt.Errorf("market task action is required")
+		}
+		return Task{}, fmt.Errorf("unknown market task action: %s", action)
+	}
 }
 
 func (u Usecase) withTx(ctx context.Context, fn func(Repository) error) error {

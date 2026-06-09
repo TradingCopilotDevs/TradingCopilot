@@ -1,8 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { clearAuthToken, getAuthToken, getAuthTokenExpiresAt, isAuthTokenUsable } from './auth'
+import { TOKEN_STORAGE_KEY, clearAuthToken, getAuthToken, getAuthTokenExpiresAt, isAuthTokenUsable } from './auth'
 
 const DashboardView = () => import('./views/DashboardView.vue')
 const LoginView = () => import('./views/LoginView.vue')
+const SetupView = () => import('./views/SetupView.vue')
+const AdminView = () => import('./views/AdminView.vue')
+const OpsView = () => import('./views/OpsView.vue')
 const SettingsView = () => import('./views/SettingsView.vue')
 const ModelProvidersView = () => import('./views/ModelProvidersView.vue')
 const ResearchTeamView = () => import('./views/ResearchTeamView.vue')
@@ -21,6 +24,9 @@ export const router = createRouter({
   routes: [
     { path: '/login', component: LoginView },
     { path: '/', component: DashboardView },
+    { path: '/setup', component: SetupView },
+    { path: '/admin', component: AdminView },
+    { path: '/ops', component: OpsView },
     { path: '/settings', component: SettingsView },
     { path: '/model-providers', component: ModelProvidersView },
     { path: '/research-team', component: ResearchTeamView },
@@ -51,7 +57,7 @@ router.afterEach(() => {
 })
 
 window.addEventListener('storage', (event) => {
-  if (event.key === 'tradingcopilot_token') {
+  if (event.key === TOKEN_STORAGE_KEY || event.key === 'tradingcopilot_token') {
     scheduleAuthExpiryRedirect()
   }
 })

@@ -76,6 +76,19 @@ func (s *Server) syncMarketSymbols(w http.ResponseWriter, r *http.Request) {
 	jsonapi.WriteData(w, http.StatusOK, jsonapi.NewResource("market-symbol-syncs", "latest", map[string]any{"provider": provider, "synced": synced}))
 }
 
+func (s *Server) submitMarketTask(w http.ResponseWriter, r *http.Request) {
+	task, ok := decodeMarketTaskPayload(w, r)
+	if !ok {
+		return
+	}
+	result, err := s.marketUsecase.EnqueueTask(r.Context(), task)
+	if err != nil {
+		writeJSONAPIError(w, http.StatusConflict, "market-task-enqueue-failed", "Market task enqueue failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusAccepted, marketTaskResource(result))
+}
+
 func (s *Server) currentQuote(w http.ResponseWriter, r *http.Request) {
 	quote, err := s.marketUsecase.CurrentQuote(r.Context(), chi.URLParam(r, "code"), r.URL.Query().Get("refresh") != "false")
 	if err != nil {
@@ -170,6 +183,17 @@ func (s *Server) toolQuery(w http.ResponseWriter, r *http.Request) {
 	jsonapi.WriteData(w, http.StatusOK, marketToolResultResources(rows))
 }
 
+func decodeMarketTaskPayload(w http.ResponseWriter, r *http.Request) (appmarket.Task, bool) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return appmarket.Task{}, false
+	}
+	return appmarket.Task{
+		Action: stringAttr(attrs, "action"),
+		Code:   stringAttr(attrs, "code"),
+	}, true
+}
+
 func decodeMarketSymbolPayload(w http.ResponseWriter, r *http.Request) (domainmarket.Symbol, bool) {
 	attrs, ok := decodeJSONAPIAttributesMap(w, r)
 	if !ok {
@@ -207,6 +231,21 @@ func decodeWatchlistPayload(w http.ResponseWriter, r *http.Request) (watchlistPa
 		Note:           note,
 		Active:         boolAttrWithDefault(attrs, true, "active"),
 	}, true
+}
+
+func marketTaskResource(result appmarket.TaskResult) jsonapi.Resource {
+	id := result.TaskID
+	if id == "" {
+		id = strings.TrimSpace(result.Task.Action)
+	}
+	return jsonapi.NewResource("market-tasks", id, map[string]any{
+		"action":   result.Task.Action,
+		"code":     nullableMarketString(result.Task.Code),
+		"status":   result.Status,
+		"provider": nullableMarketString(result.Provider),
+		"count":    result.Count,
+		"taskId":   result.TaskID,
+	})
 }
 
 func marketSymbolResource(row domainmarket.Symbol) jsonapi.Resource {
@@ -297,6 +336,14 @@ func nullableStringAttr(attrs map[string]any, keys ...string) *string {
 		return nil
 	}
 	return &text
+}
+
+func nullableMarketString(value string) *string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	return &value
 }
 
 func firstNonEmptyString(values ...string) string {

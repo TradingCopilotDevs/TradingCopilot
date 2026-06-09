@@ -13,6 +13,11 @@ func TestRuntimeEnvUsesStoredOverridesAndFallbacks(t *testing.T) {
 	repo := &fakeSettingsRepo{rows: []domainsettings.AppSetting{
 		{Key: "PUBLIC_BASE_URL", Value: domainkernel.JSON(`{"value":"https://app.example"}`)},
 		{Key: "MARKET_REALTIME_CACHE_TTL_SECONDS", Value: domainkernel.JSON(`{"value":10}`)},
+		{Key: "BACKUP_ARCHIVE_PROVIDER", Value: domainkernel.JSON(`{"value":"s3"}`)},
+		{Key: "BACKUP_ARCHIVE_S3_BUCKET", Value: domainkernel.JSON(`{"value":"tc-backups"}`)},
+		{Key: "BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY", Value: domainkernel.JSON(`{"value":"stored-secret"}`)},
+		{Key: "BACKUP_RESTORE_DRILL_INTERVAL_HOURS", Value: domainkernel.JSON(`{"value":24}`)},
+		{Key: "OTEL_TRACES_EXPORTER", Value: domainkernel.JSON(`{"value":"otlp"}`)},
 		{Key: "MEETING_MAX_ROUNDS", Value: domainkernel.JSON(`{"value":" "}`)},
 	}}
 	uc := NewUsecase(repo, fakeSettingsSecurity{}, RuntimeSettings{
@@ -25,8 +30,16 @@ func TestRuntimeEnvUsesStoredOverridesAndFallbacks(t *testing.T) {
 		MarketRealtimeCacheTTL:       5 * time.Second,
 		MeetingMaxRounds:             6,
 		MeetingDailyTokenBudget:      -1,
+		AIDailyCostBudget:            -1,
 		ToolResultLimit:              200,
 		SQLStatementTimeoutMillis:    5000,
+		BackupArchiveProvider:        "local",
+		BackupArchiveS3Region:        "us-east-1",
+		BackupArchiveS3AccessKeyID:   "env-key-id",
+		BackupRestoreDrillInterval:   168 * time.Hour,
+		OTELTracesExporter:           "none",
+		OTELExporterOTLPProtocol:     "grpc",
+		OTELTracesSampler:            "always_on",
 	}, &fakeSettingsTransactor{repo: repo})
 
 	items, err := uc.RuntimeEnv(context.Background())
@@ -51,6 +64,21 @@ func TestRuntimeEnvUsesStoredOverridesAndFallbacks(t *testing.T) {
 	}
 	if values["MEETING_DAILY_TOKEN_BUDGET"] != -1 {
 		t.Fatalf("daily token budget should default to unlimited: %+v", values)
+	}
+	if values["AI_DAILY_COST_BUDGET"] != -1.0 {
+		t.Fatalf("daily AI cost budget should default to unlimited: %+v", values)
+	}
+	if values["BACKUP_RESTORE_DRILL_INTERVAL_HOURS"].(float64) != 24 {
+		t.Fatalf("backup restore drill interval override not applied: %+v", values)
+	}
+	if values["BACKUP_ARCHIVE_PROVIDER"] != "s3" || values["BACKUP_ARCHIVE_S3_BUCKET"] != "tc-backups" || values["BACKUP_ARCHIVE_S3_REGION"] != "us-east-1" {
+		t.Fatalf("backup archive settings mismatch: %+v", values)
+	}
+	if values["BACKUP_ARCHIVE_S3_ACCESS_KEY_ID"] != "configured" || values["BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY"] != "configured" {
+		t.Fatalf("backup archive credentials should be masked: %+v", values)
+	}
+	if values["OTEL_TRACES_EXPORTER"] != "otlp" || values["OTEL_EXPORTER_OTLP_PROTOCOL"] != "grpc" || values["OTEL_TRACES_SAMPLER"] != "always_on" {
+		t.Fatalf("OTEL runtime settings mismatch: %+v", values)
 	}
 }
 
@@ -107,6 +135,106 @@ func TestUpsertAppSettingValidatesMeetingDailyTokenBudget(t *testing.T) {
 	}
 	if tx.txCount != 1 {
 		t.Fatalf("invalid budget writes should fail before transaction, tx=%d", tx.txCount)
+	}
+}
+
+func TestUpsertAppSettingValidatesAICostGovernance(t *testing.T) {
+	repo := &fakeSettingsRepo{}
+	writes := map[string]any{}
+	tx := &fakeSettingsTransactor{repo: repo}
+	uc := NewUsecase(repo, fakeSettingsSecurity{}, RuntimeSettings{}, tx, func(values map[string]any, _ string) error {
+		for key, value := range values {
+			writes[key] = value
+		}
+		return nil
+	})
+
+	if _, err := uc.UpsertAppSetting(context.Background(), "AI_DAILY_COST_BUDGET", map[string]any{"value": 12.5}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if writes["AI_DAILY_COST_BUDGET"] != 12.5 {
+		t.Fatalf("AI cost budget not written cleanly: %+v", writes)
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "AI_DAILY_COST_BUDGET", map[string]any{"value": 0}, nil); err == nil {
+		t.Fatal("expected zero AI daily cost budget to be rejected")
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "AI_COST_RATES", map[string]any{"value": map[string]any{
+		"currency": "USD",
+		"rates": []any{map[string]any{
+			"providerName":           "OpenAI",
+			"model":                  "gpt-test",
+			"inputPerMillion":        1.25,
+			"outputPerMillion":       2.5,
+			"completionPerMillion":   2.5,
+			"prompt_per_million":     1.25,
+			"completion_per_million": 2.5,
+		}},
+	}}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "AI_COST_RATES", map[string]any{"value": map[string]any{
+		"rates": []any{map[string]any{"model": "gpt-test"}},
+	}}, nil); err == nil {
+		t.Fatal("expected AI cost rate without price to be rejected")
+	}
+}
+
+func TestUpsertAppSettingValidatesOTELSettings(t *testing.T) {
+	repo := &fakeSettingsRepo{}
+	writes := map[string]any{}
+	tx := &fakeSettingsTransactor{repo: repo}
+	uc := NewUsecase(repo, fakeSettingsSecurity{}, RuntimeSettings{}, tx, func(values map[string]any, _ string) error {
+		for key, value := range values {
+			writes[key] = value
+		}
+		return nil
+	})
+
+	if _, err := uc.UpsertAppSetting(context.Background(), "OTEL_TRACES_EXPORTER", map[string]any{"value": "otlp"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if writes["OTEL_TRACES_EXPORTER"] != "otlp" {
+		t.Fatalf("OTEL exporter not written cleanly: %+v", writes)
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "OTEL_EXPORTER_OTLP_PROTOCOL", map[string]any{"value": "http/protobuf"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "OTEL_TRACES_SAMPLER_ARG", map[string]any{"value": "0.25"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "OTEL_TRACES_EXPORTER", map[string]any{"value": "zipkin"}, nil); err == nil {
+		t.Fatal("expected unsupported exporter to be rejected")
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "OTEL_TRACES_SAMPLER_ARG", map[string]any{"value": "1.1"}, nil); err == nil {
+		t.Fatal("expected invalid sampler arg to be rejected")
+	}
+}
+
+func TestUpsertAppSettingValidatesBackupArchiveProvider(t *testing.T) {
+	repo := &fakeSettingsRepo{}
+	writes := map[string]any{}
+	tx := &fakeSettingsTransactor{repo: repo}
+	uc := NewUsecase(repo, fakeSettingsSecurity{}, RuntimeSettings{}, tx, func(values map[string]any, _ string) error {
+		for key, value := range values {
+			writes[key] = value
+		}
+		return nil
+	})
+
+	if _, err := uc.UpsertAppSetting(context.Background(), "BACKUP_ARCHIVE_PROVIDER", map[string]any{"value": "oss"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if writes["BACKUP_ARCHIVE_PROVIDER"] != "oss" {
+		t.Fatalf("backup archive provider not written cleanly: %+v", writes)
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "BACKUP_ARCHIVE_PROVIDER", map[string]any{"value": "ftp"}, nil); err == nil {
+		t.Fatal("expected unsupported backup archive provider to be rejected")
+	}
+	if _, err := uc.UpsertAppSetting(context.Background(), "BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY", map[string]any{"value": "secret"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if writes["BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY"] != "secret" {
+		t.Fatalf("backup archive secret not written cleanly: %+v", writes)
 	}
 }
 

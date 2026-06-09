@@ -65,6 +65,20 @@ func TestMessagingRepositoryCRUDAndFilters(t *testing.T) {
 	if _, found, err := repo.FindMessageBySource(ctx, subscription.ID, "42"); err != nil || !found {
 		t.Fatalf("FindMessageBySource found=%v err=%v", found, err)
 	}
+	helpful := domainmsg.FeedbackHelpful
+	feedbackAt := time.Now()
+	message.FeedbackLabel = &helpful
+	message.FeedbackAt = &feedbackAt
+	if err := repo.SaveMessage(ctx, &message); err != nil {
+		t.Fatal(err)
+	}
+	feedbackRows, err := repo.ListFeedbackMessages(ctx, appmessaging.RepositoryFeedbackMessageFilter{SubscriptionID: "1", Provider: domainmsg.ProviderTelegramChannel, Label: domainmsg.FeedbackHelpful, Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(feedbackRows) != 1 || feedbackRows[0].Subscription == nil || feedbackRows[0].Subscription.SourceRef != "@news" {
+		t.Fatalf("unexpected feedback rows: %+v", feedbackRows)
+	}
 	adapter := domainmsg.PlatformAdapter{Provider: domainmsg.ProviderTelegramBot, DisplayName: "Bot", Enabled: true, Config: domainkernel.NewJSON(map[string]any{"capabilities": []string{"outbound_notifications"}})}
 	if err := repo.CreatePlatformAdapter(ctx, &adapter); err != nil {
 		t.Fatal(err)

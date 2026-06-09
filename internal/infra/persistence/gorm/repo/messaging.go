@@ -302,6 +302,34 @@ func (r MessagingRepository) ListMessages(ctx context.Context, filter appmessagi
 	return ingestedMessagesToDomain(rows), nil
 }
 
+func (r MessagingRepository) ListFeedbackMessages(ctx context.Context, filter appmessaging.RepositoryFeedbackMessageFilter) ([]domainmsg.IngestedMessage, error) {
+	var rows []persistmodel.IngestedMessage
+	q := r.db.WithContext(ctx).Model(&persistmodel.IngestedMessage{}).
+		Preload("Subscription").
+		Where("feedback_label IS NOT NULL AND feedback_label <> ''")
+	if strings.TrimSpace(filter.SubscriptionID) != "" {
+		if id, err := strconv.ParseUint(filter.SubscriptionID, 10, 64); err == nil && id > 0 {
+			q = q.Where("subscription_id = ?", id)
+		}
+	}
+	if provider := strings.TrimSpace(filter.Provider); provider != "" {
+		q = q.Where("provider = ?", provider)
+	}
+	if label := strings.ToLower(strings.TrimSpace(filter.Label)); label != "" {
+		q = q.Where("feedback_label = ?", label)
+	}
+	if filter.CursorID > 0 {
+		q = q.Where("id < ?", filter.CursorID)
+	}
+	if filter.Limit <= 0 {
+		filter.Limit = 100
+	}
+	if err := q.Order("id desc").Limit(filter.Limit).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return ingestedMessagesToDomain(rows), nil
+}
+
 func (r MessagingRepository) CreateMessage(ctx context.Context, message *domainmsg.IngestedMessage) error {
 	row := ingestedMessageToModel(*message)
 	if err := r.db.WithContext(ctx).Create(&row).Error; err != nil {
@@ -556,13 +584,19 @@ func ingestedMessagesToDomain(rows []persistmodel.IngestedMessage) []domainmsg.I
 }
 
 func ingestedMessageFromModel(row persistmodel.IngestedMessage) domainmsg.IngestedMessage {
-	return domainmsg.IngestedMessage{
+	out := domainmsg.IngestedMessage{
 		ID: row.ID, SubscriptionID: row.SubscriptionID, Provider: row.Provider, SourceMessageID: row.SourceMessageID,
 		MessageTime: row.MessageTime, Text: row.Text, Raw: domainkernel.JSON(row.Raw), FilterDecision: row.FilterDecision,
 		FilterReason: row.FilterReason, FilterStatus: normalizeFilterStatus(row.FilterStatus, row.FilterDecision, row.FilteredAt),
 		RelatedSymbols: domainkernel.JSON(row.RelatedSymbols), FilteredAt: row.FilteredAt,
-		FilterID: row.FilterID, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+		FilterID: row.FilterID, FeedbackLabel: row.FeedbackLabel, FeedbackComment: row.FeedbackComment, FeedbackAt: row.FeedbackAt,
+		CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 	}
+	if row.Subscription != nil {
+		subscription := messageSubscriptionFromModel(*row.Subscription)
+		out.Subscription = &subscription
+	}
+	return out
 }
 
 func ingestedMessageToModel(row domainmsg.IngestedMessage) persistmodel.IngestedMessage {
@@ -571,7 +605,8 @@ func ingestedMessageToModel(row domainmsg.IngestedMessage) persistmodel.Ingested
 		MessageTime: row.MessageTime, Text: row.Text, Raw: datatypes.JSON(row.Raw), FilterDecision: row.FilterDecision,
 		FilterReason: row.FilterReason, FilterStatus: normalizeFilterStatus(row.FilterStatus, row.FilterDecision, row.FilteredAt),
 		RelatedSymbols: datatypes.JSON(row.RelatedSymbols), FilteredAt: row.FilteredAt,
-		FilterID: row.FilterID, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+		FilterID: row.FilterID, FeedbackLabel: row.FeedbackLabel, FeedbackComment: row.FeedbackComment, FeedbackAt: row.FeedbackAt,
+		CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 	}
 }
 

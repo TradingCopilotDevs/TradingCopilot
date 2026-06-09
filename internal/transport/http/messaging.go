@@ -75,6 +75,19 @@ func (s *Server) listMessageSubscriptions(w http.ResponseWriter, r *http.Request
 	writeResourceCollection(w, r, out, 100, 500)
 }
 
+func (s *Server) listMessageSubscriptionDiagnostics(w http.ResponseWriter, r *http.Request) {
+	rows, err := s.messagingUsecase.SubscriptionDiagnostics(r.Context())
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-subscription-diagnostics-load-failed", "Message subscription diagnostics load failed", err.Error(), "")
+		return
+	}
+	out := make([]jsonapi.Resource, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, messageSubscriptionDiagnosticResource(row))
+	}
+	writeResourceCollection(w, r, out, 100, 500)
+}
+
 func (s *Server) listMessageSubscriptionFilters(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.messagingUsecase.ListSubscriptionFilters(r.Context())
 	if err != nil {
@@ -164,11 +177,11 @@ func (s *Server) deleteMessageSubscription(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) testMessageSubscriptionRef(w http.ResponseWriter, r *http.Request) {
-	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	input, _, ok := decodeMessageSubscriptionInput(w, r)
 	if !ok {
 		return
 	}
-	result, err := s.messagingUsecase.TestSubscriptionRef(r.Context(), stringAttr(attrs, "provider"), stringAttr(attrs, "sourceRef"))
+	result, err := s.messagingUsecase.TestSubscriptionDraft(r.Context(), input)
 	if err != nil {
 		writeJSONAPIError(w, http.StatusBadRequest, "message-subscription-test-failed", "Message subscription test failed", err.Error(), "")
 		return
@@ -214,6 +227,19 @@ func (s *Server) collectMessageSubscriptions(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	jsonapi.WriteData(w, http.StatusOK, jsonapi.NewResource("message-subscription-collect-results", "current", map[string]any{"status": result.Status, "subscriptions": result.Subscriptions, "queued": result.Queued, "collected": result.Collected, "filtered": result.Filtered}))
+}
+
+func (s *Server) maintainMessageSubscriptions(w http.ResponseWriter, r *http.Request) {
+	input, ok := decodeMessageSubscriptionMaintenanceInput(w, r)
+	if !ok {
+		return
+	}
+	result, err := s.messagingUsecase.RunSubscriptionMaintenance(r.Context(), input)
+	if err != nil {
+		writeJSONAPIError(w, http.StatusBadRequest, "message-subscription-maintenance-failed", "Message subscription maintenance failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, messageSubscriptionMaintenanceResource(result))
 }
 
 func (s *Server) listPlatformAdapters(w http.ResponseWriter, r *http.Request) {
@@ -335,6 +361,166 @@ func (s *Server) updateIngestedMessage(w http.ResponseWriter, r *http.Request) {
 	jsonapi.WriteData(w, http.StatusOK, ingestedMessageResource(result.Row))
 }
 
+func (s *Server) feedbackIngestedMessage(w http.ResponseWriter, r *http.Request) {
+	input, ok := decodeIngestedMessageFeedbackInput(w, r)
+	if !ok {
+		return
+	}
+	result, found, err := s.messagingUsecase.FeedbackMessage(r.Context(), uintParam(r, "messageId"), input)
+	if err != nil {
+		writeJSONAPIError(w, http.StatusBadRequest, "ingested-message-feedback-failed", "Ingested message feedback failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "ingested-message-not-found", "Ingested message not found", "message not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, ingestedMessageResource(result.Row))
+}
+
+func (s *Server) feedbackIngestedMessagesBatch(w http.ResponseWriter, r *http.Request) {
+	input, ok := decodeIngestedMessageFeedbackBatchInput(w, r)
+	if !ok {
+		return
+	}
+	result, err := s.messagingUsecase.FeedbackMessages(r.Context(), input)
+	if err != nil {
+		writeJSONAPIError(w, http.StatusBadRequest, "ingested-message-feedback-batch-failed", "Ingested message feedback batch failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, ingestedMessageFeedbackBatchResource(result))
+}
+
+func (s *Server) listMessageFeedbackTrainingSamples(w http.ResponseWriter, r *http.Request) {
+	page := jsonapi.ParsePage(r, 100, 500)
+	result, err := s.messagingUsecase.ListFeedbackTrainingSamples(r.Context(), appmessaging.FeedbackTrainingFilter{
+		SubscriptionID: r.URL.Query().Get("subscriptionId"),
+		Provider:       r.URL.Query().Get("provider"),
+		Label:          r.URL.Query().Get("feedbackLabel"),
+		Limit:          page.Limit,
+		Cursor:         page.Cursor,
+	})
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-training-samples-load-failed", "Message feedback training samples load failed", err.Error(), "")
+		return
+	}
+	jsonapi.Write(w, http.StatusOK, jsonapi.Document{
+		Data:  messageFeedbackTrainingSampleResources(result.Rows),
+		Links: jsonapi.PageLinks(r, result.NextCursor),
+		Meta:  jsonapi.PageMeta(len(result.Rows), result.NextCursor),
+	})
+}
+
+func (s *Server) getMessageFeedbackEvaluation(w http.ResponseWriter, r *http.Request) {
+	report, err := s.messagingUsecase.FeedbackEvaluation(r.Context(), messageFeedbackTrainingFilterFromRequest(r))
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-evaluation-load-failed", "Message feedback evaluation load failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, messageFeedbackEvaluationResource(report))
+}
+
+func (s *Server) listMessageFeedbackTrainingSnapshots(w http.ResponseWriter, r *http.Request) {
+	snapshots, err := s.messagingUsecase.ListFeedbackTrainingSnapshots(r.Context(), messageFeedbackTrainingFilterFromRequest(r))
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-training-snapshots-load-failed", "Message feedback training snapshots load failed", err.Error(), "")
+		return
+	}
+	page := jsonapi.ParsePage(r, 20, 100)
+	resources, nextCursor := jsonapi.PageResources(messageFeedbackTrainingSnapshotResources(snapshots), page)
+	jsonapi.Write(w, http.StatusOK, jsonapi.Document{
+		Data:  resources,
+		Links: jsonapi.PageLinks(r, nextCursor),
+		Meta:  jsonapi.PageMeta(len(resources), nextCursor),
+	})
+}
+
+func (s *Server) createMessageFeedbackTrainingSnapshot(w http.ResponseWriter, r *http.Request) {
+	snapshot, err := s.messagingUsecase.CreateFeedbackTrainingSnapshot(r.Context(), messageFeedbackTrainingFilterFromRequest(r))
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-training-snapshot-create-failed", "Message feedback training snapshot create failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, messageFeedbackTrainingSnapshotResource(snapshot))
+}
+
+func (s *Server) listMessageFeedbackTrainingExports(w http.ResponseWriter, r *http.Request) {
+	exports, err := s.messagingUsecase.ListFeedbackTrainingExports(r.Context(), messageFeedbackTrainingFilterFromRequest(r))
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-training-exports-load-failed", "Message feedback training exports load failed", err.Error(), "")
+		return
+	}
+	page := jsonapi.ParsePage(r, 20, 100)
+	resources, nextCursor := jsonapi.PageResources(messageFeedbackTrainingExportResources(exports, false), page)
+	jsonapi.Write(w, http.StatusOK, jsonapi.Document{
+		Data:  resources,
+		Links: jsonapi.PageLinks(r, nextCursor),
+		Meta:  jsonapi.PageMeta(len(resources), nextCursor),
+	})
+}
+
+func (s *Server) createMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request) {
+	export, err := s.messagingUsecase.CreateFeedbackTrainingExport(r.Context(), messageFeedbackTrainingFilterFromRequest(r))
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-training-export-create-failed", "Message feedback training export create failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, messageFeedbackTrainingExportResource(export, true))
+}
+
+func (s *Server) getMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request) {
+	export, found, err := s.messagingUsecase.FindFeedbackTrainingExport(r.Context(), stringParam(r, "exportVersion"))
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-training-export-load-failed", "Message feedback training export load failed", err.Error(), "")
+		return
+	}
+	if !found {
+		writeJSONAPIError(w, http.StatusNotFound, "message-feedback-training-export-not-found", "Message feedback training export not found", "training export not found", "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, messageFeedbackTrainingExportResource(export, true))
+}
+
+func (s *Server) getMessageFeedbackSourceTrust(w http.ResponseWriter, r *http.Request) {
+	report, err := s.messagingUsecase.SourceTrustReport(r.Context(), appmessaging.SourceTrustFilter{
+		SubscriptionID: r.URL.Query().Get("subscriptionId"),
+		Provider:       r.URL.Query().Get("provider"),
+	})
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-source-trust-load-failed", "Message feedback source trust load failed", err.Error(), "")
+		return
+	}
+	page := jsonapi.ParsePage(r, 100, 500)
+	resources, nextCursor := jsonapi.PageResources(messageSourceTrustItemResources(report.Items), page)
+	jsonapi.Write(w, http.StatusOK, jsonapi.Document{
+		Data:  resources,
+		Links: jsonapi.PageLinks(r, nextCursor),
+		Meta: map[string]any{
+			"pageSize":    len(resources),
+			"nextCursor":  nextCursor,
+			"hasMore":     nextCursor != "",
+			"generatedAt": report.GeneratedAt,
+			"status":      report.Status,
+			"sampleCount": report.SampleCount,
+			"sourceCount": report.SourceCount,
+			"sampleLimit": report.SampleLimit,
+			"truncated":   report.Truncated,
+		},
+	})
+}
+
+func (s *Server) recomputeMessageFeedbackSourceTrust(w http.ResponseWriter, r *http.Request) {
+	report, err := s.messagingUsecase.SourceTrustReport(r.Context(), appmessaging.SourceTrustFilter{
+		SubscriptionID: r.URL.Query().Get("subscriptionId"),
+		Provider:       r.URL.Query().Get("provider"),
+	})
+	if err != nil {
+		writeJSONAPIError(w, http.StatusInternalServerError, "message-feedback-source-trust-recompute-failed", "Message feedback source trust recompute failed", err.Error(), "")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, messageSourceTrustReportResource(report))
+}
+
 func (s *Server) deleteIngestedMessage(w http.ResponseWriter, r *http.Request) {
 	id := uintParam(r, "messageId")
 	found, err := s.messagingUsecase.DeleteMessage(r.Context(), id)
@@ -422,7 +608,7 @@ func decodeMessageSubscriptionInput(w http.ResponseWriter, r *http.Request) (app
 		Enabled:       boolAttrWithDefault(attrs, true, "enabled"),
 		BackfillLimit: 20,
 	}
-	for _, name := range []string{"provider", "title", "sourceRef", "enabled", "filterId", "config"} {
+	for _, name := range []string{"provider", "title", "sourceRef", "enabled", "filterId", "config", "rssAuthType", "rssUsername", "rssPassword"} {
 		if _, ok := attrValue(attrs, name); ok {
 			fields[name] = true
 		}
@@ -448,7 +634,48 @@ func decodeMessageSubscriptionInput(w http.ResponseWriter, r *http.Request) (app
 	if value, ok := attrValue(attrs, "config"); ok {
 		input.Config = value
 	}
+	if value, ok := stringAttrValue(attrs, "rssAuthType"); ok {
+		input.RSSAuthType = value
+		input.RSSAuthTypeSet = true
+	}
+	if value, ok := stringAttrValue(attrs, "rssUsername"); ok {
+		input.RSSUsername = value
+		input.RSSUsernameSet = true
+	}
+	if value, ok := stringAttrValue(attrs, "rssPassword"); ok {
+		input.RSSPassword = value
+		input.RSSPasswordSet = true
+	}
 	return input, fields, true
+}
+
+func decodeMessageSubscriptionMaintenanceInput(w http.ResponseWriter, r *http.Request) (appmessaging.SubscriptionMaintenanceInput, bool) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return appmessaging.SubscriptionMaintenanceInput{}, false
+	}
+	input := appmessaging.SubscriptionMaintenanceInput{
+		Action:       stringAttr(attrs, "action"),
+		Provider:     stringAttr(attrs, "provider"),
+		OnlyBlocked:  boolAttr(attrs, "onlyBlocked"),
+		OnlyWarnings: boolAttr(attrs, "onlyWarnings"),
+	}
+	if ids, ok := uintSliceAttr(attrs, "subscriptionIds"); ok {
+		input.SubscriptionIDs = ids
+	}
+	if value, ok := stringAttrValue(attrs, "rssAuthType"); ok {
+		input.RSSAuthType = value
+		input.RSSAuthTypeSet = true
+	}
+	if value, ok := stringAttrValue(attrs, "rssUsername"); ok {
+		input.RSSUsername = value
+		input.RSSUsernameSet = true
+	}
+	if value, ok := stringAttrValue(attrs, "rssPassword"); ok {
+		input.RSSPassword = value
+		input.RSSPasswordSet = true
+	}
+	return input, true
 }
 
 func decodeMessageSubscriptionFilterInput(w http.ResponseWriter, r *http.Request) (appmessaging.SubscriptionFilterInput, map[string]bool, bool) {
@@ -532,18 +759,63 @@ func decodeIngestedMessageInput(w http.ResponseWriter, r *http.Request) (appmess
 	return input, true
 }
 
+func decodeIngestedMessageFeedbackInput(w http.ResponseWriter, r *http.Request) (appmessaging.MessageFeedbackInput, bool) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return appmessaging.MessageFeedbackInput{}, false
+	}
+	input := appmessaging.MessageFeedbackInput{}
+	if value, ok := stringAttrValue(attrs, "label", "feedbackLabel"); ok {
+		input.Label = value
+	}
+	if value, ok := stringAttrValue(attrs, "comment", "feedbackComment"); ok {
+		input.Comment = value
+		input.HasComment = true
+	}
+	return input, true
+}
+
+func decodeIngestedMessageFeedbackBatchInput(w http.ResponseWriter, r *http.Request) (appmessaging.MessageFeedbackBatchInput, bool) {
+	attrs, ok := decodeJSONAPIAttributesMap(w, r)
+	if !ok {
+		return appmessaging.MessageFeedbackBatchInput{}, false
+	}
+	input := appmessaging.MessageFeedbackBatchInput{}
+	if ids, set := uintSliceAttr(attrs, "messageIds", "ids"); set {
+		input.IDs = ids
+	}
+	if value, ok := stringAttrValue(attrs, "label", "feedbackLabel"); ok {
+		input.Label = value
+	}
+	if value, ok := stringAttrValue(attrs, "comment", "feedbackComment"); ok {
+		input.Comment = value
+		input.HasComment = true
+	}
+	return input, true
+}
+
+func messageFeedbackTrainingFilterFromRequest(r *http.Request) appmessaging.FeedbackTrainingFilter {
+	return appmessaging.FeedbackTrainingFilter{
+		SubscriptionID: r.URL.Query().Get("subscriptionId"),
+		Provider:       r.URL.Query().Get("provider"),
+		Label:          r.URL.Query().Get("feedbackLabel"),
+	}
+}
+
 func messageSubscriptionResource(row domainmsg.MessageSubscription) jsonapi.Resource {
 	filterName := ""
 	if row.Filter != nil {
 		filterName = row.Filter.Name
 	}
+	config, rssAuthType, rssUsername, hasRSSPassword := messageSubscriptionConfigValue(row)
 	resource := jsonapi.NewResource("message-subscriptions", strconv.FormatUint(uint64(row.ID), 10), map[string]any{
 		"provider": row.Provider, "title": row.Title, "sourceRef": row.SourceRef, "enabled": row.Enabled,
 		"filterId": row.FilterID, "filterName": filterName,
 		"teamIds":       row.TeamIDs,
 		"backfillLimit": row.BackfillLimit, "pollIntervalSeconds": row.PollIntervalSeconds,
 		"collectFrom": row.CollectFrom, "lastCollectedAt": row.LastCollectedAt, "nextCollectAt": row.NextCollectAt,
-		"lastCollectError": row.LastCollectError, "config": rawJSONValue(row.Config),
+		"lastCollectError": row.LastCollectError, "config": config,
+		"rssAuthType": rssAuthType, "rssUsername": rssUsername, "hasRssPassword": hasRSSPassword,
 		"createdAt": row.CreatedAt, "updatedAt": row.UpdatedAt,
 	})
 	if row.FilterID != 0 {
@@ -552,6 +824,61 @@ func messageSubscriptionResource(row domainmsg.MessageSubscription) jsonapi.Reso
 		}
 	}
 	return resource
+}
+
+func messageSubscriptionConfigValue(row domainmsg.MessageSubscription) (any, string, string, bool) {
+	value := rawJSONValue(row.Config)
+	rssAuthType := "none"
+	rssUsername := ""
+	hasRSSPassword := false
+	cfg, ok := value.(map[string]any)
+	if !ok {
+		return value, rssAuthType, rssUsername, hasRSSPassword
+	}
+	auth, ok := cfg["rssAuth"].(map[string]any)
+	if !ok {
+		return cfg, rssAuthType, rssUsername, hasRSSPassword
+	}
+	if value, ok := auth["type"]; ok && value != nil && strings.TrimSpace(fmtSprint(value)) != "" {
+		rssAuthType = strings.TrimSpace(fmtSprint(value))
+	}
+	if value, ok := auth["username"]; ok && value != nil {
+		rssUsername = strings.TrimSpace(fmtSprint(value))
+	}
+	if value, ok := auth["passwordSecretName"]; ok && value != nil && strings.TrimSpace(fmtSprint(value)) != "" {
+		hasRSSPassword = true
+	}
+	sanitizedAuth := map[string]any{"type": rssAuthType}
+	if rssUsername != "" {
+		sanitizedAuth["username"] = rssUsername
+	}
+	if rssAuthType == "none" {
+		delete(cfg, "rssAuth")
+	} else {
+		cfg["rssAuth"] = sanitizedAuth
+	}
+	return cfg, rssAuthType, rssUsername, hasRSSPassword
+}
+
+func messageSubscriptionDiagnosticResource(row appmessaging.SubscriptionDiagnostic) jsonapi.Resource {
+	return jsonapi.NewResource("message-subscription-diagnostics", strconv.FormatUint(uint64(row.SubscriptionID), 10), map[string]any{
+		"subscriptionId":     row.SubscriptionID,
+		"provider":           row.Provider,
+		"title":              row.Title,
+		"sourceRef":          row.SourceRef,
+		"enabled":            row.Enabled,
+		"sourceKind":         row.SourceKind,
+		"status":             row.Status,
+		"severity":           row.Severity,
+		"ready":              row.Ready,
+		"privateCapable":     row.PrivateCapable,
+		"proxyRoute":         row.ProxyRoute,
+		"lastCollectError":   row.LastCollectError,
+		"nextCollectAt":      row.NextCollectAt,
+		"lastCollectedAt":    row.LastCollectedAt,
+		"checks":             row.Checks,
+		"recommendedActions": row.RecommendedActions,
+	})
 }
 
 func messageSubscriptionFilterResource(row domainmsg.MessageSubscriptionFilter) jsonapi.Resource {
@@ -574,6 +901,12 @@ func messageSubscriptionTestResource(result map[string]any) jsonapi.Resource {
 		"status": result["status"], "sourceRef": firstNonNil(result["source_ref"], result["channel_ref"]),
 		"title": result["title"], "sourceMessageId": firstNonNil(result["source_message_id"], result["message_id"]),
 		"messageTime": result["message_time"], "text": result["text"],
+	})
+}
+
+func messageSubscriptionMaintenanceResource(result appmessaging.SubscriptionMaintenanceResult) jsonapi.Resource {
+	return jsonapi.NewResource("message-subscription-maintenance-results", "current", map[string]any{
+		"action": result.Action, "matched": result.Matched, "checked": result.Checked, "passed": result.Passed, "failed": result.Failed, "updated": result.Updated, "queued": result.Queued, "paused": result.Paused, "skipped": result.Skipped,
 	})
 }
 
@@ -603,7 +936,8 @@ func ingestedMessageResource(row appmessaging.MessageRow) jsonapi.Resource {
 		"provider": message.Provider, "sourceMessageId": message.SourceMessageID, "messageTime": message.MessageTime,
 		"text": message.Text, "filterDecision": message.FilterDecision, "filterReason": message.FilterReason,
 		"filterStatus": message.FilterStatus, "relatedSymbols": rawJSONValue(message.RelatedSymbols), "filteredAt": message.FilteredAt,
-		"filterId": message.FilterID, "createdAt": message.CreatedAt, "updatedAt": message.UpdatedAt,
+		"filterId": message.FilterID, "feedbackLabel": message.FeedbackLabel, "feedbackComment": message.FeedbackComment, "feedbackAt": message.FeedbackAt,
+		"createdAt": message.CreatedAt, "updatedAt": message.UpdatedAt,
 	})
 	resource.Relationships = map[string]jsonapi.Relationship{
 		"subscription": {Data: map[string]string{"type": "message-subscriptions", "id": strconv.FormatUint(uint64(message.SubscriptionID), 10)}},
@@ -617,6 +951,194 @@ func ingestedMessagesPublic(rows []appmessaging.MessageRow) []jsonapi.Resource {
 		out = append(out, ingestedMessageResource(row))
 	}
 	return out
+}
+
+func ingestedMessageFeedbackBatchResource(result appmessaging.MessageFeedbackBatchResult) jsonapi.Resource {
+	return jsonapi.NewResource("ingested-message-feedback-batches", "current", map[string]any{
+		"requestedCount": result.RequestedCount,
+		"updatedCount":   result.UpdatedCount,
+		"updatedIds":     result.UpdatedIDs,
+		"missingIds":     result.MissingIDs,
+		"label":          result.Label,
+		"comment":        result.Comment,
+	})
+}
+
+func messageFeedbackTrainingSampleResource(row appmessaging.FeedbackTrainingSample) jsonapi.Resource {
+	message := row.Message
+	subscription := row.Subscription
+	return jsonapi.NewResource("message-feedback-training-samples", strconv.FormatUint(uint64(message.ID), 10), map[string]any{
+		"messageId":         message.ID,
+		"subscriptionId":    message.SubscriptionID,
+		"subscriptionTitle": subscription.Title,
+		"provider":          message.Provider,
+		"sourceRef":         subscription.SourceRef,
+		"sourceMessageId":   message.SourceMessageID,
+		"messageTime":       message.MessageTime,
+		"text":              message.Text,
+		"filterDecision":    message.FilterDecision,
+		"filterReason":      message.FilterReason,
+		"filterStatus":      message.FilterStatus,
+		"relatedSymbols":    rawJSONValue(message.RelatedSymbols),
+		"feedbackLabel":     message.FeedbackLabel,
+		"feedbackComment":   message.FeedbackComment,
+		"feedbackAt":        message.FeedbackAt,
+		"split":             row.Split,
+		"sampleWeight":      row.SampleWeight,
+		"trainingUse":       row.TrainingUse,
+		"dedupeKey":         row.DedupeKey,
+	})
+}
+
+func messageFeedbackTrainingSampleResources(rows []appmessaging.FeedbackTrainingSample) []jsonapi.Resource {
+	out := make([]jsonapi.Resource, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, messageFeedbackTrainingSampleResource(row))
+	}
+	return out
+}
+
+func messageFeedbackEvaluationResource(row appmessaging.FeedbackEvaluationReport) jsonapi.Resource {
+	return jsonapi.NewResource("message-feedback-evaluations", "current", messageFeedbackEvaluationAttrs(row))
+}
+
+func messageFeedbackEvaluationAttrs(row appmessaging.FeedbackEvaluationReport) map[string]any {
+	return map[string]any{
+		"generatedAt":                  row.GeneratedAt,
+		"status":                       row.Status,
+		"sampleCount":                  row.SampleCount,
+		"trainCount":                   row.TrainCount,
+		"validationCount":              row.ValidationCount,
+		"helpfulCount":                 row.HelpfulCount,
+		"noiseCount":                   row.NoiseCount,
+		"misclassifiedCount":           row.MisclassifiedCount,
+		"neutralCount":                 row.NeutralCount,
+		"agreementEligibleCount":       row.AgreementEligibleCount,
+		"agreementCount":               row.AgreementCount,
+		"positiveSignalCount":          row.PositiveSignalCount,
+		"noiseSuppressionCount":        row.NoiseSuppressionCount,
+		"falseMeetingFromNoiseCount":   row.FalseMeetingFromNoiseCount,
+		"needsDecisionCorrectionCount": row.NeedsDecisionCorrectionCount,
+		"agreementRate":                row.AgreementRate,
+		"noiseRate":                    row.NoiseRate,
+		"misclassificationRate":        row.MisclassificationRate,
+		"labelBreakdown":               row.LabelBreakdown,
+		"decisionBreakdown":            row.DecisionBreakdown,
+		"recommendations":              row.Recommendations,
+		"truncated":                    row.Truncated,
+		"sampleLimit":                  row.SampleLimit,
+	}
+}
+
+func messageFeedbackTrainingSnapshotResource(row appmessaging.FeedbackTrainingSnapshot) jsonapi.Resource {
+	return jsonapi.NewResource("message-feedback-training-snapshots", row.Version, map[string]any{
+		"version":               row.Version,
+		"createdAt":             row.CreatedAt,
+		"filter":                row.Filter,
+		"sampleCount":           row.SampleCount,
+		"trainCount":            row.TrainCount,
+		"validationCount":       row.ValidationCount,
+		"sourceCount":           row.SourceCount,
+		"fingerprint":           row.Fingerprint,
+		"labelBreakdown":        row.LabelBreakdown,
+		"decisionBreakdown":     row.DecisionBreakdown,
+		"sourceStatusBreakdown": row.SourceStatusBreakdown,
+		"sourceTrustSummary":    row.SourceTrustSummary,
+		"evaluation":            messageFeedbackEvaluationAttrs(row.Evaluation),
+		"sampleRefCount":        row.SampleRefCount,
+		"sampleRefsTruncated":   row.SampleRefsTruncated,
+		"sampleRefs":            row.SampleRefs,
+	})
+}
+
+func messageFeedbackTrainingSnapshotResources(rows []appmessaging.FeedbackTrainingSnapshot) []jsonapi.Resource {
+	out := make([]jsonapi.Resource, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, messageFeedbackTrainingSnapshotResource(row))
+	}
+	return out
+}
+
+func messageFeedbackTrainingExportResource(row appmessaging.FeedbackTrainingExport, includeContent bool) jsonapi.Resource {
+	attrs := map[string]any{
+		"version":               row.Version,
+		"createdAt":             row.CreatedAt,
+		"filter":                row.Filter,
+		"format":                row.Format,
+		"contentType":           row.ContentType,
+		"sampleCount":           row.SampleCount,
+		"trainCount":            row.TrainCount,
+		"validationCount":       row.ValidationCount,
+		"sourceCount":           row.SourceCount,
+		"fingerprint":           row.Fingerprint,
+		"contentSha256":         row.ContentSHA256,
+		"byteCount":             row.ByteCount,
+		"lineCount":             row.LineCount,
+		"truncated":             row.Truncated,
+		"sampleLimit":           row.SampleLimit,
+		"labelBreakdown":        row.LabelBreakdown,
+		"decisionBreakdown":     row.DecisionBreakdown,
+		"sourceStatusBreakdown": row.SourceStatusBreakdown,
+		"sourceTrustSummary":    row.SourceTrustSummary,
+		"evaluation":            messageFeedbackEvaluationAttrs(row.Evaluation),
+	}
+	if includeContent {
+		attrs["content"] = row.Content
+	}
+	return jsonapi.NewResource("message-feedback-training-exports", row.Version, attrs)
+}
+
+func messageFeedbackTrainingExportResources(rows []appmessaging.FeedbackTrainingExport, includeContent bool) []jsonapi.Resource {
+	out := make([]jsonapi.Resource, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, messageFeedbackTrainingExportResource(row, includeContent))
+	}
+	return out
+}
+
+func messageSourceTrustItemResource(row appmessaging.SourceTrustItem) jsonapi.Resource {
+	id := row.Provider + ":" + strconv.FormatUint(uint64(row.SubscriptionID), 10)
+	return jsonapi.NewResource("message-source-trust-sources", id, map[string]any{
+		"subscriptionId":     row.SubscriptionID,
+		"subscriptionTitle":  row.SubscriptionTitle,
+		"provider":           row.Provider,
+		"sourceRef":          row.SourceRef,
+		"feedbackCount":      row.FeedbackCount,
+		"helpfulCount":       row.HelpfulCount,
+		"noiseCount":         row.NoiseCount,
+		"misclassifiedCount": row.MisclassifiedCount,
+		"neutralCount":       row.NeutralCount,
+		"trustScore":         row.TrustScore,
+		"status":             row.Status,
+		"explanation":        row.Explanation,
+		"recommendedActions": row.RecommendedActions,
+		"lastFeedbackAt":     row.LastFeedbackAt,
+		"positiveRate":       row.PositiveRate,
+		"negativeRate":       row.NegativeRate,
+		"sampleWeight":       row.SampleWeight,
+		"autoAction":         row.AutoAction,
+		"autoActionReason":   row.AutoActionReason,
+	})
+}
+
+func messageSourceTrustItemResources(rows []appmessaging.SourceTrustItem) []jsonapi.Resource {
+	out := make([]jsonapi.Resource, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, messageSourceTrustItemResource(row))
+	}
+	return out
+}
+
+func messageSourceTrustReportResource(row appmessaging.SourceTrustReport) jsonapi.Resource {
+	return jsonapi.NewResource("message-source-trust-reports", "current", map[string]any{
+		"generatedAt": row.GeneratedAt,
+		"status":      row.Status,
+		"sampleCount": row.SampleCount,
+		"sourceCount": row.SourceCount,
+		"sampleLimit": row.SampleLimit,
+		"truncated":   row.Truncated,
+		"items":       messageSourceTrustItemResources(row.Items),
+	})
 }
 
 func firstNonNil(values ...any) any {

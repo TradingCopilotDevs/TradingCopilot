@@ -61,6 +61,9 @@ type IngestedMessage struct {
 	FilteredAt      *time.Time
 	FilterID        *uint `gorm:"index"`
 	Filter          *MessageSubscriptionFilter
+	FeedbackLabel   *string `gorm:"size:32;index"`
+	FeedbackComment *string `gorm:"type:text"`
+	FeedbackAt      *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

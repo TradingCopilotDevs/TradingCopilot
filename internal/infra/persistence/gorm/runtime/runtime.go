@@ -218,8 +218,8 @@ func (r Runner) meetingDispatchUsecase() appmeeting.Usecase {
 	service := runnerMeetingService{Service: inframeeting.NewService(r.db), runner: r}
 	return appmeeting.NewUsecase(gormrepo.NewMeetingRepository(r.db), service, appmeeting.Settings{
 		MeetingDispatchMode: r.settings.MeetingDispatchMode,
-	}, gormuow.NewMeetingUnitOfWork(r.db)).WithMeetingEnqueuer(func(meetingID uint) error {
-		return infraqueue.EnqueueRunMeeting(r.settings, meetingID)
+	}, gormuow.NewMeetingUnitOfWork(r.db)).WithMeetingEnqueuerContext(func(ctx context.Context, meetingID uint) error {
+		return infraqueue.EnqueueRunMeetingContext(ctx, r.settings, meetingID)
 	})
 }
 

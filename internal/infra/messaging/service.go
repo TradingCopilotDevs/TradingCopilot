@@ -97,12 +97,12 @@ func (s Service) NormalizeSourceRef(provider string, value string) string {
 	}
 }
 
-func (s Service) TestSubscription(ctx context.Context, credentials appmessaging.TelegramCredentials, provider string, sourceRef string) (map[string]any, error) {
+func (s Service) TestSubscription(ctx context.Context, credentials appmessaging.SubscriptionCredentials, provider string, sourceRef string) (map[string]any, error) {
 	if provider == domainmsg.ProviderRSSFeed {
-		return s.testFeed(ctx, credentials.Proxy, sourceRef)
+		return s.testFeed(ctx, credentials.Proxy, credentials.RSSAuth, sourceRef)
 	}
 	if _, err := infratelegram.PublicUsername(infratelegram.NormalizeChannelRef(sourceRef)); err == nil {
-		result, err := fetchPublicMessagesWithClient(sourceRef, 1, nil, s.httpClient(credentials.Proxy, proxyruntime.ModuleTelegram, 20*time.Second))
+		result, err := fetchPublicMessagesWithClient(sourceRef, 1, nil, s.httpClient(credentials.Telegram.Proxy, proxyruntime.ModuleTelegram, 20*time.Second))
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +112,7 @@ func (s Service) TestSubscription(ctx context.Context, credentials appmessaging.
 		message := result.Messages[0]
 		return map[string]any{"status": "ok", "source_ref": result.ChannelRef, "title": result.Title, "source_message_id": strconv.FormatInt(message.MessageID, 10), "message_time": message.MessageTime, "text": message.Text}, nil
 	}
-	client, err := s.mtprotoClient(credentials, true)
+	client, err := s.mtprotoClient(credentials.Telegram, true)
 	if err != nil {
 		return nil, err
 	}
@@ -130,19 +130,19 @@ func (s Service) TestSubscription(ctx context.Context, credentials appmessaging.
 	return result, err
 }
 
-func (s Service) FetchSubscriptionMessages(ctx context.Context, credentials appmessaging.TelegramCredentials, subscription domainmsg.MessageSubscription, limit int, afterSourceMessageID *string) (appmessaging.FetchedMessages, error) {
+func (s Service) FetchSubscriptionMessages(ctx context.Context, credentials appmessaging.SubscriptionCredentials, subscription domainmsg.MessageSubscription, limit int, afterSourceMessageID *string) (appmessaging.FetchedMessages, error) {
 	if subscription.Provider == domainmsg.ProviderRSSFeed {
-		return s.fetchFeed(ctx, credentials.Proxy, subscription.SourceRef, limit)
+		return s.fetchFeed(ctx, credentials.Proxy, credentials.RSSAuth, subscription.SourceRef, limit)
 	}
 	if limit <= 0 {
 		limit = 20
 	}
 	minMessageID := int64PtrFromString(afterSourceMessageID)
 	if _, err := infratelegram.PublicUsername(infratelegram.NormalizeChannelRef(subscription.SourceRef)); err == nil {
-		result, err := fetchPublicMessagesWithClient(subscription.SourceRef, limit, minMessageID, s.httpClient(credentials.Proxy, proxyruntime.ModuleTelegram, 20*time.Second))
+		result, err := fetchPublicMessagesWithClient(subscription.SourceRef, limit, minMessageID, s.httpClient(credentials.Telegram.Proxy, proxyruntime.ModuleTelegram, 20*time.Second))
 		return fetchedMessagesFromPublic(result), err
 	}
-	client, err := s.mtprotoClient(credentials, true)
+	client, err := s.mtprotoClient(credentials.Telegram, true)
 	if err != nil {
 		return appmessaging.FetchedMessages{}, err
 	}
@@ -273,8 +273,8 @@ func fetchedMessagesFromPublic(result infratelegram.PublicResult) appmessaging.F
 	return out
 }
 
-func (s Service) testFeed(ctx context.Context, proxy appmessaging.ProxyConfig, sourceRef string) (map[string]any, error) {
-	fetched, err := s.fetchFeed(ctx, proxy, sourceRef, 1)
+func (s Service) testFeed(ctx context.Context, proxy appmessaging.ProxyConfig, auth appmessaging.RSSAuthCredentials, sourceRef string) (map[string]any, error) {
+	fetched, err := s.fetchFeed(ctx, proxy, auth, sourceRef, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +285,7 @@ func (s Service) testFeed(ctx context.Context, proxy appmessaging.ProxyConfig, s
 	return map[string]any{"status": "ok", "source_ref": fetched.SourceRef, "title": fetched.Title, "source_message_id": message.SourceMessageID, "message_time": message.MessageTime, "text": message.Text}, nil
 }
 
-func (s Service) fetchFeed(ctx context.Context, proxy appmessaging.ProxyConfig, sourceRef string, limit int) (appmessaging.FetchedMessages, error) {
+func (s Service) fetchFeed(ctx context.Context, proxy appmessaging.ProxyConfig, auth appmessaging.RSSAuthCredentials, sourceRef string, limit int) (appmessaging.FetchedMessages, error) {
 	if limit <= 0 {
 		limit = 20
 	}
@@ -293,11 +293,23 @@ func (s Service) fetchFeed(ctx context.Context, proxy appmessaging.ProxyConfig, 
 	if normalized == "" {
 		return appmessaging.FetchedMessages{}, errors.New("rss feed url is required")
 	}
-	parser := gofeed.NewParser()
-	parser.Client = s.httpClient(proxy, proxyruntime.ModuleWeb, 30*time.Second)
 	feedCtx, cancel := context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
-	feed, err := parser.ParseURLWithContext(normalized, feedCtx)
+	req, err := http.NewRequestWithContext(feedCtx, http.MethodGet, normalized, nil)
+	if err != nil {
+		return appmessaging.FetchedMessages{}, err
+	}
+	applyRSSAuthHeader(req, auth)
+	resp, err := s.httpClient(proxy, proxyruntime.ModuleWeb, 30*time.Second).Do(req)
+	if err != nil {
+		return appmessaging.FetchedMessages{}, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return appmessaging.FetchedMessages{}, fmt.Errorf("rss feed returned status %d", resp.StatusCode)
+	}
+	parser := gofeed.NewParser()
+	feed, err := parser.Parse(resp.Body)
 	if err != nil {
 		return appmessaging.FetchedMessages{}, err
 	}
@@ -320,6 +332,17 @@ func (s Service) fetchFeed(ctx context.Context, proxy appmessaging.ProxyConfig, 
 		out.Messages = out.Messages[:limit]
 	}
 	return out, nil
+}
+
+func applyRSSAuthHeader(req *http.Request, auth appmessaging.RSSAuthCredentials) {
+	switch strings.ToLower(strings.TrimSpace(auth.Type)) {
+	case "basic":
+		req.SetBasicAuth(strings.TrimSpace(auth.Username), strings.TrimSpace(auth.Password))
+	case "bearer":
+		if token := strings.TrimSpace(auth.Password); token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+	}
 }
 
 func feedItemMessage(feedURL string, item *gofeed.Item) appmessaging.FetchedMessage {

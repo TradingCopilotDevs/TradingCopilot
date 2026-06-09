@@ -38,11 +38,153 @@ paths:
         "200": { $ref: "#/components/responses/AuthTokenDocument" }
         "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
         "401": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /auth/logout:
+    post:
+      operationId: postAuthLogout
+      responses:
+        "200": { $ref: "#/components/responses/AuthSessionDocument" }
+        "401": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AdminUserCollectionDocument" }
+    post:
+      operationId: postAdminUsers
+      requestBody: { $ref: "#/components/requestBodies/AdminUserCreateRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AdminUserDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "409": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /admin/users/{userId}:
+    put:
+      operationId: putAdminUser
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody: { $ref: "#/components/requestBodies/AdminUserUpdateRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AdminUserDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /admin/users/{userId}/password-reset:
+    post:
+      operationId: postAdminUserPasswordReset
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody: { $ref: "#/components/requestBodies/AdminUserPasswordResetRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AdminUserDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /admin/sessions:
+    get:
+      operationId: getAdminSessions
+      parameters:
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/IncludeRevoked"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AuthSessionCollectionDocument" }
+  /admin/sessions/{sessionId}/revoke:
+    post:
+      operationId: postAdminSessionRevoke
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody: { $ref: "#/components/requestBodies/AuthSessionRevokeRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AuthSessionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /audit-events:
+    get:
+      operationId: getAuditEvents
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/AuditEventCollectionDocument" }
   /dashboard:
     get:
       operationId: getDashboard
       responses:
         "200": { $ref: "#/components/responses/DashboardDocument" }
+  /setup/readiness:
+    get:
+      operationId: getSetupReadiness
+      responses:
+        "200": { $ref: "#/components/responses/SetupReadinessDocument" }
+  /setup/actions/{key}:
+    post:
+      operationId: postSetupAction
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200": { $ref: "#/components/responses/SetupActionResultDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /ops/provider-health:
+    get:
+      operationId: getOpsProviderHealth
+      responses:
+        "200": { $ref: "#/components/responses/OpsProviderHealthDocument" }
+  /ops/jobs:
+    get:
+      operationId: getOpsJobs
+      parameters:
+        - $ref: "#/components/parameters/OpsQueueName"
+        - $ref: "#/components/parameters/OpsTaskType"
+        - $ref: "#/components/parameters/OpsTaskState"
+        - $ref: "#/components/parameters/OpsFailedLimit"
+      responses:
+        "200": { $ref: "#/components/responses/OpsJobsDocument" }
+  /ops/jobs/retry-failed:
+    post:
+      operationId: postOpsJobsRetryFailed
+      responses:
+        "200": { $ref: "#/components/responses/OpsJobActionDocument" }
+        "409": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /ops/jobs/{queue}/tasks/{taskId}/run:
+    post:
+      operationId: postOpsJobTaskRun
+      parameters:
+        - $ref: "#/components/parameters/Queue"
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200": { $ref: "#/components/responses/OpsJobActionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "409": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /ops/metrics:
+    get:
+      operationId: getOpsMetrics
+      responses:
+        "200":
+          description: Prometheus text metrics for protected operational scraping.
+          content:
+            text/plain:
+              schema: { type: string }
+  /ops/backups:
+    get:
+      operationId: getOpsBackups
+      responses:
+        "200": { $ref: "#/components/responses/OpsBackupsDocument" }
+    post:
+      operationId: postOpsBackups
+      responses:
+        "200": { $ref: "#/components/responses/OpsBackupRunDocument" }
+        "500": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /ops/backups/{backupName}/restore-dry-run:
+    post:
+      operationId: postOpsBackupRestoreDryRun
+      parameters:
+        - $ref: "#/components/parameters/BackupName"
+      responses:
+        "200": { $ref: "#/components/responses/OpsBackupRestoreDryRunDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
   /logs:
     get:
       operationId: getLogs
@@ -296,6 +438,14 @@ paths:
       responses:
         "200": { $ref: "#/components/responses/MarketSymbolSyncDocument" }
         "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /market/tasks:
+    post:
+      operationId: postMarketTasks
+      requestBody: { $ref: "#/components/requestBodies/MarketTaskRequest" }
+      responses:
+        "202": { $ref: "#/components/responses/MarketTaskDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "409": { $ref: "#/components/responses/JsonApiErrorDocument" }
   /market/symbols/{code}:
     put:
       operationId: putMarketSymbol
@@ -403,6 +553,14 @@ paths:
       requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionUpsertRequest" }
       responses:
         "200": { $ref: "#/components/responses/MessageSubscriptionDocument" }
+  /message-subscriptions/diagnostics:
+    get:
+      operationId: getMessageSubscriptionDiagnostics
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionDiagnosticCollectionDocument" }
   /message-subscription-filters:
     get:
       operationId: getMessageSubscriptionFilters
@@ -435,6 +593,12 @@ paths:
       operationId: postMessageSubscriptionsCollect
       responses:
         "200": { $ref: "#/components/responses/MessageSubscriptionCollectDocument" }
+  /message-subscriptions/maintenance:
+    post:
+      operationId: postMessageSubscriptionsMaintenance
+      requestBody: { $ref: "#/components/requestBodies/MessageSubscriptionMaintenanceRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MessageSubscriptionMaintenanceDocument" }
   /message-subscriptions/{subscriptionId}:
     put:
       operationId: putMessageSubscription
@@ -524,6 +688,12 @@ paths:
       requestBody: { $ref: "#/components/requestBodies/IngestedMessageRefilterRequest" }
       responses:
         "200": { $ref: "#/components/responses/IngestedMessageCollectionDocument" }
+  /ingested-messages/feedback/batch:
+    post:
+      operationId: postIngestedMessagesFeedbackBatch
+      requestBody: { $ref: "#/components/requestBodies/IngestedMessageFeedbackBatchRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/IngestedMessageFeedbackBatchDocument" }
   /ingested-messages/{messageId}:
     put:
       operationId: putIngestedMessage
@@ -538,6 +708,14 @@ paths:
         - $ref: "#/components/parameters/MessageId"
       responses:
         "200": { $ref: "#/components/responses/DeletionDocument" }
+  /ingested-messages/{messageId}/feedback:
+    post:
+      operationId: postIngestedMessageFeedback
+      parameters:
+        - $ref: "#/components/parameters/MessageId"
+      requestBody: { $ref: "#/components/requestBodies/IngestedMessageFeedbackRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/IngestedMessageDocument" }
   /ingested-messages/{messageId}/filter:
     post:
       operationId: postIngestedMessageFilter
@@ -545,6 +723,89 @@ paths:
         - $ref: "#/components/parameters/MessageId"
       responses:
         "200": { $ref: "#/components/responses/IngestedMessageDocument" }
+  /message-feedback/training-samples:
+    get:
+      operationId: getMessageFeedbackTrainingSamples
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+        - $ref: "#/components/parameters/FeedbackLabelQuery"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MessageFeedbackTrainingSampleCollectionDocument" }
+  /message-feedback/evaluation:
+    get:
+      operationId: getMessageFeedbackEvaluation
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+        - $ref: "#/components/parameters/FeedbackLabelQuery"
+      responses:
+        "200": { $ref: "#/components/responses/MessageFeedbackEvaluationDocument" }
+  /message-feedback/training-snapshots:
+    get:
+      operationId: getMessageFeedbackTrainingSnapshots
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+        - $ref: "#/components/parameters/FeedbackLabelQuery"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MessageFeedbackTrainingSnapshotCollectionDocument" }
+    post:
+      operationId: postMessageFeedbackTrainingSnapshot
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+        - $ref: "#/components/parameters/FeedbackLabelQuery"
+      responses:
+        "200": { $ref: "#/components/responses/MessageFeedbackTrainingSnapshotDocument" }
+  /message-feedback/training-exports:
+    get:
+      operationId: getMessageFeedbackTrainingExports
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+        - $ref: "#/components/parameters/FeedbackLabelQuery"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MessageFeedbackTrainingExportCollectionDocument" }
+    post:
+      operationId: postMessageFeedbackTrainingExport
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+        - $ref: "#/components/parameters/FeedbackLabelQuery"
+      responses:
+        "200": { $ref: "#/components/responses/MessageFeedbackTrainingExportDocument" }
+  /message-feedback/training-exports/{exportVersion}:
+    get:
+      operationId: getMessageFeedbackTrainingExport
+      parameters:
+        - $ref: "#/components/parameters/ExportVersion"
+      responses:
+        "200": { $ref: "#/components/responses/MessageFeedbackTrainingExportDocument" }
+  /message-feedback/source-trust:
+    get:
+      operationId: getMessageFeedbackSourceTrust
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/MessageSourceTrustCollectionDocument" }
+  /message-feedback/source-trust/recompute:
+    post:
+      operationId: postMessageFeedbackSourceTrustRecompute
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionIdQuery"
+        - $ref: "#/components/parameters/ProviderQuery"
+      responses:
+        "200": { $ref: "#/components/responses/MessageSourceTrustReportDocument" }
   /meetings:
     get:
       operationId: getMeetings
@@ -589,6 +850,26 @@ paths:
         - $ref: "#/components/parameters/MeetingId"
       responses:
         "200": { $ref: "#/components/responses/MeetingDocument" }
+  /meetings/{meetingId}/trust-reviews:
+    post:
+      operationId: postMeetingTrustReview
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      requestBody: { $ref: "#/components/requestBodies/MeetingTrustReviewRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MeetingTrustReviewDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /meetings/{meetingId}/recap-action-reviews:
+    post:
+      operationId: postMeetingRecapActionReview
+      parameters:
+        - $ref: "#/components/parameters/MeetingId"
+      requestBody: { $ref: "#/components/requestBodies/MeetingRecapActionReviewRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/MeetingRecapActionReviewDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
   /meetings/{meetingId}/cancel:
     post:
       operationId: postMeetingCancel
@@ -698,6 +979,15 @@ paths:
         "200": { $ref: "#/components/responses/WakePlanDocument" }
         "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
   /wake-plans/{planId}:
+    put:
+      operationId: putWakePlan
+      parameters:
+        - $ref: "#/components/parameters/PlanId"
+      requestBody: { $ref: "#/components/requestBodies/WakePlanUpsertRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/WakePlanDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
     delete:
       operationId: deleteWakePlan
       parameters:
@@ -805,6 +1095,34 @@ paths:
         - $ref: "#/components/parameters/PageCursor"
       responses:
         "200": { $ref: "#/components/responses/PaperFillCollectionDocument" }
+  /paper/accounts/{accountId}/corporate-actions:
+    get:
+      operationId: getPaperAccountCorporateActions
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/PaperCorporateActionCollectionDocument" }
+    post:
+      operationId: postPaperAccountCorporateActions
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      requestBody: { $ref: "#/components/requestBodies/PaperCorporateActionCreateRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperCorporateActionDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /paper/accounts/{accountId}/backtests:
+    post:
+      operationId: postPaperAccountBacktests
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      requestBody: { $ref: "#/components/requestBodies/PaperBacktestRunRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperBacktestDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
   /paper/accounts/{accountId}/performance:
     get:
       operationId: getPaperAccountPerformance
@@ -812,6 +1130,14 @@ paths:
         - $ref: "#/components/parameters/AccountId"
       responses:
         "200": { $ref: "#/components/responses/PaperPerformanceDocument" }
+  /paper/accounts/{accountId}/replay:
+    get:
+      operationId: getPaperAccountReplay
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200": { $ref: "#/components/responses/PaperReplayDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
   /paper/orders:
     get:
       operationId: getPaperOrders
@@ -830,6 +1156,22 @@ paths:
       operationId: postPaperOrderCancel
       parameters:
         - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200": { $ref: "#/components/responses/PaperOrderDocument" }
+  /paper/orders/{orderId}/approve:
+    post:
+      operationId: postPaperOrderApprove
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody: { $ref: "#/components/requestBodies/PaperOrderApproveRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/PaperOrderDocument" }
+  /paper/orders/{orderId}/reject:
+    post:
+      operationId: postPaperOrderReject
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody: { $ref: "#/components/requestBodies/PaperOrderRejectRequest" }
       responses:
         "200": { $ref: "#/components/responses/PaperOrderDocument" }
   /paper/orders/{orderId}/fill:
@@ -860,6 +1202,30 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/AuthCredentialsDocument"
+    AdminUserCreateRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AdminUserCreateDocument"
+    AdminUserUpdateRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AdminUserUpdateDocument"
+    AdminUserPasswordResetRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AdminUserPasswordResetDocument"
+    AuthSessionRevokeRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AuthSessionRevokeDocument"
     SecretUpsertRequest:
       required: true
       content:
@@ -908,6 +1274,24 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/MarketSymbolUpsertDocument"
+    MarketTaskRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketTaskRequestDocument"
+    MeetingTrustReviewRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingTrustReviewCreateDocument"
+    MeetingRecapActionReviewRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingRecapActionReviewCreateDocument"
     MarketWatchlistUpsertRequest:
       required: true
       content:
@@ -950,6 +1334,12 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/MessageSubscriptionTestRequestDocument"
+    MessageSubscriptionMaintenanceRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionMaintenanceRequestDocument"
     MessageSubscriptionLoginStartRequest:
       required: true
       content:
@@ -974,6 +1364,18 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/IngestedMessageUpsertDocument"
+    IngestedMessageFeedbackRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/IngestedMessageFeedbackDocument"
+    IngestedMessageFeedbackBatchRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/IngestedMessageFeedbackBatchRequestDocument"
     IngestedMessageRefilterRequest:
       required: true
       content:
@@ -1016,12 +1418,36 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/PaperOrderCreateDocument"
+    PaperOrderRejectRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperOrderRejectDocument"
+    PaperOrderApproveRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperOrderApproveDocument"
     PaperOrderFillRequest:
       required: true
       content:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/PaperOrderFillDocument"
+    PaperCorporateActionCreateRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperCorporateActionCreateDocument"
+    PaperBacktestRunRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperBacktestRunDocument"
   responses:
     AuthBootstrapStateDocument:
       description: Bootstrap state JSON:API document.
@@ -1035,12 +1461,90 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/AuthTokenDocument"
+    AdminUserCollectionDocument:
+      description: Admin user JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AdminUserCollectionDocument"
+    AdminUserDocument:
+      description: Admin user JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AdminUserDocument"
+    AuthSessionCollectionDocument:
+      description: Auth session JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AuthSessionCollectionDocument"
+    AuthSessionDocument:
+      description: Auth session JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AuthSessionDocument"
+    AuditEventCollectionDocument:
+      description: Audit event JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/AuditEventCollectionDocument"
     DashboardDocument:
       description: Dashboard JSON:API document.
       content:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/DashboardDocument"
+    SetupReadinessDocument:
+      description: Setup readiness JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/SetupReadinessDocument"
+    SetupActionResultDocument:
+      description: Setup action result JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/SetupActionResultDocument"
+    OpsProviderHealthDocument:
+      description: Provider health JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/OpsProviderHealthDocument"
+    OpsJobsDocument:
+      description: Ops jobs JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/OpsJobsDocument"
+    OpsJobActionDocument:
+      description: Ops job action JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/OpsJobActionDocument"
+    OpsBackupsDocument:
+      description: Ops backups JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/OpsBackupsDocument"
+    OpsBackupRunDocument:
+      description: Ops backup run JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/OpsBackupRunDocument"
+    OpsBackupRestoreDryRunDocument:
+      description: Ops backup restore dry-run JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/OpsBackupRestoreDryRunDocument"
     LogEntryCollectionDocument:
       description: Log entry JSON:API collection.
       content:
@@ -1203,6 +1707,12 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/MarketSymbolSyncDocument"
+    MarketTaskDocument:
+      description: Market background task JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MarketTaskDocument"
     MarketQuoteDocument:
       description: Market quote JSON:API document.
       content:
@@ -1275,6 +1785,18 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/MeetingEventCollectionDocument"
+    MeetingTrustReviewDocument:
+      description: Meeting trust review JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingTrustReviewDocument"
+    MeetingRecapActionReviewDocument:
+      description: Meeting recap action review JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MeetingRecapActionReviewDocument"
     MeetingReferenceCollectionDocument:
       description: Meeting reference JSON:API collection.
       content:
@@ -1311,6 +1833,12 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/MessageSubscriptionCollectionDocument"
+    MessageSubscriptionDiagnosticCollectionDocument:
+      description: Message subscription diagnostics JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionDiagnosticCollectionDocument"
     MessageSubscriptionDocument:
       description: Message subscription JSON:API document.
       content:
@@ -1341,6 +1869,12 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/MessageSubscriptionCollectDocument"
+    MessageSubscriptionMaintenanceDocument:
+      description: Message subscription maintenance JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSubscriptionMaintenanceDocument"
     MessageSubscriptionLoginSessionDocument:
       description: Message subscription login session JSON:API document.
       content:
@@ -1365,6 +1899,60 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/IngestedMessageDocument"
+    IngestedMessageFeedbackBatchDocument:
+      description: Ingested message feedback batch JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/IngestedMessageFeedbackBatchDocument"
+    MessageFeedbackTrainingSampleCollectionDocument:
+      description: Message feedback training sample JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageFeedbackTrainingSampleCollectionDocument"
+    MessageFeedbackEvaluationDocument:
+      description: Message feedback offline evaluation JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageFeedbackEvaluationDocument"
+    MessageFeedbackTrainingSnapshotCollectionDocument:
+      description: Message feedback training snapshot JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotCollectionDocument"
+    MessageFeedbackTrainingSnapshotDocument:
+      description: Message feedback training snapshot JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotDocument"
+    MessageFeedbackTrainingExportCollectionDocument:
+      description: Message feedback training export JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageFeedbackTrainingExportCollectionDocument"
+    MessageFeedbackTrainingExportDocument:
+      description: Message feedback training export JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageFeedbackTrainingExportDocument"
+    MessageSourceTrustCollectionDocument:
+      description: Message source trust JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSourceTrustCollectionDocument"
+    MessageSourceTrustReportDocument:
+      description: Message source trust recompute JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/MessageSourceTrustReportDocument"
     PaperOverviewDocument:
       description: Paper overview JSON:API document.
       content:
@@ -1419,12 +2007,36 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/PaperFillCollectionDocument"
+    PaperCorporateActionCollectionDocument:
+      description: Paper corporate action JSON:API collection.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperCorporateActionCollectionDocument"
+    PaperCorporateActionDocument:
+      description: Paper corporate action JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperCorporateActionDocument"
     PaperPerformanceDocument:
       description: Paper performance JSON:API document.
       content:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/PaperPerformanceDocument"
+    PaperReplayDocument:
+      description: Paper replay JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperReplayDocument"
+    PaperBacktestDocument:
+      description: Paper backtest JSON:API document.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/PaperBacktestDocument"
     JsonApiDocument:
       description: JSON:API document.
       content:
@@ -1472,6 +2084,16 @@ components:
       name: subscriptionId
       in: query
       schema: { type: string }
+    ProviderQuery:
+      name: provider
+      in: query
+      schema: { type: string }
+    FeedbackLabelQuery:
+      name: feedbackLabel
+      in: query
+      schema:
+        type: string
+        enum: [helpful, noise, misclassified, neutral]
     OnlyUnfiltered:
       name: onlyUnfiltered
       in: query
@@ -1539,6 +2161,40 @@ components:
       name: file
       in: query
       schema: { type: string }
+    Username:
+      name: username
+      in: query
+      schema: { type: string }
+    IncludeRevoked:
+      name: includeRevoked
+      in: query
+      schema: { type: boolean, default: false }
+    OpsQueueName:
+      name: queue
+      in: query
+      description: Optional Redis/asynq queue name used to filter failed task samples.
+      schema: { type: string }
+    OpsTaskType:
+      name: type
+      in: query
+      description: Optional task type used to filter failed task samples.
+      schema: { type: string }
+    OpsTaskState:
+      name: state
+      in: query
+      description: Optional failed task state used to filter samples.
+      schema:
+        type: string
+        enum: [retry, archived]
+    OpsFailedLimit:
+      name: failedLimit
+      in: query
+      description: Maximum number of failed task samples to return. Values above 50 are capped.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 8
     PageLimit:
       name: page[limit]
       in: query
@@ -1554,9 +2210,11 @@ components:
         type: string
     AccountId: { name: accountId, in: path, required: true, schema: { type: string } }
     AdapterId: { name: adapterId, in: path, required: true, schema: { type: string } }
+    BackupName: { name: backupName, in: path, required: true, schema: { type: string } }
     ChannelId: { name: channelId, in: path, required: true, schema: { type: string } }
     Code: { name: code, in: path, required: true, schema: { type: string } }
     ConfigId: { name: configId, in: path, required: true, schema: { type: string } }
+    ExportVersion: { name: exportVersion, in: path, required: true, schema: { type: string } }
     ItemId: { name: itemId, in: path, required: true, schema: { type: string } }
     Key: { name: key, in: path, required: true, schema: { type: string } }
     MeetingId: { name: meetingId, in: path, required: true, schema: { type: string } }
@@ -1565,10 +2223,14 @@ components:
     OrderId: { name: orderId, in: path, required: true, schema: { type: string } }
     PlanId: { name: planId, in: path, required: true, schema: { type: string } }
     ProviderId: { name: providerId, in: path, required: true, schema: { type: string } }
+    Queue: { name: queue, in: path, required: true, schema: { type: string } }
     ReferenceId: { name: referenceId, in: path, required: true, schema: { type: string } }
     RoleKey: { name: roleKey, in: path, required: true, schema: { type: string } }
+    SessionId: { name: sessionId, in: path, required: true, schema: { type: string } }
     SubscriptionId: { name: subscriptionId, in: path, required: true, schema: { type: string } }
+    TaskId: { name: taskId, in: path, required: true, schema: { type: string } }
     TeamId: { name: teamId, in: path, required: true, schema: { type: string } }
+    UserId: { name: userId, in: path, required: true, schema: { type: string } }
   schemas:
     JsonApiDocument:
       type: object
@@ -1677,6 +2339,212 @@ components:
         tokenType:
           type: string
           enum: [bearer]
+    AdminUserCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    AdminUserDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AdminUserResource"
+    AdminUserResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [admin-users]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AdminUserAttributes"
+    AdminUserAttributes:
+      type: object
+      properties:
+        username: { type: string }
+        displayName: { type: string }
+        role:
+          type: string
+          enum: [owner, admin, operator, viewer]
+        active: { type: boolean }
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AdminUserCreateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [admin-users] }
+            attributes:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                displayName: { type: string }
+                role:
+                  type: string
+                  enum: [owner, admin, operator, viewer]
+                  default: admin
+                password:
+                  type: string
+                  format: password
+                active:
+                  type: boolean
+                  default: true
+    AdminUserUpdateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [admin-users] }
+            attributes:
+              type: object
+              properties:
+                displayName: { type: string }
+                role:
+                  type: string
+                  enum: [owner, admin, operator, viewer]
+                active: { type: boolean }
+    AdminUserPasswordResetDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [admin-user-password-resets] }
+            attributes:
+              type: object
+              required: [password, confirm]
+              properties:
+                password:
+                  type: string
+                  format: password
+                confirm:
+                  type: boolean
+    AuthSessionCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthSessionResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    AuthSessionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthSessionResource"
+    AuthSessionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [auth-sessions]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AuthSessionAttributes"
+    AuthSessionAttributes:
+      type: object
+      properties:
+        username: { type: string }
+        userId: { type: integer }
+        role: { type: string }
+        ip: { type: string }
+        userAgent: { type: string }
+        status:
+          type: string
+          enum: [active, revoked, expired]
+        expiresAt: { type: string, format: date-time }
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+        revokedBy: { type: string }
+        revokeReason: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AuthSessionRevokeDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [auth-session-revokes] }
+            attributes:
+              type: object
+              required: [confirm]
+              properties:
+                reason: { type: string }
+                confirm: { type: boolean }
+    AuditEventCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEventResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    AuditEventResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [audit-events]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/AuditEventAttributes"
+    AuditEventAttributes:
+      type: object
+      properties:
+        actor: { type: string }
+        action: { type: string }
+        resourceType: { type: string }
+        resourceId: { type: string }
+        outcome: { type: string }
+        detail: { type: string }
+        ip: { type: string }
+        userAgent: { type: string }
+        createdAt: { type: string, format: date-time }
     DashboardDocument:
       type: object
       required: [data]
@@ -1700,25 +2568,1026 @@ components:
       required: [summary, systemStatus, businessMetrics, recentActivity, alerts]
       properties:
         summary:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/DashboardSummary"
         systemStatus:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/DashboardSystemStatus"
         businessMetrics:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/DashboardBusinessMetrics"
         recentActivity:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/DashboardRecentActivity"
         dependencyDiagnostics:
           type: object
           additionalProperties: true
         alerts:
           type: array
           items:
+            $ref: "#/components/schemas/DashboardAlert"
+    DashboardSummary:
+      type: object
+      additionalProperties: true
+      required: [appName, appEnv, deploymentModeLabel, meetingDispatchMode, databaseBackend, paperExecutionMode]
+      properties:
+        appName: { type: string }
+        appEnv: { type: string }
+        deploymentModeLabel: { type: string }
+        meetingDispatchMode: { type: string }
+        databaseBackend: { type: string }
+        databaseTarget: { type: string }
+        paperExecutionMode: { type: string }
+    DashboardStatusItem:
+      type: object
+      additionalProperties: true
+      required: [key, title, status, summary, detail, checkedAt]
+      properties:
+        key: { type: string }
+        title: { type: string }
+        status:
+          type: string
+          enum: [ok, warning, error, disabled]
+        summary: { type: string }
+        detail: { type: string }
+        checkedAt: { type: string, format: date-time }
+    DashboardSystemStatus:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/DashboardStatusItem"
+      required: [database, redis, worker, scheduler, messageSubscriptionListener, platformAdapter, paperEngine]
+      properties:
+        database:
+          $ref: "#/components/schemas/DashboardStatusItem"
+        redis:
+          $ref: "#/components/schemas/DashboardStatusItem"
+        worker:
+          $ref: "#/components/schemas/DashboardStatusItem"
+        scheduler:
+          $ref: "#/components/schemas/DashboardStatusItem"
+        messageSubscriptionListener:
+          $ref: "#/components/schemas/DashboardStatusItem"
+        platformAdapter:
+          $ref: "#/components/schemas/DashboardStatusItem"
+        paperEngine:
+          $ref: "#/components/schemas/DashboardStatusItem"
+    DashboardBusinessMetrics:
+      type: object
+      additionalProperties: true
+      required:
+        - meetingsTotal
+        - meetingsRunning
+        - meetingsFailed24h
+        - messageSubscriptionEnabledCount
+        - ingestedMessages24h
+        - ingestedUnfilteredCount
+        - platformAdapterEnabledCount
+        - paperAccountCount
+        - paperActiveAccountCount
+        - paperTotalEquity
+        - paperPendingOrderCount
+        - wakeActiveCount
+        - wakeOverdueCount
+        - aiEnabledProviderCount
+        - aiReadyProviderCount
+        - newsFilterReady
+        - marketSymbolCount
+        - marketWatchlistCount
+        - marketActiveWatchlistCount
+        - paperIsTradingTime
+      properties:
+        meetingsTotal: { type: integer }
+        meetingsRunning: { type: integer }
+        meetingsFailed24h: { type: integer }
+        messageSubscriptionEnabledCount: { type: integer }
+        ingestedMessages24h: { type: integer }
+        ingestedUnfilteredCount: { type: integer }
+        platformAdapterEnabledCount: { type: integer }
+        paperAccountCount: { type: integer }
+        paperActiveAccountCount: { type: integer }
+        paperTotalEquity: {}
+        paperPendingOrderCount: { type: integer }
+        wakeActiveCount: { type: integer }
+        wakeOverdueCount: { type: integer }
+        aiEnabledProviderCount: { type: integer }
+        aiReadyProviderCount: { type: integer }
+        newsFilterReady: { type: boolean }
+        aiModelCalls24h: { type: integer }
+        aiPromptTokens24h: { type: integer }
+        aiCompletionTokens24h: { type: integer }
+        aiTotalTokens24h: { type: integer }
+        aiTotalTokensTotal: { type: integer }
+        aiCostAmount24h: {}
+        aiCostBudgetStatus: { type: string }
+        meetingRunAvgSeconds24h: { type: number }
+        meetingRunP95Seconds24h: { type: number }
+        meetingQueueWaitAvgSeconds24h: { type: number }
+        marketSymbolCount: { type: integer }
+        marketWatchlistCount: { type: integer }
+        marketActiveWatchlistCount: { type: integer }
+        paperIsTradingTime: { type: boolean }
+    DashboardRecentActivity:
+      type: object
+      required: [recentMeetings, recentIngestedMessages]
+      properties:
+        recentMeetings:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardRecentMeeting"
+        recentIngestedMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardRecentIngestedMessage"
+    DashboardRecentMeeting:
+      type: object
+      additionalProperties: true
+      required: [id, topic, status, triggerSource, tags, createdAt]
+      properties:
+        id: { type: integer }
+        topic: { type: string }
+        status: { type: string }
+        triggerSource: { type: string }
+        summary: { type: string, nullable: true }
+        conclusion: { type: string, nullable: true }
+        tags:
+          type: array
+          items: { type: string }
+        recapStatus: { type: string, nullable: true }
+        recapUpdatedAt: { type: string, format: date-time, nullable: true }
+        runAttempt: { type: integer }
+        heartbeatAt: { type: string, format: date-time, nullable: true }
+        autoRequeueCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: string, format: date-time, nullable: true }
+        completedAt: { type: string, format: date-time, nullable: true }
+    DashboardRecentIngestedMessage:
+      type: object
+      additionalProperties: true
+      required: [id, subscriptionId, messageTime, text]
+      properties:
+        id: { type: integer }
+        subscriptionId: { type: integer }
+        subscriptionTitle: { type: string, nullable: true }
+        sourceRef: { type: string, nullable: true }
+        messageTime: { type: string, format: date-time }
+        text: { type: string }
+        filterDecision: { type: string, nullable: true }
+        filterStatus: { type: string }
+    DashboardAlert:
+      type: object
+      additionalProperties: true
+      required: [level, title, detail, link]
+      properties:
+        level:
+          type: string
+          enum: [warning, error]
+        title: { type: string }
+        detail: { type: string }
+        link: { type: string }
+    SetupReadinessDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/SetupReadinessResource"
+    SetupReadinessResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [setup-readinesses]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          $ref: "#/components/schemas/SetupReadinessAttributes"
+    SetupReadinessAttributes:
+      type: object
+      required: [completed, total, completionPct, generatedAt, steps]
+      properties:
+        completed:
+          type: integer
+        total:
+          type: integer
+        completionPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+        generatedAt:
+          type: string
+          format: date-time
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/SetupStep"
+    SetupStep:
+      type: object
+      required: [key, title, category, ready, status, summary, detail]
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        category:
+          type: string
+        ready:
+          type: boolean
+        status:
+          type: string
+          enum: [ready, warning, missing, error]
+        summary:
+          type: string
+        detail:
+          type: string
+        actionKey:
+          type: string
+        route:
+          type: string
+        optional:
+          type: boolean
+    SetupActionResultDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/SetupActionResultResource"
+    SetupActionResultResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [setup-action-results]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/SetupActionResultAttributes"
+    SetupActionResultAttributes:
+      type: object
+      required: [key, status, summary, ranAt]
+      properties:
+        key:
+          type: string
+        status:
+          type: string
+          enum: [ok, warning, error]
+        summary:
+          type: string
+        detail:
+          type: string
+        output:
+          type: object
+          additionalProperties: true
+        ranAt:
+          type: string
+          format: date-time
+    OpsProviderHealthDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpsProviderHealthResource"
+    OpsProviderHealthResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [provider-health-reports]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          type: object
+          properties:
+            generatedAt: { type: string, format: date-time }
+            ai:
+              $ref: "#/components/schemas/OpsAIProviderHealth"
+            meeting:
+              type: object
+              additionalProperties: true
+            market:
+              type: object
+              additionalProperties: true
+            messaging:
+              type: object
+              additionalProperties: true
+    OpsAIProviderHealth:
+      type: object
+      additionalProperties: true
+      properties:
+        enabledProviders:
+          type: integer
+        readyProviders:
+          type: integer
+        newsFilterReady:
+          type: boolean
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsAIProviderDiagnostics"
+        usage:
+          $ref: "#/components/schemas/OpsAIUsageDiagnostics"
+    OpsAIProviderDiagnostics:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        status:
+          type: string
+          enum: [ok, warning, disabled]
+        summary:
+          type: string
+        enabled:
+          type: boolean
+        hasApiKey:
+          type: boolean
+        defaultModel:
+          type: string
+        ready:
+          type: boolean
+        modelCount:
+          type: integer
+        enabledModelCount:
+          type: integer
+        roleCount:
+          type: integer
+    OpsAIUsageDiagnostics:
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+          enum: [empty, observed]
+        summary:
+          type: string
+        windowSeconds:
+          type: integer
+          format: int64
+        modelCallsTotal:
+          type: integer
+          format: int64
+        modelCalls24h:
+          type: integer
+          format: int64
+        promptTokensTotal:
+          type: integer
+          format: int64
+        promptTokens24h:
+          type: integer
+          format: int64
+        completionTokensTotal:
+          type: integer
+          format: int64
+        completionTokens24h:
+          type: integer
+          format: int64
+        totalTokensTotal:
+          type: integer
+          format: int64
+        totalTokens24h:
+          type: integer
+          format: int64
+        costAmountTotal:
+          type: number
+          nullable: true
+        costAmount24h:
+          type: number
+          nullable: true
+        costAmountSource:
+          type: string
+          enum: [provider_payload, configured_rates, mixed, not_configured]
+        costCurrency:
+          type: string
+        costBudgetStatus:
+          type: string
+          enum: [ok, warning, exceeded, no_cost_data, not_configured]
+        costBudgetAmount:
+          type: number
+          nullable: true
+        costBudgetUsedPct:
+          type: number
+          nullable: true
+        costRatesConfigured:
+          type: boolean
+        costRateCoverage:
+          $ref: "#/components/schemas/OpsAICostRateCoverage"
+        costMissingCallsTotal:
+          type: integer
+          format: int64
+        costMissingCalls24h:
+          type: integer
+          format: int64
+        costEstimatedCallsTotal:
+          type: integer
+          format: int64
+        costEstimatedCalls24h:
+          type: integer
+          format: int64
+        latencyObservedCallsTotal:
+          type: integer
+          format: int64
+        latencyObservedCalls24h:
+          type: integer
+          format: int64
+        latencyAvgMsTotal:
+          type: number
+          nullable: true
+        latencyAvgMs24h:
+          type: number
+          nullable: true
+        latencyP95Ms24h:
+          type: number
+          nullable: true
+        byProviderModel:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsAIUsageProviderModel"
+    OpsAICostRateCoverage:
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+          enum: [empty, ok, warning]
+        currency:
+          type: string
+        ratesConfigured:
+          type: boolean
+        modelCount:
+          type: integer
+        coveredModelCount:
+          type: integer
+        missingModelCount:
+          type: integer
+        coveragePct:
+          type: number
+          nullable: true
+        missingModels:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsAICostRateMissingModel"
+    OpsAICostRateMissingModel:
+      type: object
+      additionalProperties: true
+      properties:
+        providerId:
+          type: integer
+          format: int64
+        providerName:
+          type: string
+        model:
+          type: string
+        source:
+          type: string
+    OpsAIUsageProviderModel:
+      type: object
+      additionalProperties: true
+      properties:
+        providerId:
+          type: integer
+          format: int64
+        providerName:
+          type: string
+        model:
+          type: string
+        modelCallsTotal:
+          type: integer
+          format: int64
+        modelCalls24h:
+          type: integer
+          format: int64
+        promptTokensTotal:
+          type: integer
+          format: int64
+        promptTokens24h:
+          type: integer
+          format: int64
+        completionTokensTotal:
+          type: integer
+          format: int64
+        completionTokens24h:
+          type: integer
+          format: int64
+        totalTokensTotal:
+          type: integer
+          format: int64
+        totalTokens24h:
+          type: integer
+          format: int64
+        costAmountTotal:
+          type: number
+          nullable: true
+        costAmount24h:
+          type: number
+          nullable: true
+        costAmountSource:
+          type: string
+          enum: [provider_payload, configured_rates, mixed, not_configured]
+        costMissingCallsTotal:
+          type: integer
+          format: int64
+        costMissingCalls24h:
+          type: integer
+          format: int64
+        costEstimatedCallsTotal:
+          type: integer
+          format: int64
+        costEstimatedCalls24h:
+          type: integer
+          format: int64
+        latencyObservedCallsTotal:
+          type: integer
+          format: int64
+        latencyObservedCalls24h:
+          type: integer
+          format: int64
+        latencyAvgMsTotal:
+          type: number
+          nullable: true
+        latencyAvgMs24h:
+          type: number
+          nullable: true
+        latencyP95Ms24h:
+          type: number
+          nullable: true
+    OpsJobsDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpsJobsResource"
+    OpsJobsResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ops-job-reports]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          type: object
+          additionalProperties: true
+          properties:
+            generatedAt: { type: string, format: date-time }
+            meetingDispatchMode: { type: string }
+            paperExecutionMode: { type: string }
+            queue:
+              $ref: "#/components/schemas/OpsQueueDiagnostics"
+            recentErrors:
+              $ref: "#/components/schemas/OpsRecentErrors"
+            redis:
+              type: object
+              additionalProperties: true
+            worker:
+              type: object
+              additionalProperties: true
+            scheduler:
+              type: object
+              additionalProperties: true
+            messageListener:
+              type: object
+              additionalProperties: true
+            paperEngine:
+              type: object
+              additionalProperties: true
+    OpsJobActionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpsJobActionResource"
+    OpsJobActionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ops-job-actions]
+        id:
+          type: string
+          enum: [retry-failed]
+        attributes:
+          type: object
+          additionalProperties: true
+          properties:
+            status: { type: string }
+            action: { type: string }
+            retriedRetryCount: { type: integer }
+            retriedArchiveCount: { type: integer }
+            totalSubmitted: { type: integer }
+            queues:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            ranAt: { type: string, format: date-time }
+            destructive: { type: boolean }
+            detail: { type: string }
+    OpsQueueDiagnostics:
+      type: object
+      properties:
+        status: { type: string, enum: [ok, warning, error, disabled] }
+        summary: { type: string }
+        detail: { type: string }
+        queueCount: { type: integer }
+        generatedAt: { type: string, format: date-time }
+        queues:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsQueueInfo"
+        totals:
+          $ref: "#/components/schemas/OpsQueueTotals"
+        failedTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsQueueFailedTask"
+        backlogRisk:
+          $ref: "#/components/schemas/OpsQueueBacklogRisk"
+        actions:
+          type: object
+          additionalProperties: true
+    OpsQueueInfo:
+      type: object
+      properties:
+        name: { type: string }
+        status: { type: string }
+        detail: { type: string }
+        paused: { type: boolean }
+        size: { type: integer }
+        pending: { type: integer }
+        active: { type: integer }
+        scheduled: { type: integer }
+        retry: { type: integer }
+        archived: { type: integer }
+        completed: { type: integer }
+        aggregating: { type: integer }
+        processedToday: { type: integer }
+        failedToday: { type: integer }
+        processedTotal: { type: integer }
+        failedTotal: { type: integer }
+        latencySeconds: { type: integer }
+        memoryUsageBytes: { type: integer, format: int64 }
+        snapshotTimestamp: { type: string, format: date-time }
+    OpsQueueTotals:
+      type: object
+      properties:
+        size: { type: integer }
+        pending: { type: integer }
+        active: { type: integer }
+        scheduled: { type: integer }
+        retry: { type: integer }
+        archived: { type: integer }
+        completed: { type: integer }
+        aggregating: { type: integer }
+        processedToday: { type: integer }
+        failedToday: { type: integer }
+        processedTotal: { type: integer }
+        failedTotal: { type: integer }
+        memoryUsageBytes: { type: integer, format: int64 }
+    OpsQueueFailedTask:
+      type: object
+      additionalProperties: true
+      properties:
+        id: { type: string }
+        queue: { type: string }
+        type: { type: string }
+        state: { type: string, enum: [retry, archived] }
+        maxRetry: { type: integer }
+        retried: { type: integer }
+        lastError: { type: string }
+        lastFailedAt: { type: string, format: date-time, nullable: true }
+        nextProcessAt: { type: string, format: date-time, nullable: true }
+        timeoutSeconds: { type: integer }
+        payloadPreview: { type: string }
+        status: { type: string }
+    OpsQueueBacklogRisk:
+      type: object
+      properties:
+        level: { type: string, enum: [ok, warning, danger] }
+        reason: { type: string }
+        backlogCount: { type: integer }
+        pendingCount: { type: integer }
+        scheduledCount: { type: integer }
+        retryCount: { type: integer }
+        archivedCount: { type: integer }
+    OpsRecentErrors:
+      type: object
+      properties:
+        status: { type: string, enum: [ok, warning] }
+        summary: { type: string }
+        detail: { type: string }
+        windowHours: { type: integer }
+        count: { type: integer }
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsRecentErrorEntry"
+    OpsRecentErrorEntry:
+      type: object
+      additionalProperties: true
+      properties:
+        id: { type: string }
+        time: { type: string, format: date-time, nullable: true }
+        level: { type: string }
+        role: { type: string }
+        source: { type: string }
+        event: { type: string }
+        group: { type: string }
+        method: { type: string }
+        path: { type: string }
+        status: { type: string }
+        message: { type: string }
+        caller: { type: string }
+        durationMs: { type: integer, nullable: true }
+        file: { type: string }
+    OpsBackupsDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpsBackupsResource"
+    OpsBackupsResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ops-backup-reports]
+        id:
+          type: string
+          enum: [current]
+        attributes:
+          $ref: "#/components/schemas/OpsBackupsAttributes"
+    OpsBackupsAttributes:
+      type: object
+      additionalProperties: true
+      required: [generatedAt, status, backupDir, backupMetadataDir, archiveProvider, archiveProviderDetail, backups, retentionPolicy, restoreDrill, supportedActions]
+      properties:
+        generatedAt: { type: string, format: date-time }
+        status: { type: string }
+        databaseBackend: {}
+        databaseTarget: {}
+        backupDir: { type: string }
+        backupMetadataDir: { type: string }
+        archiveProvider: { type: string }
+        archiveProviderDetail:
+          $ref: "#/components/schemas/OpsBackupArchiveProvider"
+        latestBackup:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/OpsBackupArchive"
+        backups:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsBackupArchive"
+        retentionPolicy: { type: string }
+        retentionPolicyDetail:
+          type: object
+          additionalProperties: true
+        retentionLastRun:
+          type: object
+          nullable: true
+          additionalProperties: true
+        restoreDrill: { type: string }
+        restoreDrillDetail:
+          type: object
+          additionalProperties: true
+        restoreDrillSchedule:
+          type: object
+          additionalProperties: true
+        restoreDrillScheduleHint: { type: string }
+        supportedActions:
+          type: array
+          items: { type: string }
+    OpsBackupArchive:
+      type: object
+      required: [name, path, sizeBytes, createdAt]
+      properties:
+        name: { type: string }
+        path: { type: string }
+        sizeBytes: { type: integer, format: int64 }
+        createdAt: { type: string, format: date-time }
+    OpsBackupArchiveProvider:
+      type: object
+      additionalProperties: true
+      required:
+        - key
+        - kind
+        - status
+        - root
+        - external
+        - supportsList
+        - supportsWrite
+        - supportsRead
+        - supportsDelete
+        - configuredProvider
+        - configuredExternalProvider
+        - externalReady
+        - missingExternalConfig
+        - setupHint
+      properties:
+        key: { type: string }
+        kind: { type: string }
+        status: { type: string }
+        root: { type: string }
+        external: { type: boolean }
+        supportsList: { type: boolean }
+        supportsWrite: { type: boolean }
+        supportsRead: { type: boolean }
+        supportsDelete: { type: boolean }
+        configuredProvider: { type: string }
+        configuredExternalProvider: { type: string }
+        externalReady: { type: boolean }
+        missingExternalConfig:
+          type: array
+          items: { type: string }
+        setupHint: { type: string }
+    OpsBackupRunDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpsBackupRunResource"
+    OpsBackupRunResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ops-backup-runs]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/OpsBackupRunAttributes"
+    OpsBackupRunAttributes:
+      type: object
+      additionalProperties: true
+      required: [status, backupName, backupPath, backupDir, backupMetadataDir, archiveProvider, archiveProviderDetail, sizeBytes, createdAt, included, notes]
+      properties:
+        status:
+          type: string
+          enum: [created, failed]
+        backupName: { type: string }
+        backupPath: { type: string }
+        backupDir: { type: string }
+        backupMetadataDir: { type: string }
+        archiveProvider: { type: string }
+        archiveProviderDetail:
+          $ref: "#/components/schemas/OpsBackupArchiveProvider"
+        sizeBytes: { type: integer, format: int64 }
+        createdAt: { type: string, format: date-time }
+        included:
+          type: array
+          items:
             type: object
             additionalProperties: true
+        notes:
+          type: array
+          items: { type: string }
+        databaseBackend: {}
+        databaseTarget: {}
+        retentionRun:
+          type: object
+          nullable: true
+          additionalProperties: true
+    OpsBackupRestoreDryRunDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpsBackupRestoreDryRunResource"
+    OpsBackupRestoreDryRunResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [ops-backup-restore-dry-runs]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/OpsBackupRestoreDryRunAttributes"
+    OpsBackupRestoreDryRunAttributes:
+      type: object
+      additionalProperties: true
+      required:
+        - status
+        - backupName
+        - backupPath
+        - backupDir
+        - backupMetadataDir
+        - archiveProvider
+        - archiveProviderDetail
+        - checkedAt
+        - entryCount
+        - databaseEntryCount
+        - logEntryCount
+        - entries
+        - notes
+        - sandboxStatus
+        - sandboxDir
+        - sandboxFileCount
+        - sandboxSizeBytes
+        - sandboxChecks
+        - restorePlan
+        - destructive
+        - operatorAction
+      properties:
+        status:
+          type: string
+          enum: [valid, warning]
+        backupName:
+          type: string
+        backupPath:
+          type: string
+        backupDir:
+          type: string
+        backupMetadataDir:
+          type: string
+        archiveProvider:
+          type: string
+        archiveProviderDetail:
+          $ref: "#/components/schemas/OpsBackupArchiveProvider"
+        checkedAt:
+          type: string
+          format: date-time
+        manifest:
+          type: object
+          additionalProperties: true
+        manifestVersion:
+          oneOf:
+            - type: string
+            - type: integer
+              format: int64
+        entryCount:
+          type: integer
+        databaseEntryCount:
+          type: integer
+        logEntryCount:
+          type: integer
+        entries:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        notes:
+          type: array
+          items:
+            type: string
+        sandboxStatus:
+          type: string
+          enum: [extracted, warning]
+        sandboxDir:
+          type: string
+          description: Directory under the backup directory where the archive was safely extracted for operator inspection.
+        sandboxFileCount:
+          type: integer
+        sandboxSizeBytes:
+          type: integer
+          format: int64
+        sandboxDatabaseFiles:
+          type: array
+          items:
+            type: string
+        sandboxLogFiles:
+          type: array
+          items:
+            type: string
+        sandboxRuntimeFiles:
+          type: array
+          items:
+            type: string
+        sandboxChecks:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsBackupSandboxCheck"
+        restorePlan:
+          type: array
+          items:
+            type: string
+        destructive:
+          type: boolean
+          enum: [false]
+        operatorAction:
+          type: string
+        retentionPolicyHint:
+          type: string
+    OpsBackupSandboxCheck:
+      type: object
+      additionalProperties: true
+      required: [name, status, detail]
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [pass, warning]
+        detail:
+          type: string
     LogEntryCollectionDocument:
       type: object
       required: [data]
@@ -2602,6 +4471,68 @@ components:
           properties:
             provider: { type: string }
             synced: { type: integer }
+    MarketTaskRequestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketTaskRequestResource"
+    MarketTaskRequestResource:
+      type: object
+      required: [type, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-tasks]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/MarketTaskRequestAttributes"
+    MarketTaskRequestAttributes:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [sync_symbols, refresh_quote, refresh_daily_bars]
+        code:
+          type: string
+          nullable: true
+    MarketTaskDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MarketTaskResource"
+    MarketTaskResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type:
+          type: string
+          enum: [market-tasks]
+        id:
+          type: string
+        attributes:
+          $ref: "#/components/schemas/MarketTaskAttributes"
+    MarketTaskAttributes:
+      type: object
+      required: [action, status, count]
+      properties:
+        action:
+          type: string
+          enum: [sync_symbols, refresh_quote, refresh_daily_bars]
+        code:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [queued, completed]
+        provider:
+          type: string
+          nullable: true
+        count: { type: integer }
+        taskId: { type: string }
     MarketQuoteDocument:
       type: object
       required: [data]
@@ -2928,7 +4859,36 @@ components:
             id:
               type: string
             attributes:
-              $ref: "#/components/schemas/WakePlanAttributes"
+              $ref: "#/components/schemas/WakePlanInputAttributes"
+    WakePlanInputAttributes:
+      type: object
+      required: [researchTeamId, triggerType, triggerConfig, reason]
+      properties:
+        researchTeamId: { type: integer }
+        meetingId:
+          type: integer
+          nullable: true
+        triggerType:
+          type: string
+          enum: [time, indicator, event]
+        triggerConfig:
+          type: object
+          additionalProperties: true
+        reason:
+          type: string
+        sourceMeetingEventId:
+          type: integer
+          nullable: true
+        sourceRoleKey:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, paused, fired, cancelled]
+        nextCheckAt:
+          type: string
+          format: date-time
+          nullable: true
     MeetingCollectionDocument:
       type: object
       required: [data]
@@ -2999,6 +4959,156 @@ components:
           format: date-time
           nullable: true
         createdAt: { type: string, format: date-time }
+        trustReport:
+          $ref: "#/components/schemas/MeetingTrustReport"
+    MeetingTrustReport:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        eventCount: { type: integer }
+        evidenceCount: { type: integer }
+        citationCount: { type: integer }
+        modelSnapshotCount: { type: integer }
+        promptSnapshotCount: { type: integer }
+        confidence:
+          type: string
+          enum: [unknown, low, medium, high]
+        evidence:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        citations:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        modelSnapshots:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        promptSnapshots:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        claimEvidenceBindings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        evidenceGateStatus:
+          type: string
+          enum: [pass, warning, blocked]
+        unsupportedClaimCount: { type: integer }
+        unsupportedClaims:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingTrustUnsupportedClaim"
+        evidenceGate:
+          $ref: "#/components/schemas/MeetingTrustEvidenceGate"
+        conclusionHistory:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        conclusionDiffs:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        sentenceReviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingTrustReviewAttributes"
+        recapActionReviewStatus:
+          type: string
+          enum: [clear, needs_review, blocked]
+        recapActionSuggestionCount: { type: integer }
+        recapActionSuggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingRecapActionSuggestion"
+        recapActionReviewCount: { type: integer }
+        recapActionReviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingRecapActionReviewAttributes"
+        claimBreakdown:
+          type: object
+          properties:
+            facts:
+              type: array
+              items: { type: string }
+            assumptions:
+              type: array
+              items: { type: string }
+            inferences:
+              type: array
+              items: { type: string }
+        evidenceGaps:
+          type: array
+          items: { type: string }
+        gaps:
+          type: array
+          items: { type: string }
+    MeetingTrustEvidenceGate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pass, warning, blocked]
+        policy: { type: string }
+        blockingClaimTypes:
+          type: array
+          items: { type: string }
+        checkedClaimCount: { type: integer }
+        supportedClaimCount: { type: integer }
+        unsupportedClaimCount: { type: integer }
+        unsupportedClaims:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeetingTrustUnsupportedClaim"
+    MeetingTrustUnsupportedClaim:
+      type: object
+      properties:
+        id: { type: string }
+        eventId: { type: integer }
+        sequence: { type: integer }
+        roleKey: { type: string }
+        claimType: { type: string }
+        claim: { type: string }
+        evidenceEventIds:
+          type: array
+          items: { type: integer }
+        citationIds:
+          type: array
+          items: { type: string }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
+    MeetingRecapActionSuggestion:
+      type: object
+      properties:
+        id: { type: string }
+        eventId: { type: integer }
+        sequence: { type: integer }
+        roleKey: { type: string }
+        status: { type: string }
+        policy: { type: string }
+        disposition: { type: string }
+        reason: { type: string }
+        actionType: { type: string }
+        actionIndex: { type: integer }
+        spec:
+          type: object
+          additionalProperties: true
+        evidenceSummary:
+          type: object
+          additionalProperties: true
+        latestReview:
+          $ref: "#/components/schemas/MeetingRecapActionReviewAttributes"
+        createdAt: { type: string, format: date-time }
     MeetingEventCollectionDocument:
       type: object
       required: [data]
@@ -3032,6 +5142,113 @@ components:
           properties:
             meeting:
               $ref: "#/components/schemas/Relationship"
+    MeetingTrustReviewDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MeetingTrustReviewResource"
+    MeetingTrustReviewResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [meeting-trust-reviews] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MeetingTrustReviewAttributes"
+        relationships:
+          type: object
+          properties:
+            meeting:
+              $ref: "#/components/schemas/Relationship"
+            event:
+              $ref: "#/components/schemas/Relationship"
+    MeetingTrustReviewAttributes:
+      type: object
+      properties:
+        meetingId: { type: integer }
+        eventId: { type: integer }
+        sequence: { type: integer }
+        sentenceId: { type: string }
+        sentence: { type: string }
+        verdict:
+          type: string
+          enum: [confirmed, needs_evidence, rejected, superseded]
+        citationIds:
+          type: array
+          items: { type: string }
+        evidenceEventIds:
+          type: array
+          items: { type: integer }
+        comment:
+          type: string
+          nullable: true
+        reviewer: { type: string }
+        reviewedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    MeetingRecapActionReviewDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MeetingRecapActionReviewResource"
+    MeetingRecapActionReviewResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [meeting-recap-action-reviews] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MeetingRecapActionReviewAttributes"
+        relationships:
+          type: object
+          properties:
+            meeting:
+              $ref: "#/components/schemas/Relationship"
+            event:
+              $ref: "#/components/schemas/Relationship"
+    MeetingRecapActionReviewAttributes:
+      type: object
+      properties:
+        meetingId: { type: integer }
+        eventId: { type: integer }
+        sequence: { type: integer }
+        suggestionId: { type: string }
+        sourceEventId: { type: integer }
+        sourceSequence: { type: integer }
+        actionIndex: { type: integer }
+        actionType: { type: string }
+        decision:
+          type: string
+          enum: [approved, needs_evidence, rejected, superseded]
+        executionDisposition: { type: string }
+        citationIds:
+          type: array
+          items: { type: string }
+        evidenceEventIds:
+          type: array
+          items: { type: integer }
+        comment:
+          type: string
+          nullable: true
+        reviewer: { type: string }
+        reviewedAt:
+          type: string
+          format: date-time
+        actionSpec:
+          type: object
+          additionalProperties: true
+        originalStatus: { type: string }
+        originalPolicy: { type: string }
+        originalDisposition: { type: string }
+        originalReason: { type: string }
+        createdAt:
+          type: string
+          format: date-time
     MeetingReferenceCollectionDocument:
       type: object
       required: [data]
@@ -3130,6 +5347,67 @@ components:
                 note:
                   type: string
                   nullable: true
+    MeetingTrustReviewCreateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [meeting-trust-reviews] }
+            attributes:
+              $ref: "#/components/schemas/MeetingTrustReviewCreateAttributes"
+    MeetingTrustReviewCreateAttributes:
+      type: object
+      required: [sentence, verdict]
+      properties:
+        sentenceId: { type: string }
+        sentence: { type: string }
+        verdict:
+          type: string
+          enum: [confirmed, needs_evidence, rejected, superseded]
+        citationIds:
+          type: array
+          items: { type: string }
+        evidenceEventIds:
+          type: array
+          items: { type: integer }
+        comment:
+          type: string
+          nullable: true
+    MeetingRecapActionReviewCreateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [meeting-recap-action-reviews] }
+            attributes:
+              $ref: "#/components/schemas/MeetingRecapActionReviewCreateAttributes"
+    MeetingRecapActionReviewCreateAttributes:
+      type: object
+      required: [suggestionId, decision]
+      properties:
+        suggestionId: { type: string }
+        sourceEventId: { type: integer }
+        actionIndex: { type: integer }
+        actionType: { type: string }
+        decision:
+          type: string
+          enum: [approved, needs_evidence, rejected, superseded]
+        citationIds:
+          type: array
+          items: { type: string }
+        evidenceEventIds:
+          type: array
+          items: { type: integer }
+        comment:
+          type: string
+          nullable: true
+        confirm: { type: boolean }
     MessageSubscriptionAppConfigDocument:
       type: object
       required: [data]
@@ -3233,6 +5511,76 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/MessageSubscriptionResource"
+    MessageSubscriptionDiagnosticCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSubscriptionDiagnosticResource"
+    MessageSubscriptionDiagnosticResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-subscription-diagnostics] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MessageSubscriptionDiagnosticAttributes"
+    MessageSubscriptionDiagnosticAttributes:
+      type: object
+      properties:
+        subscriptionId: { type: integer }
+        provider:
+          type: string
+          enum: [telegram_channel, rss_feed]
+        title: { type: string }
+        sourceRef: { type: string }
+        enabled: { type: boolean }
+        sourceKind:
+          type: string
+          description: Normalized source type, for example telegram_private_numeric, telegram_public_handle, rss_public_feed, rss_private_auth, or rss_url_credentials.
+        status:
+          type: string
+          enum: [ready, warning, blocked, disabled]
+        severity:
+          type: string
+          enum: [ready, warning, blocked, disabled]
+        ready: { type: boolean }
+        privateCapable: { type: boolean }
+        proxyRoute:
+          type: string
+          description: direct, proxy:telegram, proxy:web, or proxy_configured_but_not_enabled.
+        lastCollectError:
+          type: string
+          nullable: true
+        nextCollectAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastCollectedAt:
+          type: string
+          format: date-time
+          nullable: true
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSubscriptionDiagnosticCheck"
+        recommendedActions:
+          type: array
+          items: { type: string }
+    MessageSubscriptionDiagnosticCheck:
+      type: object
+      properties:
+        key: { type: string }
+        status:
+          type: string
+          enum: [ok, info, warning, blocked]
+        title: { type: string }
+        detail: { type: string }
+        action: { type: string }
+        route: { type: string }
+        depends: { type: string }
     MessageSubscriptionResource:
       type: object
       required: [type, id, attributes]
@@ -3248,7 +5596,7 @@ components:
             title: { type: string }
             sourceRef:
               type: string
-              description: RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+              description: RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds.
             enabled: { type: boolean }
             filterId: { type: integer }
             filterName: { type: string }
@@ -3272,6 +5620,11 @@ components:
             config:
               type: object
               additionalProperties: true
+            rssAuthType:
+              type: string
+              enum: [none, basic, bearer]
+            rssUsername: { type: string }
+            hasRssPassword: { type: boolean }
             createdAt: { type: string, format: date-time }
             updatedAt: { type: string, format: date-time }
     MessageSubscriptionUpsertDocument:
@@ -3294,7 +5647,7 @@ components:
                 title: { type: string }
                 sourceRef:
                   type: string
-                  description: RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+                  description: RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds.
                 enabled: { type: boolean }
                 filterId: { type: integer }
                 teamIds:
@@ -3305,6 +5658,15 @@ components:
                 config:
                   type: object
                   additionalProperties: true
+                rssAuthType:
+                  type: string
+                  enum: [none, basic, bearer]
+                rssUsername:
+                  type: string
+                  description: Username for RSS Basic auth. Ignored for Bearer unless a provider needs a label.
+                rssPassword:
+                  type: string
+                  description: RSS Basic password or Bearer token. Stored as an encrypted secret and never returned.
     MessageSubscriptionFilterCollectionDocument:
       type: object
       required: [data]
@@ -3409,7 +5771,16 @@ components:
                   enum: [telegram_channel, rss_feed]
                 sourceRef:
                   type: string
-                  description: RSS/Atom source refs must be public http or https feed URLs without URL-embedded credentials.
+                  description: RSS/Atom source refs must be http or https feed URLs without URL-embedded credentials; use rssAuthType, rssUsername, and rssPassword for private feeds.
+                rssAuthType:
+                  type: string
+                  enum: [none, basic, bearer]
+                rssUsername:
+                  type: string
+                  description: Username for RSS Basic auth draft tests.
+                rssPassword:
+                  type: string
+                  description: RSS Basic password or Bearer token used only for this draft test.
     MessageSubscriptionCollectDocument:
       type: object
       required: [data]
@@ -3428,6 +5799,73 @@ components:
                 status: { type: string }
                 collected: { type: integer }
                 filtered: { type: integer }
+    MessageSubscriptionMaintenanceRequestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-maintenance-results] }
+            id: { type: string, enum: [current] }
+            attributes:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [repair_defaults, clear_collect_error, queue_collect, rotate_rss_auth, audit_telegram_access, apply_source_trust_governance]
+                subscriptionIds:
+                  type: array
+                  items: { type: integer }
+                provider:
+                  type: string
+                  enum: [telegram_channel, rss_feed]
+                onlyBlocked: { type: boolean }
+                onlyWarnings: { type: boolean }
+                rssAuthType:
+                  type: string
+                  enum: [none, basic, bearer]
+                rssUsername:
+                  type: string
+                  description: Username to apply when rotating RSS Basic auth credentials.
+                rssPassword:
+                  type: string
+                  description: RSS Basic password or Bearer token to rotate into selected RSS subscriptions; stored as encrypted secrets and never returned.
+    MessageSubscriptionMaintenanceDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [message-subscription-maintenance-results] }
+            id: { type: string, enum: [current] }
+            attributes:
+              $ref: "#/components/schemas/MessageSubscriptionMaintenanceAttributes"
+    MessageSubscriptionMaintenanceAttributes:
+      type: object
+      properties:
+        action: { type: string }
+        matched: { type: integer }
+        checked: { type: integer }
+        passed: { type: integer }
+        failed: { type: integer }
+        updated: { type: integer }
+        queued: { type: integer }
+        paused: { type: integer }
+        skipped:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSubscriptionMaintenanceSkip"
+    MessageSubscriptionMaintenanceSkip:
+      type: object
+      properties:
+        subscriptionId: { type: integer }
+        title: { type: string }
+        reason: { type: string }
     MessageSubscriptionLoginSessionDocument:
       type: object
       required: [data]
@@ -3552,6 +5990,17 @@ components:
         filterId:
           type: integer
           nullable: true
+        feedbackLabel:
+          type: string
+          enum: [helpful, noise, misclassified, neutral]
+          nullable: true
+        feedbackComment:
+          type: string
+          nullable: true
+        feedbackAt:
+          type: string
+          format: date-time
+          nullable: true
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
     IngestedMessageUpsertDocument:
@@ -3581,6 +6030,70 @@ components:
                 relatedSymbols:
                   type: array
                   items: { type: string }
+    IngestedMessageFeedbackDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [ingested-message-feedbacks] }
+            attributes:
+              type: object
+              required: [label]
+              properties:
+                label:
+                  type: string
+                  enum: [helpful, noise, misclassified, neutral]
+                comment: { type: string }
+    IngestedMessageFeedbackBatchRequestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [ingested-message-feedback-batches] }
+            attributes:
+              type: object
+              required: [messageIds, label]
+              properties:
+                messageIds:
+                  type: array
+                  items: { type: integer }
+                label:
+                  type: string
+                  enum: [helpful, noise, misclassified, neutral]
+                comment: { type: string }
+    IngestedMessageFeedbackBatchDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [ingested-message-feedback-batches] }
+            id: { type: string, enum: [current] }
+            attributes:
+              type: object
+              properties:
+                requestedCount: { type: integer }
+                updatedCount: { type: integer }
+                updatedIds:
+                  type: array
+                  items: { type: integer }
+                missingIds:
+                  type: array
+                  items: { type: integer }
+                label:
+                  type: string
+                  enum: [helpful, noise, misclassified, neutral]
+                comment:
+                  type: string
+                  nullable: true
     IngestedMessageRefilterDocument:
       type: object
       required: [data]
@@ -3598,6 +6111,356 @@ components:
                   items: { type: integer }
                 limit: { type: integer }
                 onlyUnfiltered: { type: boolean }
+    MessageFeedbackTrainingSampleCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageFeedbackTrainingSampleResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MessageFeedbackTrainingSampleResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-feedback-training-samples] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MessageFeedbackTrainingSampleAttributes"
+    MessageFeedbackTrainingSampleAttributes:
+      type: object
+      properties:
+        messageId: { type: integer }
+        subscriptionId: { type: integer }
+        subscriptionTitle: { type: string }
+        provider: { type: string }
+        sourceRef: { type: string }
+        sourceMessageId: { type: string }
+        messageTime: { type: string, format: date-time }
+        text: { type: string }
+        filterDecision:
+          type: string
+          nullable: true
+        filterReason:
+          type: string
+          nullable: true
+        filterStatus:
+          type: string
+          enum: [unfiltered, filtering, filtered, failed]
+        relatedSymbols:
+          type: array
+          items: { type: string }
+        feedbackLabel:
+          type: string
+          enum: [helpful, noise, misclassified, neutral]
+        feedbackComment:
+          type: string
+          nullable: true
+        feedbackAt:
+          type: string
+          format: date-time
+          nullable: true
+        split:
+          type: string
+          enum: [train, validation]
+        sampleWeight:
+          type: number
+          format: double
+        trainingUse: { type: string }
+        dedupeKey: { type: string }
+    MessageFeedbackEvaluationDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MessageFeedbackEvaluationResource"
+    MessageFeedbackEvaluationResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-feedback-evaluations] }
+        id: { type: string, enum: [current] }
+        attributes:
+          $ref: "#/components/schemas/MessageFeedbackEvaluationAttributes"
+    MessageFeedbackEvaluationAttributes:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [empty, needs_more_feedback, healthy, noisy, needs_review]
+        sampleCount: { type: integer }
+        trainCount: { type: integer }
+        validationCount: { type: integer }
+        helpfulCount: { type: integer }
+        noiseCount: { type: integer }
+        misclassifiedCount: { type: integer }
+        neutralCount: { type: integer }
+        agreementEligibleCount: { type: integer }
+        agreementCount: { type: integer }
+        positiveSignalCount: { type: integer }
+        noiseSuppressionCount: { type: integer }
+        falseMeetingFromNoiseCount: { type: integer }
+        needsDecisionCorrectionCount: { type: integer }
+        agreementRate:
+          type: number
+          format: double
+        noiseRate:
+          type: number
+          format: double
+        misclassificationRate:
+          type: number
+          format: double
+        labelBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        decisionBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        recommendations:
+          type: array
+          items: { type: string }
+        truncated: { type: boolean }
+        sampleLimit: { type: integer }
+    MessageFeedbackTrainingSnapshotCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MessageFeedbackTrainingSnapshotDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotResource"
+    MessageFeedbackTrainingSnapshotResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-feedback-training-snapshots] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotAttributes"
+    MessageFeedbackTrainingSnapshotAttributes:
+      type: object
+      properties:
+        version: { type: string }
+        createdAt: { type: string, format: date-time }
+        filter:
+          $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotFilter"
+        sampleCount: { type: integer }
+        trainCount: { type: integer }
+        validationCount: { type: integer }
+        sourceCount: { type: integer }
+        fingerprint: { type: string }
+        labelBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        decisionBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        sourceStatusBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        sourceTrustSummary:
+          $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotSourceTrustSummary"
+        evaluation:
+          $ref: "#/components/schemas/MessageFeedbackEvaluationAttributes"
+        sampleRefCount: { type: integer }
+        sampleRefsTruncated: { type: boolean }
+        sampleRefs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotSampleRef"
+    MessageFeedbackTrainingSnapshotFilter:
+      type: object
+      properties:
+        subscriptionId: { type: string }
+        provider: { type: string }
+        feedbackLabel:
+          type: string
+          enum: [helpful, noise, misclassified, neutral]
+    MessageFeedbackTrainingSnapshotSourceTrustSummary:
+      type: object
+      properties:
+        trusted: { type: integer }
+        watch: { type: integer }
+        lowConfidence: { type: integer }
+        insufficientFeedback: { type: integer }
+    MessageFeedbackTrainingSnapshotSampleRef:
+      type: object
+      properties:
+        messageId: { type: integer }
+        dedupeKey: { type: string }
+        feedbackLabel:
+          type: string
+          enum: [helpful, noise, misclassified, neutral]
+        split:
+          type: string
+          enum: [train, validation]
+        sampleWeight:
+          type: number
+          format: double
+    MessageFeedbackTrainingExportCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageFeedbackTrainingExportResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MessageFeedbackTrainingExportDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MessageFeedbackTrainingExportResource"
+    MessageFeedbackTrainingExportResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-feedback-training-exports] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MessageFeedbackTrainingExportAttributes"
+    MessageFeedbackTrainingExportAttributes:
+      type: object
+      properties:
+        version: { type: string }
+        createdAt: { type: string, format: date-time }
+        filter:
+          $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotFilter"
+        format: { type: string, enum: [jsonl] }
+        contentType: { type: string }
+        sampleCount: { type: integer }
+        trainCount: { type: integer }
+        validationCount: { type: integer }
+        sourceCount: { type: integer }
+        fingerprint: { type: string }
+        contentSha256: { type: string }
+        byteCount: { type: integer }
+        lineCount: { type: integer }
+        truncated: { type: boolean }
+        sampleLimit: { type: integer }
+        labelBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        decisionBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        sourceStatusBreakdown:
+          type: object
+          additionalProperties: { type: integer }
+        sourceTrustSummary:
+          $ref: "#/components/schemas/MessageFeedbackTrainingSnapshotSourceTrustSummary"
+        evaluation:
+          $ref: "#/components/schemas/MessageFeedbackEvaluationAttributes"
+        content:
+          type: string
+    MessageSourceTrustCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSourceTrustResource"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+          additionalProperties: true
+    MessageSourceTrustReportDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MessageSourceTrustReportResource"
+    MessageSourceTrustReportResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-source-trust-reports] }
+        id: { type: string, enum: [current] }
+        attributes:
+          $ref: "#/components/schemas/MessageSourceTrustReportAttributes"
+    MessageSourceTrustReportAttributes:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        status: { type: string }
+        sampleCount: { type: integer }
+        sourceCount: { type: integer }
+        sampleLimit: { type: integer }
+        truncated: { type: boolean }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSourceTrustResource"
+    MessageSourceTrustResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [message-source-trust-sources] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/MessageSourceTrustAttributes"
+    MessageSourceTrustAttributes:
+      type: object
+      properties:
+        subscriptionId: { type: integer }
+        subscriptionTitle: { type: string }
+        provider: { type: string }
+        sourceRef: { type: string }
+        feedbackCount: { type: integer }
+        helpfulCount: { type: integer }
+        noiseCount: { type: integer }
+        misclassifiedCount: { type: integer }
+        neutralCount: { type: integer }
+        trustScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [trusted, watch, low_confidence, insufficient_feedback]
+        explanation: { type: string }
+        recommendedActions:
+          type: array
+          items: { type: string }
+        lastFeedbackAt:
+          type: string
+          format: date-time
+          nullable: true
+        positiveRate:
+          type: number
+          format: double
+        negativeRate:
+          type: number
+          format: double
+        sampleWeight:
+          type: number
+          format: double
+        autoAction: { type: string }
+        autoActionReason: { type: string }
     PaperOverviewDocument:
       type: object
       required: [data]
@@ -3835,7 +6698,25 @@ components:
           nullable: true
         side: { type: string, enum: [buy, sell] }
         quantity: { type: integer }
+        filledQuantity: { type: integer }
+        remainingQuantity: { type: integer }
+        partialFillCount: { type: integer }
         status: { type: string }
+        approvalRequired: { type: boolean }
+        approvalStatus:
+          type: string
+          enum: [waiting, approved, rejected, closed, unknown]
+        approvalReviewRequired: { type: boolean }
+        approvalConfirmRequired: { type: boolean }
+        approvalRiskLevel:
+          type: string
+          enum: [low, medium, high]
+        approvalRiskReasons:
+          type: array
+          items: { type: string }
+        approvalRiskMetrics:
+          type: object
+          additionalProperties: true
         suggestedPrice: {}
         filledPrice: {}
         reason:
@@ -3899,6 +6780,34 @@ components:
                   type: string
                   format: date-time
                   nullable: true
+    PaperOrderApproveDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-order-approvals] }
+            attributes:
+              type: object
+              properties:
+                confirmHighRisk: { type: boolean }
+    PaperOrderRejectDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-order-rejections] }
+            attributes:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  nullable: true
     PaperOrderFillDocument:
       type: object
       required: [data]
@@ -3913,6 +6822,9 @@ components:
               required: [price]
               properties:
                 price: {}
+                quantity:
+                  type: integer
+                  description: Optional fill quantity. Omit or set to 0 to fill the remaining order quantity.
     PaperFillCollectionDocument:
       type: object
       required: [data]
@@ -3952,6 +6864,223 @@ components:
         netAmount: {}
         realizedPnl: {}
         filledAt: { type: string, format: date-time }
+    PaperCorporateActionCollectionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperCorporateActionResource"
+    PaperCorporateActionDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PaperCorporateActionResource"
+    PaperCorporateActionResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [paper-corporate-actions] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PaperCorporateActionAttributes"
+        relationships:
+          type: object
+          properties:
+            account:
+              $ref: "#/components/schemas/Relationship"
+    PaperCorporateActionAttributes:
+      type: object
+      properties:
+        accountId: { type: integer }
+        code: { type: string }
+        actionType:
+          type: string
+          enum: [cash_dividend, bonus_share, split]
+        exDate: { type: string, format: date-time }
+        cashPerShare:
+          description: Cash dividend per held share. Required for cash_dividend.
+        shareRatio:
+          description: For bonus_share, additional shares per held share. For split, final split multiplier, e.g. 2 means 1-for-2.
+        affectedShares: { type: integer }
+        cashAmount: {}
+        status:
+          type: string
+          enum: [applied]
+        note:
+          type: string
+          nullable: true
+        appliedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt: { type: string, format: date-time }
+    PaperCorporateActionCreateDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-corporate-actions] }
+            attributes:
+              type: object
+              required: [code, actionType]
+              properties:
+                code: { type: string }
+                actionType:
+                  type: string
+                  enum: [cash_dividend, bonus_share, split]
+                exDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                cashPerShare:
+                  description: Required for cash_dividend.
+                shareRatio:
+                  description: Required for bonus_share and split. For split, use the final multiplier, e.g. 2.
+                note:
+                  type: string
+                  nullable: true
+    PaperBacktestRunDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, attributes]
+          properties:
+            type: { type: string, enum: [paper-backtests] }
+            attributes:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+                startDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                endDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                initialCash:
+                  description: Optional simulated starting cash. Defaults to the account cash/initial cash.
+                buyThresholdPct:
+                  description: Close-to-previous-close percentage threshold for buys. Defaults to -3.
+                sellThresholdPct:
+                  description: Close-to-previous-close percentage threshold for sells. Defaults to 3.
+                orderPct:
+                  description: Fraction of equity per buy order, for example 0.1 for 10%. Defaults to 0.1.
+                slippageBps:
+                  description: Simulated one-way slippage in basis points. Defaults to 5.
+    PaperBacktestDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [paper-backtests] }
+            id: { type: string }
+            attributes:
+              $ref: "#/components/schemas/PaperBacktestAttributes"
+            relationships:
+              type: object
+              properties:
+                account:
+                  $ref: "#/components/schemas/Relationship"
+    PaperBacktestAttributes:
+      type: object
+      properties:
+        accountId: { type: integer }
+        generatedAt: { type: string, format: date-time }
+        input:
+          $ref: "#/components/schemas/PaperBacktestInput"
+        policy:
+          $ref: "#/components/schemas/PaperBacktestPolicy"
+        summary:
+          $ref: "#/components/schemas/PaperBacktestSummary"
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperBacktestPoint"
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperBacktestOrder"
+    PaperBacktestInput:
+      type: object
+      properties:
+        accountId: { type: integer }
+        code: { type: string }
+        startDate: { type: string, format: date-time }
+        endDate: { type: string, format: date-time }
+        initialCash: {}
+        buyThresholdPct: {}
+        sellThresholdPct: {}
+        orderPct: {}
+        slippageBps: {}
+    PaperBacktestPolicy:
+      type: object
+      properties:
+        executionModel: { type: string }
+        riskModel: { type: string }
+        brokerIntegration: { type: string, enum: [disabled] }
+        dataSource:
+          type: string
+          enum: [daily_bars]
+        limitBandPct: {}
+        slippageBps: {}
+        lotSize: { type: integer }
+        rules:
+          type: array
+          items: { type: string }
+    PaperBacktestSummary:
+      type: object
+      properties:
+        barCount: { type: integer }
+        tradeCount: { type: integer }
+        rejectedCount: { type: integer }
+        initialCash: {}
+        finalCash: {}
+        finalMarketValue: {}
+        finalEquity: {}
+        totalReturnPct: {}
+        maxDrawdownPct: {}
+    PaperBacktestPoint:
+      type: object
+      properties:
+        tradeDate: { type: string, format: date-time }
+        close: {}
+        signalPct: {}
+        cash: {}
+        quantity: { type: integer }
+        marketValue: {}
+        totalEquity: {}
+        dailyReturnPct: {}
+        drawdownPct: {}
+    PaperBacktestOrder:
+      type: object
+      properties:
+        id: { type: string }
+        tradeDate: { type: string, format: date-time }
+        code: { type: string }
+        side: { type: string, enum: [buy, sell] }
+        quantity: { type: integer }
+        signalPct: {}
+        referencePrice: {}
+        filledPrice: {}
+        status: { type: string, enum: [suggested, filled, rejected] }
+        reason: { type: string }
+        grossAmount: {}
+        fees: {}
+        cashAfter: {}
+        positionAfter: { type: integer }
     PaperPerformanceDocument:
       type: object
       required: [data]
@@ -3981,8 +7110,119 @@ components:
         series:
           type: array
           items:
-            type: object
-            additionalProperties: true
+            $ref: "#/components/schemas/PaperPerformancePoint"
+        attribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperAttributionItem"
+        riskAlerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperRiskAlert"
+        riskSummary:
+          $ref: "#/components/schemas/PaperRiskSummary"
+    PaperPerformancePoint:
+      type: object
+      required: [id, accountId, snapshotTime, cash, marketValue, totalEquity, unrealizedPnl, realizedPnl, dailyPnl]
+      properties:
+        id: { type: integer }
+        accountId: { type: integer }
+        snapshotTime: { type: string, format: date-time }
+        cash: {}
+        marketValue: {}
+        totalEquity: {}
+        unrealizedPnl: {}
+        realizedPnl: {}
+        dailyPnl: {}
+    PaperAttributionItem:
+      type: object
+      properties:
+        code: { type: string }
+        symbolName: { type: string, nullable: true }
+        quantity: { type: integer }
+        costAmount: {}
+        marketValue: {}
+        weightPct: {}
+        unrealizedPnl: {}
+        realizedPnl: {}
+        totalPnl: {}
+        returnPct: {}
+        contributionPct: {}
+        updatedAt: { type: string, format: date-time, nullable: true }
+        source:
+          type: string
+          enum: [open_position, closed_realized, mixed]
+    PaperRiskAlert:
+      type: object
+      required: [key, severity, title, detail]
+      properties:
+        key: { type: string }
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        title: { type: string }
+        detail: { type: string }
+        code: { type: string, nullable: true }
+        metric: {}
+        threshold: {}
+    PaperRiskSummary:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, watch, critical]
+        maxSeverity:
+          type: string
+          enum: [ok, info, warning, critical]
+        alertCount: { type: integer }
+        criticalCount: { type: integer }
+        warningCount: { type: integer }
+        infoCount: { type: integer }
+    PaperReplayDocument:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [type, id, attributes]
+          properties:
+            type: { type: string, enum: [paper-replays] }
+            id: { type: string }
+            attributes:
+              $ref: "#/components/schemas/PaperReplayAttributes"
+            relationships:
+              type: object
+              properties:
+                account:
+                  $ref: "#/components/schemas/Relationship"
+    PaperReplayAttributes:
+      type: object
+      properties:
+        accountId: { type: integer }
+        generatedAt: { type: string, format: date-time }
+        modelPolicy:
+          type: object
+          additionalProperties: true
+        summary:
+          type: object
+          additionalProperties: true
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaperReplayEvent"
+    PaperReplayEvent:
+      type: object
+      properties:
+        id: { type: string }
+        type:
+          type: string
+          enum: [order, fill, corporate_action]
+        time: { type: string, format: date-time }
+        code: { type: string }
+        summary: { type: string }
+        attributes:
+          type: object
+          additionalProperties: true
     HealthDocument:
       type: object
       required: [data]

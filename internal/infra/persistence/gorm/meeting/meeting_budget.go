@@ -115,6 +115,25 @@ func actualChatTokens(model string, messages []map[string]string, content string
 	return chatPromptTokens(model, messages) + completionTokens(model, content)
 }
 
+func tokenUsagePayload(usage *ai.Usage, promptEstimate int, actual int) any {
+	if usage != nil {
+		return usage
+	}
+	if actual <= 0 {
+		return nil
+	}
+	completionEstimate := actual - promptEstimate
+	if completionEstimate < 0 {
+		completionEstimate = 0
+	}
+	return map[string]any{
+		"prompt_tokens":     promptEstimate,
+		"completion_tokens": completionEstimate,
+		"total_tokens":      actual,
+		"estimated":         true,
+	}
+}
+
 func encodingForModel(model string) *tiktoken.Tiktoken {
 	enc, err := tiktoken.EncodingForModel(tokenizerModelAlias(model))
 	if err == nil && enc != nil {

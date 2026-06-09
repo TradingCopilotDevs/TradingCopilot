@@ -22,7 +22,7 @@ func TestFetchRSSFeedMessages(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := NewService(testSettings()).FetchSubscriptionMessages(context.Background(), appmessaging.TelegramCredentials{}, domainmsg.MessageSubscription{
+	result, err := NewService(testSettings()).FetchSubscriptionMessages(context.Background(), appmessaging.SubscriptionCredentials{}, domainmsg.MessageSubscription{
 		Provider:  domainmsg.ProviderRSSFeed,
 		SourceRef: server.URL,
 	}, 10, nil)
@@ -51,7 +51,7 @@ func TestFetchAtomFeedMessagesUsesLinkAsSourceID(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := NewService(testSettings()).FetchSubscriptionMessages(context.Background(), appmessaging.TelegramCredentials{}, domainmsg.MessageSubscription{
+	result, err := NewService(testSettings()).FetchSubscriptionMessages(context.Background(), appmessaging.SubscriptionCredentials{}, domainmsg.MessageSubscription{
 		Provider:  domainmsg.ProviderRSSFeed,
 		SourceRef: server.URL,
 	}, 10, nil)
@@ -63,6 +63,55 @@ func TestFetchAtomFeedMessagesUsesLinkAsSourceID(t *testing.T) {
 	}
 	if result.Messages[0].SourceMessageID != "https://example.test/policy" {
 		t.Fatalf("source id = %q", result.Messages[0].SourceMessageID)
+	}
+}
+
+func TestFetchRSSFeedMessagesUsesBasicAuth(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username, password, ok := r.BasicAuth()
+		if !ok || username != "feed-user" || password != "feed-pass" {
+			t.Fatalf("unexpected basic auth: ok=%v username=%q password=%q", ok, username, password)
+		}
+		w.Header().Set("Content-Type", "application/rss+xml")
+		_, _ = w.Write([]byte(`<?xml version="1.0"?><rss version="2.0"><channel><title>Private Feed</title><item><guid>item-1</guid><title>Private update</title></item></channel></rss>`))
+	}))
+	defer server.Close()
+
+	result, err := NewService(testSettings()).FetchSubscriptionMessages(context.Background(), appmessaging.SubscriptionCredentials{
+		RSSAuth: appmessaging.RSSAuthCredentials{Type: "basic", Username: "feed-user", Password: "feed-pass"},
+	}, domainmsg.MessageSubscription{
+		Provider:  domainmsg.ProviderRSSFeed,
+		SourceRef: server.URL,
+	}, 10, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Title != "Private Feed" || len(result.Messages) != 1 {
+		t.Fatalf("unexpected feed result: %+v", result)
+	}
+}
+
+func TestFetchRSSFeedMessagesUsesBearerAuth(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got != "Bearer feed-token" {
+			t.Fatalf("authorization = %q, want bearer token", got)
+		}
+		w.Header().Set("Content-Type", "application/rss+xml")
+		_, _ = w.Write([]byte(`<?xml version="1.0"?><rss version="2.0"><channel><title>Token Feed</title><item><guid>item-1</guid><title>Token update</title></item></channel></rss>`))
+	}))
+	defer server.Close()
+
+	result, err := NewService(testSettings()).FetchSubscriptionMessages(context.Background(), appmessaging.SubscriptionCredentials{
+		RSSAuth: appmessaging.RSSAuthCredentials{Type: "bearer", Password: "feed-token"},
+	}, domainmsg.MessageSubscription{
+		Provider:  domainmsg.ProviderRSSFeed,
+		SourceRef: server.URL,
+	}, 10, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Title != "Token Feed" || len(result.Messages) != 1 {
+		t.Fatalf("unexpected feed result: %+v", result)
 	}
 }
 

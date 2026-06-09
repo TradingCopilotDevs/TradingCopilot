@@ -18,6 +18,62 @@
       <span>采集异常</span>
       <strong>{{ failedSourceCount }}</strong>
     </div>
+    <div class="metric">
+      <span>配置阻塞</span>
+      <strong>{{ blockedDiagnosticCount }}</strong>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-head">
+      <h2>来源诊断</h2>
+      <div class="toolbar compact-toolbar">
+        <el-button :loading="running.maintenanceRepair" @click="repairBlockedSources">修复阻塞源</el-button>
+        <el-button :loading="running.telegramAccessAudit" @click="auditTelegramAccess">Telegram 权限巡检</el-button>
+        <el-button :icon="Refresh" :loading="loading" @click="loadDiagnostics()">刷新</el-button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <el-table v-loading="loading" :data="filteredDiagnostics" empty-text="暂无诊断结果">
+        <el-table-column label="来源" min-width="240">
+          <template #default="{ row }">
+            <div class="source-title-line">
+              <strong>{{ row.title || row.sourceRef }}</strong>
+              <el-tag size="small" :type="providerTagType(row.provider)" effect="plain">{{ providerLabel(row.provider) }}</el-tag>
+            </div>
+            <small class="muted source-ref-line">{{ row.sourceRef }}</small>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="diagnosticStatusTagType(row.status)">{{ diagnosticStatusLabel(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="路径" min-width="220">
+          <template #default="{ row }">
+            <div>{{ sourceKindLabel(row.sourceKind) }}</div>
+            <small class="muted">{{ proxyRouteLabel(row.proxyRoute) }}</small>
+          </template>
+        </el-table-column>
+        <el-table-column label="推荐动作" min-width="260">
+          <template #default="{ row }">
+            <div v-if="row.recommendedActions?.length" class="diagnostic-action-list">
+              <span v-for="action in row.recommendedActions" :key="action">{{ action }}</span>
+            </div>
+            <span v-else class="muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="检查项" min-width="340">
+          <template #default="{ row }">
+            <div class="diagnostic-check-tags">
+              <el-tooltip v-for="check in row.checks || []" :key="`${row.id}:${check.key}`" :content="diagnosticCheckTooltip(check)" placement="top">
+                <el-tag size="small" :type="diagnosticCheckTagType(check.status)" effect="plain">{{ check.title }}</el-tag>
+              </el-tooltip>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 
   <div class="panel">
@@ -25,6 +81,7 @@
       <h2>订阅来源</h2>
       <div class="toolbar compact-toolbar">
         <el-button :icon="Refresh" :loading="collecting" @click="collect()">采集全部</el-button>
+        <el-button :icon="Refresh" @click="openRSSRotation">RSS 凭据轮换</el-button>
         <el-button type="primary" :icon="Plus" @click="openSubscription()">新增来源</el-button>
       </div>
     </div>
@@ -44,6 +101,7 @@
           </div>
           <div class="source-card-tags">
             <el-tag :type="providerTagType(source.provider)" effect="plain">{{ providerLabel(source.provider) }}</el-tag>
+            <el-tag v-if="source.provider === 'rss_feed' && source.rssAuthType && source.rssAuthType !== 'none'" size="small" type="warning" effect="plain">{{ rssAuthLabel(source.rssAuthType) }}</el-tag>
             <el-tag :type="source.enabled ? 'success' : 'info'">{{ source.enabled ? '启用' : '停用' }}</el-tag>
           </div>
         </div>
@@ -74,6 +132,7 @@
             <div class="source-title-line">
               <strong>{{ row.title || row.sourceRef }}</strong>
               <el-tag size="small" :type="providerTagType(row.provider)" effect="plain">{{ providerLabel(row.provider) }}</el-tag>
+              <el-tag v-if="row.provider === 'rss_feed' && row.rssAuthType && row.rssAuthType !== 'none'" size="small" type="warning" effect="plain">{{ rssAuthLabel(row.rssAuthType) }}</el-tag>
             </div>
             <small class="muted source-ref-line">{{ row.sourceRef }}</small>
           </template>
@@ -183,6 +242,20 @@
       <el-form-item label="来源">
         <el-input v-model="subscriptionForm.sourceRef" :placeholder="sourcePlaceholder" />
       </el-form-item>
+      <template v-if="subscriptionForm.provider === 'rss_feed'">
+        <el-form-item label="RSS auth">
+          <el-segmented v-model="subscriptionForm.rssAuthType" :options="rssAuthOptions" />
+        </el-form-item>
+        <el-form-item v-if="subscriptionForm.rssAuthType === 'basic'" label="RSS user">
+          <el-input v-model="subscriptionForm.rssUsername" autocomplete="off" />
+        </el-form-item>
+        <el-form-item v-if="subscriptionForm.rssAuthType !== 'none'" :label="subscriptionForm.rssAuthType === 'bearer' ? 'Bearer token' : 'RSS password'">
+          <el-input v-model="subscriptionForm.rssPassword" type="password" show-password autocomplete="new-password" :placeholder="rssPasswordPlaceholder" />
+        </el-form-item>
+        <el-form-item v-if="subscriptionForm.id && subscriptionForm.rssAuthType !== 'none'" label="Saved secret">
+          <el-tag :type="subscriptionForm.hasRssPassword ? 'success' : 'warning'" effect="plain">{{ subscriptionForm.hasRssPassword ? 'configured' : 'missing' }}</el-tag>
+        </el-form-item>
+      </template>
       <el-form-item label="名称">
         <el-input v-model="subscriptionForm.title" placeholder="可留空，测试或采集后自动补全" />
       </el-form-item>
@@ -204,6 +277,27 @@
       <el-button @click="subscriptionDialog = false">取消</el-button>
       <el-button :loading="testingDraft" @click="testDraft">测试当前源</el-button>
       <el-button type="primary" :loading="running.saveSubscription" @click="saveSubscription">保存来源</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog v-model="rssRotationDialog" title="RSS 凭据轮换" :width="dialogWidth" :fullscreen="isMobile">
+    <el-form :model="rssRotationForm" :label-width="isMobile ? 'auto' : '120px'" :label-position="isMobile ? 'top' : 'right'">
+      <el-form-item label="认证方式">
+        <el-segmented v-model="rssRotationForm.rssAuthType" :options="rssAuthOptions.filter((item) => item.value !== 'none')" />
+      </el-form-item>
+      <el-form-item v-if="rssRotationForm.rssAuthType === 'basic'" label="RSS user">
+        <el-input v-model="rssRotationForm.rssUsername" autocomplete="off" />
+      </el-form-item>
+      <el-form-item :label="rssRotationForm.rssAuthType === 'bearer' ? 'Bearer token' : 'RSS password'">
+        <el-input v-model="rssRotationForm.rssPassword" type="password" show-password autocomplete="new-password" />
+      </el-form-item>
+      <el-form-item label="范围">
+        <el-checkbox v-model="rssRotationForm.onlyBlocked">仅阻塞源</el-checkbox>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="rssRotationDialog = false">取消</el-button>
+      <el-button type="primary" :loading="running.rotateRssAuth" @click="rotateRSSAuth">应用轮换</el-button>
     </template>
   </el-dialog>
 
@@ -251,13 +345,15 @@
 import { Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { api, apiErrorText, jsonapiResource, unwrapJsonApiCollection, unwrapJsonApiResource, type MessageSubscription, type MessageSubscriptionFilter } from '../api'
+import { api, apiErrorText, jsonapiResource, unwrapJsonApiCollection, unwrapJsonApiResource, type MessageSubscription, type MessageSubscriptionDiagnostic, type MessageSubscriptionFilter } from '../api'
 import { useAutoRefresh } from '../composables/useAutoRefresh'
 import { useAsyncAction } from '../composables/useAsyncAction'
 import { useResponsive } from '../composables/useResponsive'
 import { formatDateTimeUtc8 } from '../utils/datetime'
 
 type SourceProvider = 'telegram_channel' | 'rss_feed'
+type RSSAuthType = 'none' | 'basic' | 'bearer'
+type DiagnosticCheck = NonNullable<MessageSubscriptionDiagnostic['checks']>[number]
 
 interface Status {
   hasAppId: boolean
@@ -279,9 +375,30 @@ const { running, runAction } = useAsyncAction()
 const appConfig = reactive({ appId: '', appHash: '' })
 const loginForm = reactive({ phone: '', code: '', password: '', phoneCodeHash: '' })
 const status = reactive<Status>({ hasAppId: false, hasAppHash: false, hasSession: false })
-const subscriptionForm = reactive({ id: null as number | null, provider: 'telegram_channel' as SourceProvider, title: '', sourceRef: '', filterId: null as number | null, teamIds: [] as number[], backfillLimit: 20, pollIntervalSeconds: 30, enabled: true })
+const subscriptionForm = reactive({
+  id: null as number | null,
+  provider: 'telegram_channel' as SourceProvider,
+  title: '',
+  sourceRef: '',
+  filterId: null as number | null,
+  teamIds: [] as number[],
+  backfillLimit: 20,
+  pollIntervalSeconds: 30,
+  enabled: true,
+  rssAuthType: 'none' as RSSAuthType,
+  rssUsername: '',
+  rssPassword: '',
+  hasRssPassword: false
+})
+const rssRotationForm = reactive({
+  rssAuthType: 'basic' as Exclude<RSSAuthType, 'none'>,
+  rssUsername: '',
+  rssPassword: '',
+  onlyBlocked: false
+})
 const filterForm = reactive<any>({ id: null, name: '', description: '', promptTemplate: '', providerId: null, model: '', enabled: true, isDefault: false, toolNames: [], skillNames: [] })
 const subscriptions = ref<MessageSubscription[]>([])
+const diagnostics = ref<MessageSubscriptionDiagnostic[]>([])
 const filters = ref<MessageSubscriptionFilter[]>([])
 const providers = ref<any[]>([])
 const teams = ref<any[]>([])
@@ -297,11 +414,17 @@ const loading = ref(false)
 const testVisible = ref(false)
 const testResult = ref<TestResult | null>(null)
 const subscriptionDialog = ref(false)
+const rssRotationDialog = ref(false)
 const filterDialog = ref(false)
 
 const providerOptions = [
   { label: 'Telegram', value: 'telegram_channel' },
   { label: 'RSS/Atom', value: 'rss_feed' }
+]
+const rssAuthOptions = [
+  { label: 'None', value: 'none' },
+  { label: 'Basic', value: 'basic' },
+  { label: 'Bearer', value: 'bearer' }
 ]
 const providerFilterOptions = [{ label: '全部', value: 'all' }, ...providerOptions]
 const dialogWidth = computed(() => (isMobile.value ? '100%' : isTablet.value ? '90vw' : '760px'))
@@ -311,15 +434,25 @@ const defaultFilterId = computed(() => filters.value.find((filter) => filter.isD
 const enabledFilters = computed(() => filters.value.filter((filter) => filter.enabled))
 const enabledSourceCount = computed(() => subscriptions.value.filter((source) => source.enabled).length)
 const failedSourceCount = computed(() => subscriptions.value.filter((source) => !!source.lastCollectError).length)
+const blockedDiagnosticCount = computed(() => diagnostics.value.filter((item) => item.status === 'blocked').length)
 const canStartLogin = computed(() => status.hasAppId && status.hasAppHash && !!loginForm.phone.trim())
 const canVerifyLogin = computed(() => !!loginForm.phoneCodeHash && !!loginForm.phone.trim() && !!loginForm.code.trim())
 const sourcePlaceholder = computed(() => subscriptionForm.provider === 'rss_feed' ? 'https://example.com/feed.xml' : '频道链接、@用户名或 -100 编号')
+const rssPasswordPlaceholder = computed(() => subscriptionForm.hasRssPassword ? 'leave blank to keep saved secret' : '')
 const filteredSubscriptions = computed(() => {
   const query = sourceQuery.value.trim().toLowerCase()
   return subscriptions.value.filter((source) => {
     if (sourceProviderFilter.value !== 'all' && source.provider !== sourceProviderFilter.value) return false
     if (!query) return true
     return `${source.title} ${source.sourceRef}`.toLowerCase().includes(query)
+  })
+})
+const filteredDiagnostics = computed(() => {
+  const query = sourceQuery.value.trim().toLowerCase()
+  return diagnostics.value.filter((item) => {
+    if (sourceProviderFilter.value !== 'all' && item.provider !== sourceProviderFilter.value) return false
+    if (!query) return true
+    return `${item.title} ${item.sourceRef} ${item.sourceKind}`.toLowerCase().includes(query)
   })
 })
 
@@ -331,8 +464,66 @@ function providerLabel(provider: string) {
   return provider === 'rss_feed' ? 'RSS/Atom' : provider === 'telegram_channel' ? 'Telegram' : provider
 }
 
+function rssAuthLabel(value?: string) {
+  if (value === 'basic') return 'Basic'
+  if (value === 'bearer') return 'Bearer'
+  return 'None'
+}
+
 function providerTagType(provider: string) {
   return provider === 'rss_feed' ? 'warning' : 'primary'
+}
+
+function diagnosticStatusLabel(status?: string) {
+  if (status === 'ready') return '就绪'
+  if (status === 'warning') return '预警'
+  if (status === 'blocked') return '阻塞'
+  if (status === 'disabled') return '停用'
+  return status || '-'
+}
+
+function diagnosticStatusTagType(status?: string) {
+  if (status === 'ready') return 'success'
+  if (status === 'warning') return 'warning'
+  if (status === 'blocked') return 'danger'
+  return 'info'
+}
+
+function diagnosticCheckTagType(status?: string) {
+  if (status === 'ok') return 'success'
+  if (status === 'warning') return 'warning'
+  if (status === 'blocked') return 'danger'
+  return 'info'
+}
+
+function diagnosticCheckTooltip(check: DiagnosticCheck) {
+  return [check.detail, check.action].filter(Boolean).join(' / ')
+}
+
+function sourceKindLabel(kind?: string) {
+  const labels: Record<string, string> = {
+    telegram_private_numeric: 'Telegram 私有编号',
+    telegram_private_invite: 'Telegram 邀请链接',
+    telegram_public_handle: 'Telegram 公开用户名',
+    telegram_public_link: 'Telegram 公开链接',
+    telegram_peer_ref: 'Telegram Peer',
+    rss_public_feed: 'RSS/Atom 公开源',
+    rss_private_auth: 'RSS/Atom 私有认证',
+    rss_url_credentials: 'RSS/Atom URL 凭据',
+    invalid_url: 'URL 无效',
+    missing_source_ref: '来源缺失'
+  }
+  return labels[kind || ''] || kind || '-'
+}
+
+function proxyRouteLabel(route?: string) {
+  const labels: Record<string, string> = {
+    direct: '直连',
+    'proxy:telegram': '代理：Telegram',
+    'proxy:web': '代理：Web/RSS',
+    proxy_configured_but_not_enabled: '代理未路由'
+  }
+  return labels[route || ''] || route || '-'
 }
 
 function providerName(providerId?: number | null) {
@@ -372,6 +563,10 @@ async function loadSubscriptions() {
   subscriptions.value = unwrapJsonApiCollection<MessageSubscription>((await api.get('/message-subscriptions')).data)
 }
 
+async function loadDiagnostics() {
+  diagnostics.value = unwrapJsonApiCollection<MessageSubscriptionDiagnostic>((await api.get('/message-subscriptions/diagnostics')).data)
+}
+
 async function loadTeams() {
   teams.value = unwrapJsonApiCollection((await api.get('/research-teams')).data)
 }
@@ -379,14 +574,14 @@ async function loadTeams() {
 async function load(background = false) {
   if (!background) loading.value = true
   try {
-    await Promise.all([loadStatus(), loadProviders(), loadFilters(), loadSubscriptions(), loadTeams()])
+    await Promise.all([loadStatus(), loadProviders(), loadFilters(), loadSubscriptions(), loadDiagnostics(), loadTeams()])
   } finally {
     if (!background) loading.value = false
   }
 }
 
 async function refreshRuntimeState() {
-  await Promise.all([loadStatus(), loadSubscriptions()])
+  await Promise.all([loadStatus(), loadSubscriptions(), loadDiagnostics()])
 }
 
 function openSubscription(row?: MessageSubscription) {
@@ -400,9 +595,18 @@ function openSubscription(row?: MessageSubscription) {
     teamIds: [...(row?.teamIds ?? [])],
     backfillLimit: row?.backfillLimit ?? 20,
     pollIntervalSeconds: row?.pollIntervalSeconds ?? (provider === 'rss_feed' ? 900 : 30),
-    enabled: row?.enabled ?? true
+    enabled: row?.enabled ?? true,
+    rssAuthType: (row?.rssAuthType as RSSAuthType | undefined) ?? 'none',
+    rssUsername: row?.rssUsername ?? '',
+    rssPassword: '',
+    hasRssPassword: !!row?.hasRssPassword
   })
   subscriptionDialog.value = true
+}
+
+function openRSSRotation() {
+  Object.assign(rssRotationForm, { rssAuthType: 'basic', rssUsername: '', rssPassword: '', onlyBlocked: false })
+  rssRotationDialog.value = true
 }
 
 function openFilter(row?: MessageSubscriptionFilter) {
@@ -431,6 +635,7 @@ async function saveAppConfig() {
     Object.assign(status, unwrapJsonApiResource(data) || {})
     appConfig.appId = ''
     appConfig.appHash = ''
+    await loadDiagnostics()
   }, { success: '配置已保存' })
 }
 
@@ -458,13 +663,64 @@ async function verifyLogin() {
       phoneCodeHash: loginForm.phoneCodeHash
     }))
     Object.assign(loginForm, { code: '', password: '', phoneCodeHash: '' })
-    await loadStatus()
+    await Promise.all([loadStatus(), loadDiagnostics()])
     ElMessage.success('会话已保存')
   } catch (error) {
     ElMessage.error(apiErrorText(error))
   } finally {
     verifyingCode.value = false
   }
+}
+
+function maintenanceMessage(result: any) {
+  const skipped = Array.isArray(result?.skipped) ? result.skipped.length : 0
+  const audit = result?.checked ? `，巡检 ${result.checked}，通过 ${result?.passed ?? 0}，失败 ${result?.failed ?? 0}` : ''
+  return `匹配 ${result?.matched ?? 0}${audit}，更新 ${result?.updated ?? 0}，入队 ${result?.queued ?? 0}${skipped ? `，跳过 ${skipped}` : ''}`
+}
+
+async function runSubscriptionMaintenance(payload: Record<string, any>) {
+  const { data } = await api.post('/message-subscriptions/maintenance', jsonapiResource('message-subscription-maintenance-results', payload, 'current'))
+  return unwrapJsonApiResource<any>(data)
+}
+
+async function repairBlockedSources() {
+  await runAction('maintenanceRepair', async () => {
+    const result = await runSubscriptionMaintenance({ action: 'repair_defaults', onlyBlocked: true })
+    await Promise.all([loadSubscriptions(), loadDiagnostics()])
+    ElMessage.success(maintenanceMessage(result))
+  })
+}
+
+async function auditTelegramAccess() {
+  await runAction('telegramAccessAudit', async () => {
+    const result = await runSubscriptionMaintenance({ action: 'audit_telegram_access', provider: 'telegram_channel' })
+    await Promise.all([loadSubscriptions(), loadDiagnostics()])
+    ElMessage.success(maintenanceMessage(result))
+  })
+}
+
+async function rotateRSSAuth() {
+  if (rssRotationForm.rssAuthType === 'basic' && !rssRotationForm.rssUsername.trim()) {
+    ElMessage.warning('RSS Basic auth requires a username')
+    return
+  }
+  if (!rssRotationForm.rssPassword.trim()) {
+    ElMessage.warning('RSS auth requires a password or token')
+    return
+  }
+  await runAction('rotateRssAuth', async () => {
+    const result = await runSubscriptionMaintenance({
+      action: 'rotate_rss_auth',
+      provider: 'rss_feed',
+      onlyBlocked: rssRotationForm.onlyBlocked,
+      rssAuthType: rssRotationForm.rssAuthType,
+      rssUsername: rssRotationForm.rssAuthType === 'basic' ? rssRotationForm.rssUsername : '',
+      rssPassword: rssRotationForm.rssPassword
+    })
+    rssRotationDialog.value = false
+    await Promise.all([loadSubscriptions(), loadDiagnostics()])
+    ElMessage.success(maintenanceMessage(result))
+  })
 }
 
 async function saveSubscription() {
@@ -480,15 +736,39 @@ async function saveSubscription() {
     ElMessage.warning('启用的来源至少绑定一个投研团队')
     return
   }
+  if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType === 'basic' && !subscriptionForm.rssUsername.trim()) {
+    ElMessage.warning('RSS Basic auth requires a username')
+    return
+  }
+  if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType !== 'none' && !subscriptionForm.rssPassword.trim() && !subscriptionForm.hasRssPassword) {
+    ElMessage.warning('RSS auth requires a password or token')
+    return
+  }
   await runAction('saveSubscription', async () => {
-    const payload = { ...subscriptionForm }
+    const payload: Record<string, any> = {
+      provider: subscriptionForm.provider,
+      title: subscriptionForm.title,
+      sourceRef: subscriptionForm.sourceRef,
+      filterId: subscriptionForm.filterId,
+      teamIds: subscriptionForm.teamIds,
+      backfillLimit: subscriptionForm.backfillLimit,
+      pollIntervalSeconds: subscriptionForm.pollIntervalSeconds,
+      enabled: subscriptionForm.enabled
+    }
+    if (subscriptionForm.provider === 'rss_feed') {
+      payload.rssAuthType = subscriptionForm.rssAuthType
+      payload.rssUsername = subscriptionForm.rssAuthType === 'basic' ? subscriptionForm.rssUsername : ''
+      if (subscriptionForm.rssAuthType !== 'none' && subscriptionForm.rssPassword.trim()) {
+        payload.rssPassword = subscriptionForm.rssPassword
+      }
+    }
     if (subscriptionForm.id) {
       await api.put(`/message-subscriptions/${subscriptionForm.id}`, jsonapiResource('message-subscriptions', payload, String(subscriptionForm.id)))
     } else {
       await api.post('/message-subscriptions', jsonapiResource('message-subscriptions', payload))
     }
     subscriptionDialog.value = false
-    await loadSubscriptions()
+    await Promise.all([loadSubscriptions(), loadDiagnostics()])
   }, { success: '订阅来源已保存，采集任务已启动' })
 }
 
@@ -513,7 +793,7 @@ async function saveFilter() {
       await api.post('/message-subscription-filters', jsonapiResource('message-subscription-filters', payload))
     }
     filterDialog.value = false
-    await Promise.all([loadFilters(), loadSubscriptions()])
+    await Promise.all([loadFilters(), loadSubscriptions(), loadDiagnostics()])
   }, { success: '过滤器已保存' })
 }
 
@@ -521,21 +801,21 @@ async function setDefaultFilter(row: MessageSubscriptionFilter) {
   if (row.isDefault) return
   await runAction(`defaultFilter:${row.id}`, async () => {
     await api.put(`/message-subscription-filters/${row.id}`, jsonapiResource('message-subscription-filters', { isDefault: true }, String(row.id)))
-    await loadFilters()
+    await Promise.all([loadFilters(), loadDiagnostics()])
   }, { success: '默认过滤器已更新' })
 }
 
 async function toggle(row: MessageSubscription) {
   await runAction(`toggleSubscription:${row.id}`, async () => {
     await api.put(`/message-subscriptions/${row.id}`, jsonapiResource('message-subscriptions', { enabled: !row.enabled }, String(row.id)))
-    await loadSubscriptions()
+    await Promise.all([loadSubscriptions(), loadDiagnostics()])
   }, { success: row.enabled ? '订阅来源已停用' : '订阅来源已启用' })
 }
 
 async function deleteSubscription(row: MessageSubscription) {
   await runAction(`deleteSubscription:${row.id}`, async () => {
     await api.delete(`/message-subscriptions/${row.id}`)
-    await loadSubscriptions()
+    await Promise.all([loadSubscriptions(), loadDiagnostics()])
   }, { success: '订阅来源已删除' })
 }
 
@@ -544,9 +824,23 @@ async function testDraft() {
     ElMessage.warning('请先填写订阅来源')
     return
   }
+  if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType === 'basic' && !subscriptionForm.rssUsername.trim()) {
+    ElMessage.warning('RSS Basic auth requires a username')
+    return
+  }
+  if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType !== 'none' && !subscriptionForm.rssPassword.trim()) {
+    ElMessage.warning('RSS draft test requires a password or token')
+    return
+  }
   testingDraft.value = true
   try {
-    const { data } = await api.post('/message-subscriptions/test', jsonapiResource('message-subscription-tests', { provider: subscriptionForm.provider, sourceRef: subscriptionForm.sourceRef }))
+    const payload: Record<string, any> = { provider: subscriptionForm.provider, sourceRef: subscriptionForm.sourceRef }
+    if (subscriptionForm.provider === 'rss_feed') {
+      payload.rssAuthType = subscriptionForm.rssAuthType
+      payload.rssUsername = subscriptionForm.rssAuthType === 'basic' ? subscriptionForm.rssUsername : ''
+      if (subscriptionForm.rssAuthType !== 'none') payload.rssPassword = subscriptionForm.rssPassword
+    }
+    const { data } = await api.post('/message-subscriptions/test', jsonapiResource('message-subscription-tests', payload))
     testResult.value = unwrapJsonApiResource(data)
     if (!subscriptionForm.title && testResult.value?.title) subscriptionForm.title = testResult.value.title
     testVisible.value = true
@@ -571,7 +865,7 @@ async function collect(row?: MessageSubscription) {
   try {
     await runAction(key, async () => {
       await api.post('/message-subscriptions/collect', jsonapiResource('message-subscription-collect-results', { limit: 200, subscriptionId: row?.id }))
-      await loadSubscriptions()
+      await Promise.all([loadSubscriptions(), loadDiagnostics()])
     }, { success: '采集任务已启动' })
   } finally {
     if (!row) collecting.value = false
@@ -597,6 +891,34 @@ watch(
   (provider) => {
     if (subscriptionDialog.value && subscriptionForm.id === null) {
       subscriptionForm.pollIntervalSeconds = provider === 'rss_feed' ? 900 : 30
+    }
+    if (provider !== 'rss_feed') {
+      subscriptionForm.rssAuthType = 'none'
+      subscriptionForm.rssUsername = ''
+      subscriptionForm.rssPassword = ''
+      subscriptionForm.hasRssPassword = false
+    }
+  }
+)
+
+watch(
+  () => subscriptionForm.rssAuthType,
+  (authType) => {
+    if (authType === 'none') {
+      subscriptionForm.rssUsername = ''
+      subscriptionForm.rssPassword = ''
+    }
+    if (authType === 'bearer') {
+      subscriptionForm.rssUsername = ''
+    }
+  }
+)
+
+watch(
+  () => rssRotationForm.rssAuthType,
+  (authType) => {
+    if (authType === 'bearer') {
+      rssRotationForm.rssUsername = ''
     }
   }
 )

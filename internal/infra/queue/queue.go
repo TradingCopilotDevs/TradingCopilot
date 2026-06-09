@@ -17,6 +17,7 @@ const (
 	TypeEvaluateWakePlans     = "evaluate_wake_plans"
 	TypeRunPaperMaintenance   = "run_paper_maintenance"
 	TypeRecoverQueuedMeetings = "recover_queued_meetings"
+	TypeRunBackupRestoreDrill = "run_backup_restore_drill"
 )
 
 type RunMeetingPayload struct {
@@ -33,6 +34,8 @@ type Handlers struct {
 	EvaluateWakePlans     func(context.Context) error
 	RunPaperMaintenance   func(context.Context) error
 	RecoverQueuedMeetings func(context.Context) error
+	RunBackupRestoreDrill func(context.Context) error
+	MarketTasks           MarketTaskHandlers
 	MessageTasks          MessageTaskHandlers
 }
 
@@ -40,33 +43,62 @@ func NewServeMux(handlers Handlers) *asynq.ServeMux {
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(TypeRunMeeting, func(ctx context.Context, task *asynq.Task) error {
 		start := time.Now()
+		ctx, raw, span := beginTaskSpan(ctx, TypeRunMeeting, task.Payload())
+		defer span.End()
 		var payload RunMeetingPayload
-		if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+		if err := json.Unmarshal(raw, &payload); err != nil {
+			finishTaskSpan(span, err)
 			infralogging.LogOperation(start, "queue.task", "meeting", "run", "queue task run_meeting failed", err, zap.String("taskType", TypeRunMeeting))
 			return err
 		}
 		err := handlers.RunMeeting(ctx, payload)
+		finishTaskSpan(span, err)
 		infralogging.LogOperation(start, "queue.task", "meeting", "run", "queue task run_meeting completed", err, zap.String("taskType", TypeRunMeeting), zap.Uint("meetingId", payload.MeetingID))
 		return err
 	})
-	mux.HandleFunc(TypeEvaluateWakePlans, func(ctx context.Context, _ *asynq.Task) error {
+	mux.HandleFunc(TypeEvaluateWakePlans, func(ctx context.Context, task *asynq.Task) error {
 		start := time.Now()
+		ctx, _, span := beginTaskSpan(ctx, TypeEvaluateWakePlans, task.Payload())
+		defer span.End()
 		err := handlers.EvaluateWakePlans(ctx)
+		finishTaskSpan(span, err)
 		infralogging.LogOperation(start, "queue.task", "wake", "evaluate", "queue task evaluate_wake_plans completed", err, zap.String("taskType", TypeEvaluateWakePlans))
 		return err
 	})
-	mux.HandleFunc(TypeRunPaperMaintenance, func(ctx context.Context, _ *asynq.Task) error {
+	mux.HandleFunc(TypeRunPaperMaintenance, func(ctx context.Context, task *asynq.Task) error {
 		start := time.Now()
+		ctx, _, span := beginTaskSpan(ctx, TypeRunPaperMaintenance, task.Payload())
+		defer span.End()
 		err := handlers.RunPaperMaintenance(ctx)
+		finishTaskSpan(span, err)
 		infralogging.LogOperation(start, "queue.task", "paper", "run", "queue task run_paper_maintenance completed", err, zap.String("taskType", TypeRunPaperMaintenance))
 		return err
 	})
-	mux.HandleFunc(TypeRecoverQueuedMeetings, func(ctx context.Context, _ *asynq.Task) error {
+	mux.HandleFunc(TypeRecoverQueuedMeetings, func(ctx context.Context, task *asynq.Task) error {
 		start := time.Now()
+		ctx, _, span := beginTaskSpan(ctx, TypeRecoverQueuedMeetings, task.Payload())
+		defer span.End()
 		err := handlers.RecoverQueuedMeetings(ctx)
+		finishTaskSpan(span, err)
 		infralogging.LogOperation(start, "queue.task", "meeting", "recover", "queue task recover_queued_meetings completed", err, zap.String("taskType", TypeRecoverQueuedMeetings))
 		return err
 	})
+	mux.HandleFunc(TypeRunBackupRestoreDrill, func(ctx context.Context, task *asynq.Task) error {
+		start := time.Now()
+		ctx, _, span := beginTaskSpan(ctx, TypeRunBackupRestoreDrill, task.Payload())
+		defer span.End()
+		if handlers.RunBackupRestoreDrill == nil {
+			err := errors.New("backup restore drill handler is not configured")
+			finishTaskSpan(span, err)
+			infralogging.LogOperation(start, "queue.task", "ops", "restore_drill", "queue task run_backup_restore_drill failed", err, zap.String("taskType", TypeRunBackupRestoreDrill))
+			return err
+		}
+		err := handlers.RunBackupRestoreDrill(ctx)
+		finishTaskSpan(span, err)
+		infralogging.LogOperation(start, "queue.task", "ops", "restore_drill", "queue task run_backup_restore_drill completed", err, zap.String("taskType", TypeRunBackupRestoreDrill))
+		return err
+	})
+	RegisterMarketTaskHandlers(mux, handlers.MarketTasks)
 	RegisterMessageTaskHandlers(mux, handlers.MessageTasks)
 	return mux
 }
@@ -83,21 +115,29 @@ func RedisClientOpt(redisURL string) asynq.RedisClientOpt {
 }
 
 func EnqueueRunMeeting(settings config.Settings, meetingID uint) error {
+	return EnqueueRunMeetingContext(context.Background(), settings, meetingID)
+}
+
+func EnqueueRunMeetingContext(ctx context.Context, settings config.Settings, meetingID uint) error {
 	start := time.Now()
 	client := asynq.NewClient(RedisClientOpt(settings.RedisURL))
 	defer client.Close()
-	payload, _ := json.Marshal(RunMeetingPayload{MeetingID: meetingID})
-	_, err := client.Enqueue(asynq.NewTask(TypeRunMeeting, payload), asynq.TaskID("run_meeting:"+itoa(meetingID)), asynq.Timeout(settings.MeetingRunTimeout), asynq.Retention(0))
+	payload := encodeTaskPayload(ctx, RunMeetingPayload{MeetingID: meetingID})
+	_, err := client.EnqueueContext(ctx, asynq.NewTask(TypeRunMeeting, payload), asynq.TaskID("run_meeting:"+itoa(meetingID)), asynq.Timeout(settings.MeetingRunTimeout), asynq.Retention(0))
 	infralogging.LogOperation(start, "queue.enqueue", "meeting", "enqueue", "queue enqueue run_meeting completed", err, zap.String("taskType", TypeRunMeeting), zap.Uint("meetingId", meetingID))
 	return err
 }
 
 func EnqueueDuePeriodicJobs(client *asynq.Client, now time.Time, jobs []PeriodicJob, next map[string]time.Time) error {
+	return EnqueueDuePeriodicJobsContext(context.Background(), client, now, jobs, next)
+}
+
+func EnqueueDuePeriodicJobsContext(ctx context.Context, client *asynq.Client, now time.Time, jobs []PeriodicJob, next map[string]time.Time) error {
 	for _, job := range jobs {
 		if now.Before(next[job.Type]) {
 			continue
 		}
-		_, err := client.Enqueue(asynq.NewTask(job.Type, nil), periodicEnqueueOptions(job, now)...)
+		_, err := client.EnqueueContext(ctx, asynq.NewTask(job.Type, encodeTaskPayloadBytes(ctx, nil)), periodicEnqueueOptions(job, now)...)
 		if err != nil {
 			if IsExistingPeriodicTask(err) {
 				infralogging.Logger().Info("queue periodic task skipped",

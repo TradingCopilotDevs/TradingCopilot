@@ -81,6 +81,15 @@ canvas {
   background: #243245;
 }
 
+.sidebar-actions {
+  padding: 12px 20px 20px;
+}
+
+.sidebar-actions .el-button {
+  width: 100%;
+  justify-content: center;
+}
+
 .content {
   background: #f4f7fb;
   padding: var(--shell-padding);
@@ -529,6 +538,20 @@ canvas {
 .source-error {
   display: block;
   color: #dc2626;
+  overflow-wrap: anywhere;
+}
+
+.diagnostic-action-list,
+.diagnostic-check-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.diagnostic-action-list span {
+  max-width: 100%;
+  color: #4b5563;
   overflow-wrap: anywhere;
 }
 

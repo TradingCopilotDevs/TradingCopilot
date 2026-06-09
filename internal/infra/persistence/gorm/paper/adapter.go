@@ -5,7 +5,6 @@ import (
 	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
 	"time"
 
-	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -51,8 +50,12 @@ func (s Service) CreateOrder(ctx context.Context, input domainpaper.OrderInput) 
 	return CreateOrderFromSpec(s.db.WithContext(ctx), orderInputSpec(input))
 }
 
-func (s Service) FillOrder(ctx context.Context, row *domainpaper.Order, price decimal.Decimal) error {
-	return FillOrder(s.db.WithContext(ctx), row, price)
+func (s Service) SubmitOrder(ctx context.Context, row *domainpaper.Order) error {
+	return SubmitOrder(s.db.WithContext(ctx), row)
+}
+
+func (s Service) FillOrder(ctx context.Context, row *domainpaper.Order, input domainpaper.OrderFillInput) error {
+	return FillOrderWithInput(s.db.WithContext(ctx), row, input)
 }
 
 func (s Service) OrdersPublic(ctx context.Context, rows []domainpaper.Order) []map[string]any {

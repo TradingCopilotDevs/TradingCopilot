@@ -6,5 +6,11 @@ end_of_line = crlf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+[*.go]
+end_of_line = lf
+
 [*.sh]
+end_of_line = lf
+
+[*.{yml,yaml}]
 end_of_line = lf

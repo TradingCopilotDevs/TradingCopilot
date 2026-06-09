@@ -20,6 +20,7 @@ import (
 	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	infraai "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/ai"
+	infrabackup "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/backup"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
 	inframarketdata "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata"
@@ -121,17 +122,18 @@ func httpDependencies(settings config.Settings, db *gorm.DB, sec security.Servic
 		AI:        appai.NewUsecase(gormrepo.NewAIRepository(db), sec, infraai.NewModelSyncer(settings, sec, runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleAI, 0)), gormuow.NewAIUnitOfWork(db)),
 		Dashboard: appdashboard.NewUsecase(infradashboard.NewLoader(db, settings), appdashboard.Settings{AppName: settings.AppName, AppEnv: settings.AppEnv}),
 		Logs:      applogging.NewUsecase(infralogging.NewReader(settings)),
-		Market:    appmarket.NewUsecase(gormrepo.NewMarketRepository(db), inframarketdata.NewService(settings, gormmarketdata.NewStore(db, settings, sec)), gormuow.NewMarketUnitOfWork(db, settings)),
+		Market:    appmarket.NewUsecase(gormrepo.NewMarketRepository(db), inframarketdata.NewService(settings, gormmarketdata.NewStore(db, settings, sec)), gormuow.NewMarketUnitOfWork(db, settings)).WithTaskQueue(infraqueue.NewRedisMarketTaskQueue(settings)),
 		Meeting: appmeeting.NewUsecase(gormrepo.NewMeetingRepository(db), inframeeting.NewService(db), appmeeting.Settings{
 			MeetingDispatchMode: settings.MeetingDispatchMode,
-		}, gormuow.NewMeetingUnitOfWork(db)).WithMeetingEnqueuer(func(meetingID uint) error {
-			return infraqueue.EnqueueRunMeeting(settings, meetingID)
+		}, gormuow.NewMeetingUnitOfWork(db)).WithMeetingEnqueuerContext(func(ctx context.Context, meetingID uint) error {
+			return infraqueue.EnqueueRunMeetingContext(ctx, settings, meetingID)
 		}),
 		Messaging: appmessaging.NewUsecase(gormrepo.NewMessagingRepository(db), inframessaging.NewService(settings), sec, gormuow.NewMessagingUnitOfWork(db, settings)).WithTaskQueue(messageQueue),
 		Paper:     apppaper.NewUsecase(gormrepo.NewPaperRepository(db), infrapaper.NewService(db), gormuow.NewPaperUnitOfWork(db)),
 		Research:  appresearch.NewUsecase(gormrepo.NewResearchRepository(db), gormuow.NewResearchUnitOfWork(db)),
 		AppConfig: appsettings.NewUsecase(gormrepo.NewSettingsRepository(db), sec, appSettings(settings), gormuow.NewSettingsUnitOfWork(db), config.WriteEnvOverrides).WithProxyTester(infraproxy.NewTester(db, settings, sec)),
 		Wake:      appwake.NewUsecase(gormrepo.NewWakeRepository(db), inframarketdata.NewService(settings, gormmarketdata.NewStore(db, settings, sec)), gormuow.NewWakeUnitOfWork(db, settings)),
+		Backup:    infrabackup.StoreForSettings(settings),
 	}
 }
 
@@ -154,8 +156,8 @@ func messageTaskHandlers(settings config.Settings, db *gorm.DB, sec security.Ser
 	messagingUsecase := appmessaging.NewUsecase(gormrepo.NewMessagingRepository(db), inframessaging.NewService(settings), sec, gormuow.NewMessagingUnitOfWork(db, settings)).WithTaskQueue(queue)
 	meetingUsecase := appmeeting.NewUsecase(gormrepo.NewMeetingRepository(db), inframeeting.NewService(db), appmeeting.Settings{
 		MeetingDispatchMode: settings.MeetingDispatchMode,
-	}, gormuow.NewMeetingUnitOfWork(db)).WithMeetingEnqueuer(func(meetingID uint) error {
-		return infraqueue.EnqueueRunMeeting(settings, meetingID)
+	}, gormuow.NewMeetingUnitOfWork(db)).WithMeetingEnqueuerContext(func(ctx context.Context, meetingID uint) error {
+		return infraqueue.EnqueueRunMeetingContext(ctx, settings, meetingID)
 	})
 	return infraqueue.MessageTaskHandlers{
 		Collect: func(ctx context.Context, task appmessaging.CollectTask) error {
@@ -189,10 +191,31 @@ func dispatchMessageMeetings(ctx context.Context, meetingUsecase appmeeting.Usec
 
 func httpSettings(settings config.Settings) httptransport.Settings {
 	return httptransport.Settings{
-		AppName:      settings.AppName,
-		AppEnv:       settings.AppEnv,
-		CORSOrigins:  settings.CORSOrigins,
-		FrontendDist: settings.FrontendDist,
+		AppName:                    settings.AppName,
+		AppEnv:                     settings.AppEnv,
+		CORSOrigins:                settings.CORSOrigins,
+		FrontendDist:               settings.FrontendDist,
+		DatabaseURL:                settings.DatabaseURL,
+		RedisURL:                   settings.RedisURL,
+		MeetingMode:                settings.MeetingDispatchMode,
+		LogDir:                     settings.LogDir,
+		RuntimeEnvFile:             settings.RuntimeEnvFile,
+		BackupArchiveProvider:      settings.BackupArchiveProvider,
+		BackupArchiveS3Bucket:      settings.BackupArchiveS3Bucket,
+		BackupArchiveS3Region:      settings.BackupArchiveS3Region,
+		BackupArchiveS3Endpoint:    settings.BackupArchiveS3Endpoint,
+		BackupArchiveS3AccessKeyID: settings.BackupArchiveS3AccessKeyID,
+		BackupArchiveS3SecretKey:   settings.BackupArchiveS3SecretAccessKey,
+		BackupArchiveS3Prefix:      settings.BackupArchiveS3Prefix,
+		BackupArchiveOSSBucket:     settings.BackupArchiveOSSBucket,
+		BackupArchiveOSSRegion:     settings.BackupArchiveOSSRegion,
+		BackupArchiveOSSEndpoint:   settings.BackupArchiveOSSEndpoint,
+		BackupArchiveOSSAccessKey:  settings.BackupArchiveOSSAccessKeyID,
+		BackupArchiveOSSSecretKey:  settings.BackupArchiveOSSAccessKeySecret,
+		BackupArchiveOSSPrefix:     settings.BackupArchiveOSSPrefix,
+		BackupCopies:               settings.BackupRetentionCopies,
+		BackupDays:                 settings.BackupRetentionDays,
+		BackupRestoreDrillInterval: settings.BackupRestoreDrillInterval,
 	}
 }
 
@@ -207,6 +230,7 @@ func appSettings(settings config.Settings) appsettings.RuntimeSettings {
 		MarketRealtimeCacheTTL:       settings.MarketRealtimeCacheTTL,
 		MeetingMaxRounds:             settings.MeetingMaxRounds,
 		MeetingDailyTokenBudget:      settings.MeetingDailyTokenBudget,
+		AIDailyCostBudget:            settings.AIDailyCostBudget,
 		ToolResultLimit:              settings.ToolResultLimit,
 		SQLStatementTimeoutMillis:    settings.SQLStatementTimeoutMillis,
 		LogDir:                       settings.LogDir,
@@ -215,6 +239,26 @@ func appSettings(settings config.Settings) appsettings.RuntimeSettings {
 		LogRotationSizeMB:            settings.LogRotationSizeMB,
 		LogRotationTotalSizeMB:       settings.LogRotationTotalSizeMB,
 		LogRotationMaxAgeDays:        settings.LogRotationMaxAgeDays,
+		BackupArchiveProvider:        settings.BackupArchiveProvider,
+		BackupArchiveS3Bucket:        settings.BackupArchiveS3Bucket,
+		BackupArchiveS3Region:        settings.BackupArchiveS3Region,
+		BackupArchiveS3Endpoint:      settings.BackupArchiveS3Endpoint,
+		BackupArchiveS3AccessKeyID:   settings.BackupArchiveS3AccessKeyID,
+		BackupArchiveS3SecretKey:     settings.BackupArchiveS3SecretAccessKey,
+		BackupArchiveS3Prefix:        settings.BackupArchiveS3Prefix,
+		BackupArchiveOSSBucket:       settings.BackupArchiveOSSBucket,
+		BackupArchiveOSSRegion:       settings.BackupArchiveOSSRegion,
+		BackupArchiveOSSEndpoint:     settings.BackupArchiveOSSEndpoint,
+		BackupArchiveOSSAccessKey:    settings.BackupArchiveOSSAccessKeyID,
+		BackupArchiveOSSSecretKey:    settings.BackupArchiveOSSAccessKeySecret,
+		BackupArchiveOSSPrefix:       settings.BackupArchiveOSSPrefix,
+		BackupRestoreDrillInterval:   settings.BackupRestoreDrillInterval,
+		OTELServiceName:              settings.OTELServiceName,
+		OTELTracesExporter:           settings.OTELTracesExporter,
+		OTELExporterOTLPEndpoint:     settings.OTELExporterOTLPEndpoint,
+		OTELExporterOTLPProtocol:     settings.OTELExporterOTLPProtocol,
+		OTELTracesSampler:            settings.OTELTracesSampler,
+		OTELTracesSamplerArg:         settings.OTELTracesSamplerArg,
 		RuntimeEnvFile:               settings.RuntimeEnvFile,
 	}
 }

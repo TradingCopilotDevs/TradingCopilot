@@ -729,9 +729,9 @@ func TestRSSCredentialFreeContractIsExplicit(t *testing.T) {
 		t.Fatal(err)
 	}
 	apiContractText := string(apiContractRaw)
-	for _, required := range []string{"RSS/Atom subscriptions require public", "reject URL-embedded credentials", "do not support feed authentication in v1"} {
+	for _, required := range []string{"RSS/Atom subscriptions require http/https", "reject URL-embedded credentials", "rssAuthType", "Basic/Bearer feed authentication"} {
 		if !strings.Contains(apiContractText, required) {
-			t.Fatalf("doc/api-contract.md must document RSS/Atom credential-free contract via %q", required)
+			t.Fatalf("doc/api-contract.md must document RSS/Atom feed credential contract via %q", required)
 		}
 	}
 
@@ -1577,7 +1577,7 @@ func TestMessagingRuntimeAdapterIsOutsideGORMPersistence(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(raw)
-	for _, required := range []string{"github.com/mmcdole/gofeed", "ProviderRSSFeed", "ParseURLWithContext"} {
+	for _, required := range []string{"github.com/mmcdole/gofeed", "ProviderRSSFeed", "http.NewRequestWithContext", "applyRSSAuthHeader"} {
 		if !strings.Contains(text, required) {
 			t.Fatalf("internal/infra/messaging/service.go must own RSS/Atom runtime via %q", required)
 		}

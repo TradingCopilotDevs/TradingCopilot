@@ -1,6 +1,12 @@
 package httptransport
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"go.opentelemetry.io/otel/trace"
+)
 
 func TestHTTPLogGroupAndNoise(t *testing.T) {
 	cases := []struct {
@@ -22,5 +28,28 @@ func TestHTTPLogGroupAndNoise(t *testing.T) {
 		if noise := logNoise(tt.path, group); noise != tt.noise {
 			t.Fatalf("%s noise = %v, want %v", tt.path, noise, tt.noise)
 		}
+	}
+}
+
+func TestTraceRequestsExtractsTraceContext(t *testing.T) {
+	var traceID string
+	handler := traceRequests(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		spanCtx := trace.SpanContextFromContext(r.Context())
+		if spanCtx.IsValid() {
+			traceID = spanCtx.TraceID().String()
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204", rec.Code)
+	}
+	if traceID != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Fatalf("trace id = %q", traceID)
 	}
 }

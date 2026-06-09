@@ -65,7 +65,55 @@ func (s *Server) GetAuthBootstrapRequired(w http.ResponseWriter, r *http.Request
 	s.bootstrapRequired(w, r)
 }
 func (s *Server) PostAuthLogin(w http.ResponseWriter, r *http.Request) { s.login(w, r) }
-func (s *Server) GetDashboard(w http.ResponseWriter, r *http.Request)  { s.dashboard(w, r) }
+func (s *Server) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
+	s.logout(w, r)
+}
+func (s *Server) GetAdminUsers(w http.ResponseWriter, r *http.Request, _ openapi.GetAdminUsersParams) {
+	s.listAdminUsers(w, r)
+}
+func (s *Server) PostAdminUsers(w http.ResponseWriter, r *http.Request) { s.createAdminUser(w, r) }
+func (s *Server) PutAdminUser(w http.ResponseWriter, r *http.Request, _ openapi.UserId) {
+	s.updateAdminUser(w, r)
+}
+func (s *Server) PostAdminUserPasswordReset(w http.ResponseWriter, r *http.Request, _ openapi.UserId) {
+	s.resetAdminUserPassword(w, r)
+}
+func (s *Server) GetAdminSessions(w http.ResponseWriter, r *http.Request, _ openapi.GetAdminSessionsParams) {
+	s.listAdminSessions(w, r)
+}
+func (s *Server) PostAdminSessionRevoke(w http.ResponseWriter, r *http.Request, _ openapi.SessionId) {
+	s.revokeAdminSession(w, r)
+}
+func (s *Server) GetAuditEvents(w http.ResponseWriter, r *http.Request, _ openapi.GetAuditEventsParams) {
+	s.listAuditEvents(w, r)
+}
+func (s *Server) GetOpsProviderHealth(w http.ResponseWriter, r *http.Request) {
+	s.providerHealth(w, r)
+}
+func (s *Server) GetOpsJobs(w http.ResponseWriter, r *http.Request, _ openapi.GetOpsJobsParams) {
+	s.opsJobs(w, r)
+}
+func (s *Server) GetOpsMetrics(w http.ResponseWriter, r *http.Request) { s.opsMetrics(w, r) }
+func (s *Server) PostOpsJobsRetryFailed(w http.ResponseWriter, r *http.Request) {
+	s.retryFailedOpsJobs(w, r)
+}
+func (s *Server) PostOpsJobTaskRun(w http.ResponseWriter, r *http.Request, queue openapi.Queue, taskID openapi.TaskId) {
+	s.runOpsJobTask(w, r, string(queue), string(taskID))
+}
+func (s *Server) GetOpsBackups(w http.ResponseWriter, r *http.Request) { s.opsBackups(w, r) }
+func (s *Server) PostOpsBackups(w http.ResponseWriter, r *http.Request) {
+	s.createOpsBackup(w, r)
+}
+func (s *Server) PostOpsBackupRestoreDryRun(w http.ResponseWriter, r *http.Request, backupName openapi.BackupName) {
+	s.restoreOpsBackupDryRun(w, r, string(backupName))
+}
+func (s *Server) GetDashboard(w http.ResponseWriter, r *http.Request) { s.dashboard(w, r) }
+func (s *Server) GetSetupReadiness(w http.ResponseWriter, r *http.Request) {
+	s.setupReadiness(w, r)
+}
+func (s *Server) PostSetupAction(w http.ResponseWriter, r *http.Request, _ openapi.Key) {
+	s.runSetupAction(w, r)
+}
 func (s *Server) GetLogs(w http.ResponseWriter, r *http.Request, _ openapi.GetLogsParams) {
 	s.listLogs(w, r)
 }
@@ -87,6 +135,7 @@ func (s *Server) PostMarketSymbols(w http.ResponseWriter, r *http.Request) { s.c
 func (s *Server) PostMarketSymbolsSync(w http.ResponseWriter, r *http.Request) {
 	s.syncMarketSymbols(w, r)
 }
+func (s *Server) PostMarketTasks(w http.ResponseWriter, r *http.Request) { s.submitMarketTask(w, r) }
 func (s *Server) DeleteMarketSymbol(w http.ResponseWriter, r *http.Request, _ openapi.Code) {
 	s.deleteSymbol(w, r)
 }
@@ -102,6 +151,9 @@ func (s *Server) PostMessageSubscriptionAppConfig(w http.ResponseWriter, r *http
 }
 func (s *Server) GetMessageSubscriptions(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageSubscriptionsParams) {
 	s.listMessageSubscriptions(w, r)
+}
+func (s *Server) GetMessageSubscriptionDiagnostics(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageSubscriptionDiagnosticsParams) {
+	s.listMessageSubscriptionDiagnostics(w, r)
 }
 func (s *Server) GetMessageSubscriptionFilters(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageSubscriptionFiltersParams) {
 	s.listMessageSubscriptionFilters(w, r)
@@ -120,6 +172,9 @@ func (s *Server) PostMessageSubscriptionsTest(w http.ResponseWriter, r *http.Req
 }
 func (s *Server) PostMessageSubscriptionsCollect(w http.ResponseWriter, r *http.Request) {
 	s.collectMessageSubscriptions(w, r)
+}
+func (s *Server) PostMessageSubscriptionsMaintenance(w http.ResponseWriter, r *http.Request) {
+	s.maintainMessageSubscriptions(w, r)
 }
 func (s *Server) DeleteMessageSubscription(w http.ResponseWriter, r *http.Request, _ openapi.SubscriptionId) {
 	s.deleteMessageSubscription(w, r)
@@ -160,14 +215,47 @@ func (s *Server) PostIngestedMessages(w http.ResponseWriter, r *http.Request) {
 func (s *Server) PostIngestedMessagesRefilter(w http.ResponseWriter, r *http.Request) {
 	s.refilterIngestedMessages(w, r)
 }
+func (s *Server) PostIngestedMessagesFeedbackBatch(w http.ResponseWriter, r *http.Request) {
+	s.feedbackIngestedMessagesBatch(w, r)
+}
 func (s *Server) DeleteIngestedMessage(w http.ResponseWriter, r *http.Request, _ openapi.MessageId) {
 	s.deleteIngestedMessage(w, r)
 }
 func (s *Server) PutIngestedMessage(w http.ResponseWriter, r *http.Request, _ openapi.MessageId) {
 	s.updateIngestedMessage(w, r)
 }
+func (s *Server) PostIngestedMessageFeedback(w http.ResponseWriter, r *http.Request, _ openapi.MessageId) {
+	s.feedbackIngestedMessage(w, r)
+}
 func (s *Server) PostIngestedMessageFilter(w http.ResponseWriter, r *http.Request, _ openapi.MessageId) {
 	s.filterIngestedMessage(w, r)
+}
+func (s *Server) GetMessageFeedbackTrainingSamples(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageFeedbackTrainingSamplesParams) {
+	s.listMessageFeedbackTrainingSamples(w, r)
+}
+func (s *Server) GetMessageFeedbackEvaluation(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageFeedbackEvaluationParams) {
+	s.getMessageFeedbackEvaluation(w, r)
+}
+func (s *Server) GetMessageFeedbackTrainingSnapshots(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageFeedbackTrainingSnapshotsParams) {
+	s.listMessageFeedbackTrainingSnapshots(w, r)
+}
+func (s *Server) PostMessageFeedbackTrainingSnapshot(w http.ResponseWriter, r *http.Request, _ openapi.PostMessageFeedbackTrainingSnapshotParams) {
+	s.createMessageFeedbackTrainingSnapshot(w, r)
+}
+func (s *Server) GetMessageFeedbackTrainingExports(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageFeedbackTrainingExportsParams) {
+	s.listMessageFeedbackTrainingExports(w, r)
+}
+func (s *Server) PostMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request, _ openapi.PostMessageFeedbackTrainingExportParams) {
+	s.createMessageFeedbackTrainingExport(w, r)
+}
+func (s *Server) GetMessageFeedbackTrainingExport(w http.ResponseWriter, r *http.Request, _ openapi.ExportVersion) {
+	s.getMessageFeedbackTrainingExport(w, r)
+}
+func (s *Server) GetMessageFeedbackSourceTrust(w http.ResponseWriter, r *http.Request, _ openapi.GetMessageFeedbackSourceTrustParams) {
+	s.getMessageFeedbackSourceTrust(w, r)
+}
+func (s *Server) PostMessageFeedbackSourceTrustRecompute(w http.ResponseWriter, r *http.Request, _ openapi.PostMessageFeedbackSourceTrustRecomputeParams) {
+	s.recomputeMessageFeedbackSourceTrust(w, r)
 }
 func (s *Server) GetMarketWatchlist(w http.ResponseWriter, r *http.Request, _ openapi.GetMarketWatchlistParams) {
 	s.listWatchlist(w, r)
@@ -202,6 +290,12 @@ func (s *Server) GetMeetingEvents(w http.ResponseWriter, r *http.Request, _ open
 }
 func (s *Server) PostMeetingRecap(w http.ResponseWriter, r *http.Request, _ openapi.MeetingId) {
 	s.recapMeeting(w, r)
+}
+func (s *Server) PostMeetingTrustReview(w http.ResponseWriter, r *http.Request, _ openapi.MeetingId) {
+	s.reviewMeetingTrustSentence(w, r)
+}
+func (s *Server) PostMeetingRecapActionReview(w http.ResponseWriter, r *http.Request, _ openapi.MeetingId) {
+	s.reviewMeetingRecapAction(w, r)
 }
 func (s *Server) GetMeetingReferences(w http.ResponseWriter, r *http.Request, _ openapi.MeetingId, _ openapi.GetMeetingReferencesParams) {
 	s.listReferences(w, r)
@@ -239,11 +333,23 @@ func (s *Server) PostPaperAccountDeactivate(w http.ResponseWriter, r *http.Reque
 func (s *Server) GetPaperAccountFills(w http.ResponseWriter, r *http.Request, _ openapi.AccountId, _ openapi.GetPaperAccountFillsParams) {
 	s.listFills(w, r)
 }
+func (s *Server) GetPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request, _ openapi.AccountId, _ openapi.GetPaperAccountCorporateActionsParams) {
+	s.listCorporateActions(w, r)
+}
+func (s *Server) PostPaperAccountCorporateActions(w http.ResponseWriter, r *http.Request, _ openapi.AccountId) {
+	s.createCorporateAction(w, r)
+}
+func (s *Server) PostPaperAccountBacktests(w http.ResponseWriter, r *http.Request, _ openapi.AccountId) {
+	s.paperBacktest(w, r)
+}
 func (s *Server) GetPaperAccountOrders(w http.ResponseWriter, r *http.Request, _ openapi.AccountId, _ openapi.GetPaperAccountOrdersParams) {
 	s.listAccountOrders(w, r)
 }
 func (s *Server) GetPaperAccountPerformance(w http.ResponseWriter, r *http.Request, _ openapi.AccountId) {
 	s.paperPerformance(w, r)
+}
+func (s *Server) GetPaperAccountReplay(w http.ResponseWriter, r *http.Request, _ openapi.AccountId) {
+	s.paperReplay(w, r)
 }
 func (s *Server) GetPaperAccountPositions(w http.ResponseWriter, r *http.Request, _ openapi.AccountId, _ openapi.GetPaperAccountPositionsParams) {
 	s.listPositions(w, r)
@@ -254,6 +360,12 @@ func (s *Server) GetPaperOrders(w http.ResponseWriter, r *http.Request, _ openap
 func (s *Server) PostPaperOrders(w http.ResponseWriter, r *http.Request) { s.createOrder(w, r) }
 func (s *Server) DeletePaperOrder(w http.ResponseWriter, r *http.Request, _ openapi.OrderId) {
 	s.deleteOrder(w, r)
+}
+func (s *Server) PostPaperOrderApprove(w http.ResponseWriter, r *http.Request, _ openapi.OrderId) {
+	s.approveOrder(w, r)
+}
+func (s *Server) PostPaperOrderReject(w http.ResponseWriter, r *http.Request, _ openapi.OrderId) {
+	s.rejectOrder(w, r)
 }
 func (s *Server) PostPaperOrderCancel(w http.ResponseWriter, r *http.Request, _ openapi.OrderId) {
 	s.cancelOrder(w, r)
@@ -299,6 +411,9 @@ func (s *Server) GetWakePlans(w http.ResponseWriter, r *http.Request, _ openapi.
 	s.listWakePlans(w, r)
 }
 func (s *Server) PostWakePlans(w http.ResponseWriter, r *http.Request) { s.createWakePlan(w, r) }
+func (s *Server) PutWakePlan(w http.ResponseWriter, r *http.Request, _ openapi.PlanId) {
+	s.updateWakePlan(w, r)
+}
 func (s *Server) DeleteWakePlan(w http.ResponseWriter, r *http.Request, _ openapi.PlanId) {
 	s.deleteWakePlan(w, r)
 }

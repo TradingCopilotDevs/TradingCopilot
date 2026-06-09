@@ -95,6 +95,19 @@
         <el-input-number v-model="appForm.MEETING_DAILY_TOKEN_BUDGET" :min="-1" :step="10000" />
         <div class="form-tip">-1 means unlimited; positive integers enforce a daily cap.</div>
       </el-form-item>
+      <el-form-item label="AI 每日成本预算">
+        <el-input-number v-model="appForm.AI_DAILY_COST_BUDGET" :min="-1" :precision="4" :step="1" />
+        <div class="form-tip">-1 表示不限制。运维页会按 provider payload 或下方价格表估算 24h 成本。</div>
+      </el-form-item>
+      <el-form-item label="AI 模型价格表">
+        <el-input
+          v-model="aiCostRatesText"
+          type="textarea"
+          :rows="8"
+          placeholder='{"currency":"USD","rates":[]}'
+        />
+        <div class="form-tip">JSON 格式，rates 每项支持 providerId/providerName、model、inputPerMillion、outputPerMillion 或 totalPerMillion。</div>
+      </el-form-item>
       <el-form-item label="工具结果上限">
         <el-input-number v-model="appForm.TOOL_RESULT_LIMIT" :min="10" :max="2000" />
       </el-form-item>
@@ -138,6 +151,58 @@
       <el-form-item label="保留天数">
         <el-input-number v-model="appForm.LOG_ROTATION_MAX_AGE_DAYS" :min="1" :max="365" />
         <div class="form-tip">仅按时间轮转时使用，默认每日切分并保留 7 天。</div>
+      </el-form-item>
+
+      <el-divider content-position="left">备份归档</el-divider>
+
+      <el-alert
+        type="info"
+        :closable="false"
+        title="S3/OSS 配置完整后会作为真实备份归档 provider；凭据留空表示不更新已有 .env 值。"
+        class="settings-inline-alert"
+      />
+      <el-form-item label="归档配置目标">
+        <el-select v-model="appForm.BACKUP_ARCHIVE_PROVIDER">
+          <el-option label="本地归档" value="local" />
+          <el-option label="S3 归档" value="s3" />
+          <el-option label="OSS 归档" value="oss" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="S3 Bucket">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_S3_BUCKET" placeholder="tradingcopilot-backups" />
+      </el-form-item>
+      <el-form-item label="S3 Region">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_S3_REGION" placeholder="us-east-1" />
+      </el-form-item>
+      <el-form-item label="S3 Endpoint">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_S3_ENDPOINT" placeholder="https://s3.example.com" />
+      </el-form-item>
+      <el-form-item label="S3 Access Key ID">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_S3_ACCESS_KEY_ID" type="password" show-password placeholder="留空则不更新" />
+      </el-form-item>
+      <el-form-item label="S3 Secret Access Key">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY" type="password" show-password placeholder="留空则不更新" />
+      </el-form-item>
+      <el-form-item label="S3 Prefix">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_S3_PREFIX" placeholder="prod/tradingcopilot" />
+      </el-form-item>
+      <el-form-item label="OSS Bucket">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_OSS_BUCKET" placeholder="tradingcopilot-backups" />
+      </el-form-item>
+      <el-form-item label="OSS Region">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_OSS_REGION" placeholder="cn-hangzhou" />
+      </el-form-item>
+      <el-form-item label="OSS Endpoint">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_OSS_ENDPOINT" placeholder="https://oss-cn-hangzhou.aliyuncs.com" />
+      </el-form-item>
+      <el-form-item label="OSS Access Key ID">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID" type="password" show-password placeholder="留空则不更新" />
+      </el-form-item>
+      <el-form-item label="OSS Access Key Secret">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET" type="password" show-password placeholder="留空则不更新" />
+      </el-form-item>
+      <el-form-item label="OSS Prefix">
+        <el-input v-model="appForm.BACKUP_ARCHIVE_OSS_PREFIX" placeholder="prod/tradingcopilot" />
       </el-form-item>
 
       <el-button type="primary" @click="saveAppSettings">保存并同步 .env 文件</el-button>
@@ -244,7 +309,7 @@ interface RuntimeEnvItem {
 
 interface AppSettingRecord {
   key: string
-  value: { value?: string | number | boolean | null }
+  value: { value?: unknown }
 }
 
 interface AppFormState {
@@ -255,6 +320,7 @@ interface AppFormState {
   MARKET_REALTIME_CACHE_TTL_SECONDS: number
   MEETING_MAX_ROUNDS: number
   MEETING_DAILY_TOKEN_BUDGET: number
+  AI_DAILY_COST_BUDGET: number
   TOOL_RESULT_LIMIT: number
   SQL_STATEMENT_TIMEOUT_MS: number
   LOG_DIR: string
@@ -263,6 +329,19 @@ interface AppFormState {
   LOG_ROTATION_SIZE_MB: number
   LOG_ROTATION_TOTAL_SIZE_MB: number
   LOG_ROTATION_MAX_AGE_DAYS: number
+  BACKUP_ARCHIVE_PROVIDER: 'local' | 's3' | 'oss'
+  BACKUP_ARCHIVE_S3_BUCKET: string
+  BACKUP_ARCHIVE_S3_REGION: string
+  BACKUP_ARCHIVE_S3_ENDPOINT: string
+  BACKUP_ARCHIVE_S3_ACCESS_KEY_ID: string
+  BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY: string
+  BACKUP_ARCHIVE_S3_PREFIX: string
+  BACKUP_ARCHIVE_OSS_BUCKET: string
+  BACKUP_ARCHIVE_OSS_REGION: string
+  BACKUP_ARCHIVE_OSS_ENDPOINT: string
+  BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID: string
+  BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET: string
+  BACKUP_ARCHIVE_OSS_PREFIX: string
 }
 
 interface ProxyTestItem {
@@ -279,6 +358,8 @@ const savedAppSettings = ref<AppSettingRecord[]>([])
 const secretValues = reactive<Record<string, string>>({})
 const proxyNoProxyText = ref('localhost,127.0.0.1')
 const proxyTestResults = ref<ProxyTestItem[]>([])
+const defaultAICostRatesText = JSON.stringify({ currency: 'USD', rates: [] }, null, 2)
+const aiCostRatesText = ref(defaultAICostRatesText)
 
 const appForm = reactive<AppFormState>({
   PUBLIC_BASE_URL: '',
@@ -288,6 +369,7 @@ const appForm = reactive<AppFormState>({
   MARKET_REALTIME_CACHE_TTL_SECONDS: 5,
   MEETING_MAX_ROUNDS: 6,
   MEETING_DAILY_TOKEN_BUDGET: -1,
+  AI_DAILY_COST_BUDGET: -1,
   TOOL_RESULT_LIMIT: 200,
   SQL_STATEMENT_TIMEOUT_MS: 5000,
   LOG_DIR: './logs',
@@ -295,7 +377,20 @@ const appForm = reactive<AppFormState>({
   LOG_ROTATION_MODE: 'size',
   LOG_ROTATION_SIZE_MB: 5,
   LOG_ROTATION_TOTAL_SIZE_MB: 100,
-  LOG_ROTATION_MAX_AGE_DAYS: 7
+  LOG_ROTATION_MAX_AGE_DAYS: 7,
+  BACKUP_ARCHIVE_PROVIDER: 'local',
+  BACKUP_ARCHIVE_S3_BUCKET: '',
+  BACKUP_ARCHIVE_S3_REGION: '',
+  BACKUP_ARCHIVE_S3_ENDPOINT: '',
+  BACKUP_ARCHIVE_S3_ACCESS_KEY_ID: '',
+  BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY: '',
+  BACKUP_ARCHIVE_S3_PREFIX: '',
+  BACKUP_ARCHIVE_OSS_BUCKET: '',
+  BACKUP_ARCHIVE_OSS_REGION: '',
+  BACKUP_ARCHIVE_OSS_ENDPOINT: '',
+  BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID: '',
+  BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET: '',
+  BACKUP_ARCHIVE_OSS_PREFIX: ''
 })
 
 const proxyForm = reactive<ProxySettings>({
@@ -327,6 +422,18 @@ function normalizeCompatProvider(value: unknown): AppFormState['MARKET_REALTIME_
   return text === 'sina' || text === 'disabled' ? text : 'tencent'
 }
 
+function normalizeBackupArchiveProvider(value: unknown): AppFormState['BACKUP_ARCHIVE_PROVIDER'] {
+  const text = String(value ?? '').trim()
+  return text === 's3' || text === 'oss' ? text : 'local'
+}
+
+function clearBackupArchiveSecretFields() {
+  appForm.BACKUP_ARCHIVE_S3_ACCESS_KEY_ID = ''
+  appForm.BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY = ''
+  appForm.BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID = ''
+  appForm.BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET = ''
+}
+
 async function load() {
   const [envResp, defsResp, secretsResp, appResp, proxyResp] = await Promise.all([
     api.get('/settings/runtime-env'),
@@ -340,8 +447,13 @@ async function load() {
   secretDefinitions.value = unwrapJsonApiCollection<any>(defsResp.data)
   secrets.value = unwrapJsonApiCollection<any>(secretsResp.data)
   savedAppSettings.value = unwrapJsonApiCollection<AppSettingRecord>(appResp.data)
+  const savedCostRates = valueFromSetting('AI_COST_RATES')
+  aiCostRatesText.value = savedCostRates && typeof savedCostRates === 'object'
+    ? JSON.stringify(savedCostRates, null, 2)
+    : defaultAICostRatesText
   Object.assign(proxyForm, unwrapJsonApiResource<ProxySettings>(proxyResp.data))
   proxyNoProxyText.value = (proxyForm.noProxy || ['localhost', '127.0.0.1']).join(',')
+  clearBackupArchiveSecretFields()
 
   for (const row of runtimeEnv.value) {
     if (!row.editableInUi || !(row.key in appForm)) {
@@ -371,6 +483,9 @@ async function load() {
       case 'MEETING_DAILY_TOKEN_BUDGET':
         appForm.MEETING_DAILY_TOKEN_BUDGET = Number(value)
         break
+      case 'AI_DAILY_COST_BUDGET':
+        appForm.AI_DAILY_COST_BUDGET = Number(value)
+        break
       case 'TOOL_RESULT_LIMIT':
         appForm.TOOL_RESULT_LIMIT = Number(value)
         break
@@ -395,6 +510,33 @@ async function load() {
       case 'LOG_ROTATION_MAX_AGE_DAYS':
         appForm.LOG_ROTATION_MAX_AGE_DAYS = Number(value)
         break
+      case 'BACKUP_ARCHIVE_PROVIDER':
+        appForm.BACKUP_ARCHIVE_PROVIDER = normalizeBackupArchiveProvider(value)
+        break
+      case 'BACKUP_ARCHIVE_S3_BUCKET':
+        appForm.BACKUP_ARCHIVE_S3_BUCKET = String(value)
+        break
+      case 'BACKUP_ARCHIVE_S3_REGION':
+        appForm.BACKUP_ARCHIVE_S3_REGION = String(value)
+        break
+      case 'BACKUP_ARCHIVE_S3_ENDPOINT':
+        appForm.BACKUP_ARCHIVE_S3_ENDPOINT = String(value)
+        break
+      case 'BACKUP_ARCHIVE_S3_PREFIX':
+        appForm.BACKUP_ARCHIVE_S3_PREFIX = String(value)
+        break
+      case 'BACKUP_ARCHIVE_OSS_BUCKET':
+        appForm.BACKUP_ARCHIVE_OSS_BUCKET = String(value)
+        break
+      case 'BACKUP_ARCHIVE_OSS_REGION':
+        appForm.BACKUP_ARCHIVE_OSS_REGION = String(value)
+        break
+      case 'BACKUP_ARCHIVE_OSS_ENDPOINT':
+        appForm.BACKUP_ARCHIVE_OSS_ENDPOINT = String(value)
+        break
+      case 'BACKUP_ARCHIVE_OSS_PREFIX':
+        appForm.BACKUP_ARCHIVE_OSS_PREFIX = String(value)
+        break
     }
   }
 }
@@ -417,7 +559,19 @@ async function saveSecret(definition: any) {
 }
 
 async function saveAppSettings() {
-  const payloads: Record<string, string | number> = {
+  let aiCostRates: Record<string, unknown>
+  try {
+    const parsed = JSON.parse(aiCostRatesText.value || '{}')
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('AI cost rates must be a JSON object')
+    }
+    aiCostRates = parsed
+  } catch (error) {
+    ElMessage.warning(`AI 模型价格表不是合法 JSON：${(error as Error).message}`)
+    return
+  }
+
+  const payloads: Record<string, string | number | Record<string, unknown>> = {
     PUBLIC_BASE_URL: appForm.PUBLIC_BASE_URL,
     DEFAULT_MARKET_PROVIDER: appForm.DEFAULT_MARKET_PROVIDER,
     MARKET_REALTIME_PROVIDER: appForm.MARKET_REALTIME_PROVIDER,
@@ -425,6 +579,8 @@ async function saveAppSettings() {
     MARKET_REALTIME_CACHE_TTL_SECONDS: appForm.MARKET_REALTIME_CACHE_TTL_SECONDS,
     MEETING_MAX_ROUNDS: appForm.MEETING_MAX_ROUNDS,
     MEETING_DAILY_TOKEN_BUDGET: appForm.MEETING_DAILY_TOKEN_BUDGET,
+    AI_DAILY_COST_BUDGET: appForm.AI_DAILY_COST_BUDGET,
+    AI_COST_RATES: aiCostRates,
     TOOL_RESULT_LIMIT: appForm.TOOL_RESULT_LIMIT,
     SQL_STATEMENT_TIMEOUT_MS: appForm.SQL_STATEMENT_TIMEOUT_MS,
     LOG_DIR: appForm.LOG_DIR,
@@ -432,7 +588,33 @@ async function saveAppSettings() {
     LOG_ROTATION_MODE: appForm.LOG_ROTATION_MODE,
     LOG_ROTATION_SIZE_MB: appForm.LOG_ROTATION_SIZE_MB,
     LOG_ROTATION_TOTAL_SIZE_MB: appForm.LOG_ROTATION_TOTAL_SIZE_MB,
-    LOG_ROTATION_MAX_AGE_DAYS: appForm.LOG_ROTATION_MAX_AGE_DAYS
+    LOG_ROTATION_MAX_AGE_DAYS: appForm.LOG_ROTATION_MAX_AGE_DAYS,
+    BACKUP_ARCHIVE_PROVIDER: appForm.BACKUP_ARCHIVE_PROVIDER,
+    BACKUP_ARCHIVE_S3_BUCKET: appForm.BACKUP_ARCHIVE_S3_BUCKET,
+    BACKUP_ARCHIVE_S3_REGION: appForm.BACKUP_ARCHIVE_S3_REGION,
+    BACKUP_ARCHIVE_S3_ENDPOINT: appForm.BACKUP_ARCHIVE_S3_ENDPOINT,
+    BACKUP_ARCHIVE_S3_PREFIX: appForm.BACKUP_ARCHIVE_S3_PREFIX,
+    BACKUP_ARCHIVE_OSS_BUCKET: appForm.BACKUP_ARCHIVE_OSS_BUCKET,
+    BACKUP_ARCHIVE_OSS_REGION: appForm.BACKUP_ARCHIVE_OSS_REGION,
+    BACKUP_ARCHIVE_OSS_ENDPOINT: appForm.BACKUP_ARCHIVE_OSS_ENDPOINT,
+    BACKUP_ARCHIVE_OSS_PREFIX: appForm.BACKUP_ARCHIVE_OSS_PREFIX
+  }
+  const secretPayloads: Array<keyof Pick<AppFormState,
+    'BACKUP_ARCHIVE_S3_ACCESS_KEY_ID' |
+    'BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY' |
+    'BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID' |
+    'BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET'
+  >> = [
+    'BACKUP_ARCHIVE_S3_ACCESS_KEY_ID',
+    'BACKUP_ARCHIVE_S3_SECRET_ACCESS_KEY',
+    'BACKUP_ARCHIVE_OSS_ACCESS_KEY_ID',
+    'BACKUP_ARCHIVE_OSS_ACCESS_KEY_SECRET'
+  ]
+  for (const key of secretPayloads) {
+    const value = String(appForm[key] || '').trim()
+    if (value) {
+      payloads[key] = value
+    }
   }
 
   await Promise.all(

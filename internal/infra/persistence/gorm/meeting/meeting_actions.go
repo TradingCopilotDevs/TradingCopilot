@@ -3,6 +3,7 @@ package meeting
 import (
 	"encoding/json"
 	"fmt"
+	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
@@ -43,6 +44,17 @@ func TryApplyModeratorRecapFromEvents(db *gorm.DB, meeting *domainmeeting.Meetin
 func ApplyMeetingRecapActions(db *gorm.DB, meeting *domainmeeting.Meeting, recapEvent *domainmeeting.Event, moderatorRoleKey string, recap map[string]any) error {
 	if moderatorRoleKey == "" {
 		moderatorRoleKey = "moderator"
+	}
+	if err := appmeeting.ValidateModeratorRecapActions(recap); err != nil {
+		if recapHasActions(recap) {
+			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Executable recap actions were blocked by evidence policy: "+err.Error(), recapActionGatePayload(recap, "recap_actions_blocked", err.Error(), "evidence_policy", "blocked"))
+		}
+		return nil
+	}
+	if recapActionsRequireReview(recap) {
+		reason := "executable actions cite only role messages; add a tool/source citation or explicit evidence event reference before automation"
+		_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Executable recap actions require manual review because evidence references are weak role-only citations.", recapActionGatePayload(recap, "recap_actions_review_required", reason, "weak_reference_review", "manual_review_required"))
+		return nil
 	}
 	watchlistActions := recapWatchlistActions(recap, recapEvent, meeting)
 	for _, raw := range watchlistActions {
@@ -221,6 +233,117 @@ func recapHasActions(recap map[string]any) bool {
 	return len(objectList(recap["watchlist_actions"])) > 0 || len(objectList(recap["wake_plans"])) > 0 || len(objectList(recap["orders"])) > 0
 }
 
+func recapActionGatePayload(recap map[string]any, status string, reason string, policy string, disposition string) map[string]any {
+	suggestions := recapActionSuggestions(recap, disposition, reason)
+	return map[string]any{
+		"status":                 status,
+		"reason":                 reason,
+		"policy":                 policy,
+		"disposition":            disposition,
+		"watchlist_action_count": len(objectList(recap["watchlist_actions"])),
+		"wake_plan_count":        len(objectList(recap["wake_plans"])),
+		"order_count":            len(objectList(recap["orders"])),
+		"suggestion_count":       len(suggestions),
+		"suggested_actions":      suggestions,
+		"evidence_summary": map[string]any{
+			"facts":              stringList(recap["facts"]),
+			"inferences":         stringList(recap["inferences"]),
+			"citations":          stringList(recap["citations"]),
+			"evidence_event_ids": anyList(firstNonEmptyAny(recap["evidence_event_ids"], recap["evidenceEventIds"], recap["evidence_ids"], recap["evidenceIds"])),
+		},
+	}
+}
+
+func recapActionSuggestions(recap map[string]any, disposition string, reason string) []map[string]any {
+	out := []map[string]any{}
+	out = append(out, recapActionSuggestionsForType("watchlist", objectList(recap["watchlist_actions"]), disposition, reason)...)
+	out = append(out, recapActionSuggestionsForType("wake_plan", objectList(recap["wake_plans"]), disposition, reason)...)
+	out = append(out, recapActionSuggestionsForType("paper_order", objectList(recap["orders"]), disposition, reason)...)
+	return out
+}
+
+func recapActionSuggestionsForType(actionType string, actions []map[string]any, disposition string, reason string) []map[string]any {
+	out := make([]map[string]any, 0, len(actions))
+	for index, spec := range actions {
+		out = append(out, map[string]any{
+			"action_type": actionType,
+			"index":       index,
+			"disposition": disposition,
+			"reason":      reason,
+			"spec":        spec,
+		})
+	}
+	return out
+}
+
+func recapActionsRequireReview(recap map[string]any) bool {
+	if !recapHasActions(recap) {
+		return false
+	}
+	if hasStrongActionCitation(recap["citations"]) || hasStrongActionCitation(recap["citation_ids"]) || hasExplicitEvidenceReference(recap) {
+		return false
+	}
+	for _, raw := range recapActionObjects(recap) {
+		if hasStrongActionCitation(raw["citations"]) || hasStrongActionCitation(raw["citation_ids"]) || hasExplicitEvidenceReference(raw) {
+			return false
+		}
+	}
+	return true
+}
+
+func recapActionObjects(recap map[string]any) []map[string]any {
+	out := []map[string]any{}
+	out = append(out, objectList(recap["watchlist_actions"])...)
+	out = append(out, objectList(recap["wake_plans"])...)
+	out = append(out, objectList(recap["orders"])...)
+	return out
+}
+
+func hasStrongActionCitation(value any) bool {
+	for _, raw := range anyList(value) {
+		text := actionCitationText(raw)
+		if text == "" || strings.HasPrefix(text, "@") {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+func actionCitationText(value any) string {
+	switch typed := value.(type) {
+	case map[string]any:
+		return strings.TrimSpace(firstNonEmptyString(stringFromAny(typed["id"]), stringFromAny(typed["source"]), stringFromAny(typed["tool"]), stringFromAny(typed["url"]), stringFromAny(typed["ref"])))
+	default:
+		return strings.TrimSpace(stringFromAny(value))
+	}
+}
+
+func hasExplicitEvidenceReference(values map[string]any) bool {
+	for _, key := range []string{"evidence_event_ids", "evidenceEventIds", "evidence_ids", "evidenceIds", "source_event_ids", "sourceEventIds"} {
+		if hasNonEmptyReferenceValue(values[key]) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasNonEmptyReferenceValue(value any) bool {
+	switch typed := value.(type) {
+	case nil:
+		return false
+	case []any, []string, []uint:
+		for _, item := range anyList(typed) {
+			if strings.TrimSpace(stringFromAny(item)) != "" {
+				return true
+			}
+		}
+		return false
+	default:
+		return strings.TrimSpace(stringFromAny(value)) != ""
+	}
+}
+
 func recapWatchlistActions(recap map[string]any, recapEvent *domainmeeting.Event, meeting *domainmeeting.Meeting) []map[string]any {
 	watchlistActions := objectList(recap["watchlist_actions"])
 	orders := objectList(recap["orders"])
@@ -310,6 +433,18 @@ func anyList(value any) []any {
 	case []any:
 		return typed
 	case []string:
+		out := make([]any, 0, len(typed))
+		for _, item := range typed {
+			out = append(out, item)
+		}
+		return out
+	case []uint:
+		out := make([]any, 0, len(typed))
+		for _, item := range typed {
+			out = append(out, item)
+		}
+		return out
+	case []int:
 		out := make([]any, 0, len(typed))
 		for _, item := range typed {
 			out = append(out, item)

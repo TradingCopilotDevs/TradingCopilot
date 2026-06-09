@@ -1,6 +1,10 @@
 package meeting
 
-import "errors"
+import (
+	"errors"
+
+	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
+)
 
 var errMeetingRunSuperseded = errors.New("meeting run is no longer active")
 
@@ -12,19 +16,6 @@ func (e activeMeetingFailure) Error() string {
 	return e.reason
 }
 
-type roleTurnResult struct {
-	Content    string
-	Raw        string
-	Questions  []map[string]string
-	Mentions   []string
-	Citations  []string
-	Confidence string
-}
+type roleTurnResult = appmeeting.RoleTurnResult
 
-type moderatorPlan struct {
-	Content            string
-	Raw                string
-	ContinueDiscussion bool
-	FocusRoles         []string
-	Questions          []map[string]string
-}
+type moderatorPlan = appmeeting.ModeratorPlan

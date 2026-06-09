@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -66,6 +67,172 @@ func TestFilterMessageDoesNotPersistFailureWhenParentContextCanceled(t *testing.
 	}
 }
 
+func TestProcessFilterTaskReturnsRetryableErrorAfterPersistingFilterFailure(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", Enabled: true, FilterID: 1}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{filterErr: errors.New("provider timeout")}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, found, err := usecase.ProcessFilterTask(ctx, FilterTask{MessageID: 1})
+	if !found || err == nil || result == nil {
+		t.Fatalf("ProcessFilterTask found=%v result=%+v err=%v, want retryable error with result", found, result, err)
+	}
+	stored := repo.messages[1]
+	if stored.FilterStatus != domainmsg.FilterStatusFailed || stored.FilterReason == nil || !strings.Contains(*stored.FilterReason, "provider timeout") {
+		t.Fatalf("filter failure was not persisted for operator visibility: %+v", stored)
+	}
+	if len(result.CreatedMeetings) != 0 || result.Row.Message.FilterStatus != domainmsg.FilterStatusFailed {
+		t.Fatalf("failed filter should not create meetings and should return failed row, got %+v", result)
+	}
+}
+
+func TestFilterMessageAppliesSourceTrustDownrank(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "Noisy Feed", SourceRef: "@noisy", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.messages[10] = domainmsg.IngestedMessage{ID: 10, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	now := time.Now()
+	noise := domainmsg.FeedbackNoise
+	misclassified := domainmsg.FeedbackMisclassified
+	ignore := domainkernel.NewsIgnore
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "1", MessageTime: now, Text: "noise one", FilterDecision: &ignore, FeedbackLabel: &noise, FeedbackAt: &now}
+	repo.messages[2] = domainmsg.IngestedMessage{ID: 2, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "2", MessageTime: now, Text: "noise two", FilterDecision: &ignore, FeedbackLabel: &noise, FeedbackAt: &now}
+	repo.messages[3] = domainmsg.IngestedMessage{ID: 3, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "3", MessageTime: now, Text: "bad classification", FilterDecision: &ignore, FeedbackLabel: &misclassified, FeedbackAt: &now}
+	service := &fakeMessagingService{filter: FilterResult{
+		Decision:       ptrDecision(domainkernel.NewsMeeting),
+		Reason:         ptrString("model wanted a meeting"),
+		RelatedSymbols: jsonBytes(t, []string{"600000"}),
+		FilterID:       1,
+	}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, found, err := usecase.FilterMessage(ctx, 10)
+	if err != nil || !found {
+		t.Fatalf("FilterMessage found=%v err=%v", found, err)
+	}
+	if result.Row.Message.FilterDecision == nil || *result.Row.Message.FilterDecision != domainkernel.NewsObserve {
+		t.Fatalf("low-trust source should downrank meeting to observe, got %+v", result.Row.Message.FilterDecision)
+	}
+	if result.Row.Message.FilterReason == nil || !strings.Contains(*result.Row.Message.FilterReason, "Source trust auto-downrank applied") {
+		t.Fatalf("expected downrank reason to be persisted, got %+v", result.Row.Message.FilterReason)
+	}
+	if len(result.CreatedMeetings) != 0 || repo.createMeetingCalls != 0 {
+		t.Fatalf("downranked meeting should not dispatch a meeting, result=%+v createMeetingCalls=%d", result.CreatedMeetings, repo.createMeetingCalls)
+	}
+	report, err := usecase.SourceTrustReport(ctx, SourceTrustFilter{SubscriptionID: "1"})
+	if err != nil {
+		t.Fatalf("SourceTrustReport: %v", err)
+	}
+	if len(report.Items) != 1 || report.Items[0].AutoAction == "" {
+		t.Fatalf("expected source trust report to expose auto action: %+v", report.Items)
+	}
+}
+
+func TestFeedbackTrainingSamplesAndSourceTrustReport(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "Useful Feed", SourceRef: "@useful", Enabled: true}
+	repo.subscriptions[2] = domainmsg.MessageSubscription{ID: 2, Provider: domainmsg.ProviderRSSFeed, Title: "Noisy Feed", SourceRef: "https://example.test/feed.xml", Enabled: true}
+	now := time.Now()
+	helpful := domainmsg.FeedbackHelpful
+	noise := domainmsg.FeedbackNoise
+	misclassified := domainmsg.FeedbackMisclassified
+	observe := domainkernel.NewsObserve
+	ignore := domainkernel.NewsIgnore
+	meeting := domainkernel.NewsMeeting
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "1", MessageTime: now, Text: "600000 useful", FilterDecision: &observe, FeedbackLabel: &helpful, FeedbackAt: &now}
+	repo.messages[2] = domainmsg.IngestedMessage{ID: 2, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "2", MessageTime: now, Text: "600001 useful", FilterDecision: &observe, FeedbackLabel: &helpful, FeedbackAt: &now}
+	repo.messages[3] = domainmsg.IngestedMessage{ID: 3, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "3", MessageTime: now, Text: "600002 noisy", FilterDecision: &ignore, FeedbackLabel: &noise, FeedbackAt: &now}
+	repo.messages[4] = domainmsg.IngestedMessage{ID: 4, SubscriptionID: 2, Provider: domainmsg.ProviderRSSFeed, SourceMessageID: "4", MessageTime: now, Text: "bad classification", FilterDecision: &meeting, FeedbackLabel: &misclassified, FeedbackAt: &now}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	samples, err := usecase.ListFeedbackTrainingSamples(ctx, FeedbackTrainingFilter{SubscriptionID: "1", Label: domainmsg.FeedbackHelpful, Limit: 10})
+	if err != nil {
+		t.Fatalf("ListFeedbackTrainingSamples: %v", err)
+	}
+	if len(samples.Rows) != 2 || samples.Rows[0].Subscription.SourceRef != "@useful" || samples.Rows[0].TrainingUse != "positive_source_signal" || samples.Rows[0].SampleWeight != 1 {
+		t.Fatalf("unexpected feedback samples: %+v", samples.Rows)
+	}
+
+	report, err := usecase.SourceTrustReport(ctx, SourceTrustFilter{})
+	if err != nil {
+		t.Fatalf("SourceTrustReport: %v", err)
+	}
+	if report.SampleCount != 4 || report.SourceCount != 2 {
+		t.Fatalf("unexpected report counts: %+v", report)
+	}
+	if report.Items[0].SourceRef != "@useful" || report.Items[0].Status != "watch" || report.Items[0].TrustScore <= report.Items[1].TrustScore {
+		t.Fatalf("unexpected source trust ranking: %+v", report.Items)
+	}
+	if report.Items[1].Status != "insufficient_feedback" {
+		t.Fatalf("single negative sample should still require more feedback: %+v", report.Items[1])
+	}
+
+	evaluation, err := usecase.FeedbackEvaluation(ctx, FeedbackTrainingFilter{})
+	if err != nil {
+		t.Fatalf("FeedbackEvaluation: %v", err)
+	}
+	if evaluation.SampleCount != 4 || evaluation.AgreementCount != 3 || evaluation.NeedsDecisionCorrectionCount != 1 || evaluation.Status != "needs_more_feedback" {
+		t.Fatalf("unexpected feedback evaluation: %+v", evaluation)
+	}
+
+	snapshot, err := usecase.CreateFeedbackTrainingSnapshot(ctx, FeedbackTrainingFilter{})
+	if err != nil {
+		t.Fatalf("CreateFeedbackTrainingSnapshot: %v", err)
+	}
+	if snapshot.SampleCount != 4 || snapshot.SourceCount != 2 || snapshot.Fingerprint == "" || snapshot.Version == "" || snapshot.SampleRefCount != 4 {
+		t.Fatalf("unexpected feedback snapshot: %+v", snapshot)
+	}
+	repeated, err := usecase.CreateFeedbackTrainingSnapshot(ctx, FeedbackTrainingFilter{})
+	if err != nil {
+		t.Fatalf("CreateFeedbackTrainingSnapshot repeated: %v", err)
+	}
+	if repeated.Version != snapshot.Version {
+		t.Fatalf("unchanged training set should reuse snapshot version, got %q then %q", snapshot.Version, repeated.Version)
+	}
+	snapshots, err := usecase.ListFeedbackTrainingSnapshots(ctx, FeedbackTrainingFilter{})
+	if err != nil {
+		t.Fatalf("ListFeedbackTrainingSnapshots: %v", err)
+	}
+	if len(snapshots) != 1 || snapshots[0].Fingerprint != snapshot.Fingerprint {
+		t.Fatalf("unexpected persisted snapshots: %+v", snapshots)
+	}
+
+	export, err := usecase.CreateFeedbackTrainingExport(ctx, FeedbackTrainingFilter{})
+	if err != nil {
+		t.Fatalf("CreateFeedbackTrainingExport: %v", err)
+	}
+	if export.SampleCount != 4 || export.LineCount != 4 || export.ByteCount == 0 || export.ContentSHA256 == "" || export.Content == "" {
+		t.Fatalf("unexpected feedback training export: %+v", export)
+	}
+	if strings.Count(export.Content, "\n") != export.LineCount || !strings.Contains(export.Content, `"feedbackLabel":"helpful"`) {
+		t.Fatalf("unexpected feedback training export content: %q", export.Content)
+	}
+	foundExport, found, err := usecase.FindFeedbackTrainingExport(ctx, export.Version)
+	if err != nil || !found || foundExport.ContentSHA256 != export.ContentSHA256 {
+		t.Fatalf("FindFeedbackTrainingExport found=%v export=%+v err=%v", found, foundExport, err)
+	}
+	repeatedExport, err := usecase.CreateFeedbackTrainingExport(ctx, FeedbackTrainingFilter{})
+	if err != nil {
+		t.Fatalf("CreateFeedbackTrainingExport repeated: %v", err)
+	}
+	if repeatedExport.Version != export.Version {
+		t.Fatalf("unchanged training export should reuse version, got %q then %q", export.Version, repeatedExport.Version)
+	}
+	exports, err := usecase.ListFeedbackTrainingExports(ctx, FeedbackTrainingFilter{})
+	if err != nil {
+		t.Fatalf("ListFeedbackTrainingExports: %v", err)
+	}
+	if len(exports) != 1 || exports[0].ContentSHA256 != export.ContentSHA256 {
+		t.Fatalf("unexpected persisted training exports: %+v", exports)
+	}
+}
+
 func TestTelegramLoginSecretsArePersistedByAppUsecase(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
@@ -123,6 +290,370 @@ func TestSubscriptionStatusRequiresDecryptableSecrets(t *testing.T) {
 	status = usecase.SubscriptionStatus(ctx)
 	if status["has_app_id"] {
 		t.Fatal("non-numeric app_id secret should not be reported as configured")
+	}
+}
+
+func TestSubscriptionDiagnosticsReportTelegramPrivateSourceRequirements(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "Private", SourceRef: "-1001234567890", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	diagnostics, err := usecase.SubscriptionDiagnostics(ctx)
+	if err != nil {
+		t.Fatalf("SubscriptionDiagnostics: %v", err)
+	}
+	if len(diagnostics) != 1 {
+		t.Fatalf("diagnostics len=%d, want 1", len(diagnostics))
+	}
+	diagnostic := diagnostics[0]
+	if diagnostic.SourceKind != "telegram_private_numeric" || diagnostic.Status != "blocked" || diagnostic.ProxyRoute != "direct" {
+		t.Fatalf("unexpected telegram diagnostic: %+v", diagnostic)
+	}
+	sessionCheck := findSubscriptionDiagnosticCheck(t, diagnostic, "telegram_session")
+	if sessionCheck.Status != "blocked" {
+		t.Fatalf("telegram_session check = %+v, want blocked", sessionCheck)
+	}
+	privateCheck := findSubscriptionDiagnosticCheck(t, diagnostic, "telegram_private_source")
+	if privateCheck.Status != "warning" || privateCheck.Depends != "telegram_session" {
+		t.Fatalf("telegram_private_source check = %+v, want warning depending on telegram_session", privateCheck)
+	}
+}
+
+func TestSubscriptionDiagnosticsRejectRSSURLCredentials(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Private RSS", SourceRef: "https://user:pass@example.test/feed.xml", Enabled: false, FilterID: 1}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	diagnostics, err := usecase.SubscriptionDiagnostics(ctx)
+	if err != nil {
+		t.Fatalf("SubscriptionDiagnostics: %v", err)
+	}
+	if len(diagnostics) != 1 {
+		t.Fatalf("diagnostics len=%d, want 1", len(diagnostics))
+	}
+	diagnostic := diagnostics[0]
+	if diagnostic.SourceKind != "rss_url_credentials" || diagnostic.Status != "disabled" {
+		t.Fatalf("unexpected RSS diagnostic: %+v", diagnostic)
+	}
+	authCheck := findSubscriptionDiagnosticCheck(t, diagnostic, "rss_url_credentials")
+	if authCheck.Status != "blocked" {
+		t.Fatalf("rss_url_credentials check = %+v, want blocked", authCheck)
+	}
+}
+
+func TestCreateRSSSubscriptionStoresAuthSecret(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, err := usecase.CreateSubscription(ctx, SubscriptionInput{
+		Provider:       domainmsg.ProviderRSSFeed,
+		Title:          "Private RSS",
+		SourceRef:      "https://example.test/feed.xml",
+		Enabled:        false,
+		FilterID:       1,
+		RSSAuthType:    rssAuthTypeBasic,
+		RSSAuthTypeSet: true,
+		RSSUsername:    "feed-user",
+		RSSUsernameSet: true,
+		RSSPassword:    "feed-pass",
+		RSSPasswordSet: true,
+	})
+	if err != nil {
+		t.Fatalf("CreateSubscription: %v", err)
+	}
+	row := result.MessageSubscription
+	auth := rssAuthConfigFromSubscription(row)
+	if auth.Type != rssAuthTypeBasic || auth.Username != "feed-user" || auth.PasswordSecretName != rssPasswordSecretName(row.ID) {
+		t.Fatalf("unexpected rss auth config: %+v", auth)
+	}
+	if secret, ok := repo.secret(domainkernel.SecretKindMessageSubscription, rssPasswordSecretName(row.ID)); !ok || secret.EncryptedValue != "enc:feed-pass" {
+		t.Fatalf("rss auth secret not saved: %+v ok=%v", secret, ok)
+	}
+	config := jsonValueFromDomainJSON(row.Config).(map[string]any)
+	rssAuth := config["rssAuth"].(map[string]any)
+	if _, ok := rssAuth["password"]; ok {
+		t.Fatalf("rss auth config must not contain password: %+v", rssAuth)
+	}
+}
+
+func TestSubscriptionDiagnosticsReportReadyRSSAuth(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.secrets[string(domainkernel.SecretKindMessageSubscription)+":"+rssPasswordSecretName(1)] = domainsettings.Secret{Kind: domainkernel.SecretKindMessageSubscription, Name: rssPasswordSecretName(1), EncryptedValue: "enc:feed-pass"}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Private RSS", SourceRef: "https://example.test/feed.xml", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, Config: domainkernel.JSON(`{"rssAuth":{"type":"basic","username":"feed-user","passwordSecretName":"rss:1:password"}}`)}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	diagnostics, err := usecase.SubscriptionDiagnostics(ctx)
+	if err != nil {
+		t.Fatalf("SubscriptionDiagnostics: %v", err)
+	}
+	diagnostic := diagnostics[0]
+	if diagnostic.SourceKind != "rss_private_auth" || diagnostic.Status != "ready" || !diagnostic.PrivateCapable {
+		t.Fatalf("unexpected RSS diagnostic: %+v", diagnostic)
+	}
+	authCheck := findSubscriptionDiagnosticCheck(t, diagnostic, "rss_auth")
+	if authCheck.Status != "ok" {
+		t.Fatalf("rss_auth check = %+v, want ok", authCheck)
+	}
+}
+
+func TestCollectRSSSubscriptionPassesStoredAuthCredentials(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.secrets[string(domainkernel.SecretKindMessageSubscription)+":"+rssPasswordSecretName(1)] = domainsettings.Secret{Kind: domainkernel.SecretKindMessageSubscription, Name: rssPasswordSecretName(1), EncryptedValue: "enc:feed-pass"}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Private RSS", SourceRef: "https://example.test/feed.xml", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, Config: domainkernel.JSON(`{"rssAuth":{"type":"basic","username":"feed-user","passwordSecretName":"rss:1:password"}}`)}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{fetched: FetchedMessages{Title: "Private RSS", Messages: []FetchedMessage{{SourceMessageID: "item-1", MessageTime: time.Now(), Text: "private signal"}}}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	id := uint(1)
+	result, found, err := usecase.CollectSubscriptions(ctx, CollectInput{SubscriptionID: &id, Limit: 1})
+	if err != nil || !found {
+		t.Fatalf("CollectSubscriptions found=%v err=%v", found, err)
+	}
+	if result.Collected != 1 {
+		t.Fatalf("collected = %d, want 1", result.Collected)
+	}
+	got := service.lastCredentials.RSSAuth
+	if got.Type != rssAuthTypeBasic || got.Username != "feed-user" || got.Password != "feed-pass" {
+		t.Fatalf("unexpected RSS auth credentials: %+v", got)
+	}
+}
+
+func TestUpdateRSSSubscriptionToNoAuthDeletesSecret(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.secrets[string(domainkernel.SecretKindMessageSubscription)+":"+rssPasswordSecretName(1)] = domainsettings.Secret{Kind: domainkernel.SecretKindMessageSubscription, Name: rssPasswordSecretName(1), EncryptedValue: "enc:feed-pass"}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Private RSS", SourceRef: "https://example.test/feed.xml", Enabled: false, FilterID: 1, Config: domainkernel.JSON(`{"rssAuth":{"type":"basic","username":"feed-user","passwordSecretName":"rss:1:password"}}`)}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, found, err := usecase.UpdateSubscription(ctx, 1, SubscriptionInput{RSSAuthType: rssAuthTypeNone, RSSAuthTypeSet: true}, map[string]bool{"rssAuthType": true})
+	if err != nil || !found {
+		t.Fatalf("UpdateSubscription found=%v err=%v", found, err)
+	}
+	if _, ok := repo.secret(domainkernel.SecretKindMessageSubscription, rssPasswordSecretName(1)); ok {
+		t.Fatal("rss auth secret should be deleted when auth type is none")
+	}
+	if auth := rssAuthConfigFromSubscription(result.MessageSubscription); auth.Type != rssAuthTypeNone || auth.PasswordSecretName != "" {
+		t.Fatalf("unexpected rss auth config after clearing: %+v", auth)
+	}
+}
+
+func TestRunSubscriptionMaintenanceRepairsDefaultsAndQueuesCollect(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	collectErr := "previous collect failed"
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "default", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
+	repo.filters[2] = domainmsg.MessageSubscriptionFilter{ID: 2, Name: "disabled", PromptTemplate: "return JSON", Enabled: false, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Feed", SourceRef: "https://example.test/feed.xml", Enabled: true, FilterID: 2, TeamIDs: []uint{1}, LastCollectError: &collectErr}
+	queue := &fakeMessagingQueue{}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo}).WithTaskQueue(queue)
+
+	result, err := usecase.RunSubscriptionMaintenance(ctx, SubscriptionMaintenanceInput{Action: "repair_defaults", OnlyBlocked: true})
+	if err != nil {
+		t.Fatalf("RunSubscriptionMaintenance: %v", err)
+	}
+	if result.Matched != 1 || result.Updated != 1 || result.Queued != 1 || len(result.Skipped) != 0 {
+		t.Fatalf("unexpected maintenance result: %+v", result)
+	}
+	row := repo.subscriptions[1]
+	if row.FilterID != 1 || row.LastCollectError != nil {
+		t.Fatalf("subscription was not repaired: %+v", row)
+	}
+	if len(queue.collect) != 1 || queue.collect[0].SubscriptionID != 1 || queue.collect[0].Reason != "maintenance_repair" {
+		t.Fatalf("unexpected collect tasks: %+v", queue.collect)
+	}
+}
+
+func TestRunSubscriptionMaintenanceRotatesRSSAuth(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.secrets[string(domainkernel.SecretKindMessageSubscription)+":"+rssPasswordSecretName(1)] = domainsettings.Secret{Kind: domainkernel.SecretKindMessageSubscription, Name: rssPasswordSecretName(1), EncryptedValue: "enc:old-pass"}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Private RSS", SourceRef: "https://example.test/feed.xml", Enabled: false, FilterID: 1, Config: domainkernel.JSON(`{"rssAuth":{"type":"basic","username":"old-user","passwordSecretName":"rss:1:password"}}`)}
+	repo.subscriptions[2] = domainmsg.MessageSubscription{ID: 2, Provider: domainmsg.ProviderTelegramChannel, Title: "Telegram", SourceRef: "@news", Enabled: false, FilterID: 1}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, err := usecase.RunSubscriptionMaintenance(ctx, SubscriptionMaintenanceInput{
+		Action:          "rotate_rss_auth",
+		SubscriptionIDs: []uint{1, 2},
+		RSSAuthType:     rssAuthTypeBasic,
+		RSSAuthTypeSet:  true,
+		RSSUsername:     "new-user",
+		RSSUsernameSet:  true,
+		RSSPassword:     "new-pass",
+		RSSPasswordSet:  true,
+	})
+	if err != nil {
+		t.Fatalf("RunSubscriptionMaintenance: %v", err)
+	}
+	if result.Matched != 2 || result.Updated != 1 || len(result.Skipped) != 1 {
+		t.Fatalf("unexpected maintenance result: %+v", result)
+	}
+	auth := rssAuthConfigFromSubscription(repo.subscriptions[1])
+	if auth.Type != rssAuthTypeBasic || auth.Username != "new-user" || auth.PasswordSecretName != rssPasswordSecretName(1) {
+		t.Fatalf("unexpected auth config after rotation: %+v", auth)
+	}
+	if secret, ok := repo.secret(domainkernel.SecretKindMessageSubscription, rssPasswordSecretName(1)); !ok || secret.EncryptedValue != "enc:new-pass" {
+		t.Fatalf("rss auth secret not rotated: %+v ok=%v", secret, ok)
+	}
+}
+
+func TestRunSubscriptionMaintenanceAuditsTelegramAccess(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	oldErr := "telegram access audit failed: old permission issue"
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "Public", SourceRef: "@public", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, LastCollectError: &oldErr}
+	repo.subscriptions[2] = domainmsg.MessageSubscription{ID: 2, Provider: domainmsg.ProviderTelegramChannel, Title: "Private", SourceRef: "-100123", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.subscriptions[3] = domainmsg.MessageSubscription{ID: 3, Provider: domainmsg.ProviderRSSFeed, Title: "Feed", SourceRef: "https://example.test/feed.xml", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{testErrors: map[string]error{"-100123": errors.New("peer not accessible")}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, err := usecase.RunSubscriptionMaintenance(ctx, SubscriptionMaintenanceInput{Action: "audit_telegram_access", SubscriptionIDs: []uint{1, 2, 3}})
+	if err != nil {
+		t.Fatalf("RunSubscriptionMaintenance: %v", err)
+	}
+	if result.Matched != 3 || result.Checked != 2 || result.Passed != 1 || result.Failed != 1 || result.Updated != 2 || len(result.Skipped) != 1 {
+		t.Fatalf("unexpected maintenance result: %+v", result)
+	}
+	if repo.subscriptions[1].LastCollectError != nil {
+		t.Fatalf("successful audit should clear previous telegram access error, got %q", *repo.subscriptions[1].LastCollectError)
+	}
+	if repo.subscriptions[2].LastCollectError == nil || !strings.Contains(*repo.subscriptions[2].LastCollectError, "peer not accessible") {
+		t.Fatalf("failed audit should persist access error, got %+v", repo.subscriptions[2].LastCollectError)
+	}
+	tested := map[string]bool{}
+	for _, call := range service.testCalls {
+		tested[call] = true
+	}
+	if len(service.testCalls) != 2 || !tested["@public"] || !tested["-100123"] {
+		t.Fatalf("unexpected tested refs: %+v", service.testCalls)
+	}
+}
+
+func TestRunSubscriptionMaintenanceAppliesSourceTrustGovernance(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "Noisy", SourceRef: "@noisy", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.subscriptions[2] = domainmsg.MessageSubscription{ID: 2, Provider: domainmsg.ProviderRSSFeed, Title: "Unreviewed", SourceRef: "https://example.test/feed.xml", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.subscriptions[3] = domainmsg.MessageSubscription{ID: 3, Provider: domainmsg.ProviderTelegramChannel, Title: "Mixed", SourceRef: "@mixed", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	now := time.Now()
+	noise := domainmsg.FeedbackNoise
+	helpful := domainmsg.FeedbackHelpful
+	ignore := domainkernel.NewsIgnore
+	observe := domainkernel.NewsObserve
+	for id := uint(1); id <= 4; id++ {
+		repo.messages[id] = domainmsg.IngestedMessage{ID: id, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: strconv.FormatUint(uint64(id), 10), MessageTime: now, Text: "noise", FilterDecision: &ignore, FeedbackLabel: &noise, FeedbackAt: &now}
+	}
+	repo.messages[5] = domainmsg.IngestedMessage{ID: 5, SubscriptionID: 3, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "5", MessageTime: now, Text: "mixed helpful 1", FilterDecision: &observe, FeedbackLabel: &helpful, FeedbackAt: &now}
+	repo.messages[6] = domainmsg.IngestedMessage{ID: 6, SubscriptionID: 3, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "6", MessageTime: now, Text: "mixed helpful 2", FilterDecision: &observe, FeedbackLabel: &helpful, FeedbackAt: &now}
+	repo.messages[7] = domainmsg.IngestedMessage{ID: 7, SubscriptionID: 3, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "7", MessageTime: now, Text: "mixed noise 1", FilterDecision: &observe, FeedbackLabel: &noise, FeedbackAt: &now}
+	repo.messages[8] = domainmsg.IngestedMessage{ID: 8, SubscriptionID: 3, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "8", MessageTime: now, Text: "mixed noise 2", FilterDecision: &observe, FeedbackLabel: &noise, FeedbackAt: &now}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, err := usecase.RunSubscriptionMaintenance(ctx, SubscriptionMaintenanceInput{Action: "apply_source_trust_governance", SubscriptionIDs: []uint{1, 2, 3}})
+	if err != nil {
+		t.Fatalf("RunSubscriptionMaintenance: %v", err)
+	}
+	if result.Matched != 3 || result.Checked != 2 || result.Updated != 2 || result.Paused != 1 || result.Passed != 0 || len(result.Skipped) != 1 {
+		t.Fatalf("unexpected maintenance result: %+v", result)
+	}
+	noisy := repo.subscriptions[1]
+	if noisy.Enabled || noisy.LastCollectError == nil || !strings.Contains(*noisy.LastCollectError, "paused source") {
+		t.Fatalf("severe source should be paused with governance reason: %+v", noisy)
+	}
+	noisyConfig := jsonValueFromDomainJSON(noisy.Config).(map[string]any)
+	noisyGovernance := noisyConfig["sourceTrustGovernance"].(map[string]any)
+	if noisyGovernance["action"] != "pause_source" || noisyGovernance["autoAction"] != "downrank_meeting_to_observe_and_observe_to_ignore" {
+		t.Fatalf("unexpected noisy governance config: %+v", noisyGovernance)
+	}
+	mixed := repo.subscriptions[3]
+	if !mixed.Enabled || mixed.LastCollectError == nil || !strings.Contains(*mixed.LastCollectError, "governance watch") {
+		t.Fatalf("mixed source should stay enabled with watch reason: %+v", mixed)
+	}
+	mixedConfig := jsonValueFromDomainJSON(mixed.Config).(map[string]any)
+	mixedGovernance := mixedConfig["sourceTrustGovernance"].(map[string]any)
+	if mixedGovernance["action"] != "watch_source" || mixedGovernance["autoAction"] != "downrank_meeting_to_observe" {
+		t.Fatalf("unexpected mixed governance config: %+v", mixedGovernance)
+	}
+}
+
+func TestSubscriptionDiagnosticsWarnWhenProxyRouteIsNotEnabled(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.secrets[string(domainkernel.SecretKindApp)+":"+proxySecretName] = domainsettings.Secret{Kind: domainkernel.SecretKindApp, Name: proxySecretName, EncryptedValue: "enc:http://127.0.0.1:7890"}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Feed", SourceRef: "https://example.test/feed.xml", Enabled: false, FilterID: 1}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	diagnostics, err := usecase.SubscriptionDiagnostics(ctx)
+	if err != nil {
+		t.Fatalf("SubscriptionDiagnostics: %v", err)
+	}
+	if len(diagnostics) != 1 {
+		t.Fatalf("diagnostics len=%d, want 1", len(diagnostics))
+	}
+	diagnostic := diagnostics[0]
+	if diagnostic.ProxyRoute != "proxy_configured_but_not_enabled" {
+		t.Fatalf("proxy route = %q, want proxy_configured_but_not_enabled", diagnostic.ProxyRoute)
+	}
+	proxyCheck := findSubscriptionDiagnosticCheck(t, diagnostic, "proxy_route")
+	if proxyCheck.Status != "warning" {
+		t.Fatalf("proxy_route check = %+v, want warning", proxyCheck)
+	}
+}
+
+func TestFeedbackMessagesBatchUpdatesFoundAndReportsMissing(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", Enabled: true}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "1", MessageTime: time.Now(), Text: "one"}
+	repo.messages[2] = domainmsg.IngestedMessage{ID: 2, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "2", MessageTime: time.Now(), Text: "two"}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, err := usecase.FeedbackMessages(ctx, MessageFeedbackBatchInput{
+		IDs: []uint{1, 2, 2, 999, 0},
+		MessageFeedbackInput: MessageFeedbackInput{
+			Label:      domainmsg.FeedbackNoise,
+			Comment:    "duplicated headline",
+			HasComment: true,
+		},
+	})
+	if err != nil {
+		t.Fatalf("FeedbackMessages: %v", err)
+	}
+	if result.RequestedCount != 3 || result.UpdatedCount != 2 || len(result.MissingIDs) != 1 || result.MissingIDs[0] != 999 {
+		t.Fatalf("unexpected batch result: %+v", result)
+	}
+	for _, id := range []uint{1, 2} {
+		row := repo.messages[id]
+		if row.FeedbackLabel == nil || *row.FeedbackLabel != domainmsg.FeedbackNoise {
+			t.Fatalf("message %d feedback label = %+v", id, row.FeedbackLabel)
+		}
+		if row.FeedbackComment == nil || *row.FeedbackComment != "duplicated headline" || row.FeedbackAt == nil {
+			t.Fatalf("message %d feedback metadata not persisted: %+v", id, row)
+		}
 	}
 }
 
@@ -558,8 +1089,12 @@ func (fakeMessagingSecurity) DecryptSecret(value string) (string, error) {
 
 type fakeMessagingService struct {
 	filter              FilterResult
+	filterErr           error
 	fetched             FetchedMessages
 	fetchCalls          int
+	testErrors          map[string]error
+	testCalls           []string
+	lastCredentials     SubscriptionCredentials
 	loginHash           string
 	loginSession        string
 	session             string
@@ -574,11 +1109,17 @@ func (s *fakeMessagingService) CompleteSubscriptionLogin(_ context.Context, cred
 	return s.session, nil
 }
 func (s *fakeMessagingService) NormalizeSourceRef(_ string, value string) string { return value }
-func (s *fakeMessagingService) TestSubscription(context.Context, TelegramCredentials, string, string) (map[string]any, error) {
-	return nil, nil
+func (s *fakeMessagingService) TestSubscription(_ context.Context, credentials SubscriptionCredentials, _ string, sourceRef string) (map[string]any, error) {
+	s.lastCredentials = credentials
+	s.testCalls = append(s.testCalls, sourceRef)
+	if err, ok := s.testErrors[sourceRef]; ok {
+		return nil, err
+	}
+	return map[string]any{"status": "ok", "source_ref": sourceRef}, nil
 }
-func (s *fakeMessagingService) FetchSubscriptionMessages(_ context.Context, _ TelegramCredentials, subscription domainmsg.MessageSubscription, _ int, afterSourceMessageID *string) (FetchedMessages, error) {
+func (s *fakeMessagingService) FetchSubscriptionMessages(_ context.Context, credentials SubscriptionCredentials, subscription domainmsg.MessageSubscription, _ int, afterSourceMessageID *string) (FetchedMessages, error) {
 	s.fetchCalls++
+	s.lastCredentials = credentials
 	if afterSourceMessageID == nil || subscription.Provider == domainmsg.ProviderRSSFeed {
 		return s.fetched, nil
 	}
@@ -604,7 +1145,7 @@ func (s *fakeMessagingService) JSON(value any) domainkernel.JSON {
 }
 func (s *fakeMessagingService) ExtractRelatedSymbols(string) []string { return nil }
 func (s *fakeMessagingService) ApplyFilter(context.Context, domainmsg.IngestedMessage, SecurityService, domainmsg.MessageSubscriptionFilter, domainai.Provider, ProxyConfig) (FilterResult, error) {
-	return s.filter, nil
+	return s.filter, s.filterErr
 }
 
 type fakeMessagingTx struct {
@@ -681,7 +1222,8 @@ func (r *fakeMessagingRepo) FindAppSetting(_ context.Context, key string) (*doma
 	row, ok := r.settings[key]
 	return &row, ok, nil
 }
-func (r *fakeMessagingRepo) SaveAppSetting(context.Context, *domainsettings.AppSetting) error {
+func (r *fakeMessagingRepo) SaveAppSetting(_ context.Context, setting *domainsettings.AppSetting) error {
+	r.settings[setting.Key] = *setting
 	return nil
 }
 func (r *fakeMessagingRepo) TryAcquireLease(context.Context, string, domainkernel.JSON, string, time.Time, time.Time, func(domainsettings.AppSetting) bool) (bool, error) {
@@ -831,7 +1373,8 @@ func (r *fakeMessagingRepo) ListSubscriptionsForCollect(_ context.Context, subsc
 	}
 	return out, nil
 }
-func (r *fakeMessagingRepo) DeleteSubscriptionGraph(context.Context, uint, []string) error {
+func (r *fakeMessagingRepo) DeleteSubscriptionGraph(_ context.Context, id uint, _ []string) error {
+	delete(r.subscriptions, id)
 	return nil
 }
 func (r *fakeMessagingRepo) ListMessagesBySubscription(_ context.Context, subscriptionID uint) ([]domainmsg.IngestedMessage, error) {
@@ -845,6 +1388,39 @@ func (r *fakeMessagingRepo) ListMessagesBySubscription(_ context.Context, subscr
 }
 func (r *fakeMessagingRepo) ListMessages(context.Context, RepositoryMessageFilter) ([]domainmsg.IngestedMessage, error) {
 	return nil, nil
+}
+func (r *fakeMessagingRepo) ListFeedbackMessages(_ context.Context, filter RepositoryFeedbackMessageFilter) ([]domainmsg.IngestedMessage, error) {
+	var subscriptionID uint64
+	if strings.TrimSpace(filter.SubscriptionID) != "" {
+		subscriptionID, _ = strconv.ParseUint(strings.TrimSpace(filter.SubscriptionID), 10, 64)
+	}
+	out := make([]domainmsg.IngestedMessage, 0)
+	for _, row := range r.messages {
+		if row.FeedbackLabel == nil || strings.TrimSpace(*row.FeedbackLabel) == "" {
+			continue
+		}
+		if subscriptionID > 0 && row.SubscriptionID != uint(subscriptionID) {
+			continue
+		}
+		if strings.TrimSpace(filter.Provider) != "" && row.Provider != strings.TrimSpace(filter.Provider) {
+			continue
+		}
+		if strings.TrimSpace(filter.Label) != "" && strings.ToLower(strings.TrimSpace(*row.FeedbackLabel)) != strings.ToLower(strings.TrimSpace(filter.Label)) {
+			continue
+		}
+		if filter.CursorID > 0 && uint64(row.ID) >= filter.CursorID {
+			continue
+		}
+		if subscription, ok := r.subscriptions[row.SubscriptionID]; ok {
+			row.Subscription = &subscription
+		}
+		out = append(out, row)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID > out[j].ID })
+	if filter.Limit > 0 && len(out) > filter.Limit {
+		out = out[:filter.Limit]
+	}
+	return out, nil
 }
 func (r *fakeMessagingRepo) CreateMessage(_ context.Context, message *domainmsg.IngestedMessage) error {
 	if message.ID == 0 {
@@ -930,6 +1506,17 @@ func (r *fakeMessagingRepo) SavePlatformAdapter(context.Context, *domainmsg.Plat
 	return nil
 }
 func (r *fakeMessagingRepo) DeletePlatformAdapter(context.Context, uint) error { return nil }
+
+func findSubscriptionDiagnosticCheck(t testing.TB, diagnostic SubscriptionDiagnostic, key string) SubscriptionDiagnosticCheck {
+	t.Helper()
+	for _, check := range diagnostic.Checks {
+		if check.Key == key {
+			return check
+		}
+	}
+	t.Fatalf("diagnostic check %q not found in %+v", key, diagnostic.Checks)
+	return SubscriptionDiagnosticCheck{}
+}
 
 func ptrDecision(value domainkernel.NewsDecision) *domainkernel.NewsDecision { return &value }
 func ptrString(value string) *string                                         { return &value }

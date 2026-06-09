@@ -12,6 +12,19 @@ export type JsonApiErrorDocument = components['schemas']['JsonApiErrorDocument']
 export type JsonApiResource = components['schemas']['Resource']
 export type JsonApiError = components['schemas']['ErrorObject']
 export type ApiSchema<K extends keyof components['schemas']> = components['schemas'][K]
+export type ApiResourceAttributes<K extends keyof components['schemas']> =
+  ApiSchema<K> extends { attributes: infer Attributes } ? Attributes : never
+export type ApiResourceModel<
+  K extends keyof components['schemas'],
+  Id extends string | number = number
+> = Required<ApiSchema<K>> & { id: Id }
+export type ApiResourceModelFromResource<
+  K extends keyof components['schemas'],
+  Id extends string | number = number
+> = Required<ApiResourceAttributes<K>> & { id: Id }
+type Override<T, U> = Omit<T, keyof U> & U
+type ApiDecimal = string | number
+type ApiNullableDecimal = ApiDecimal | null
 
 api.interceptors.request.use((config) => {
   const token = getAuthToken()
@@ -97,183 +110,139 @@ function transformRecordKeys(value: unknown): unknown {
   )
 }
 
-export interface Meeting {
-  id: number
-  researchTeamId: number
-  topic: string
+export type Meeting = ApiResourceModel<'MeetingAttributes'>
+export type MeetingTrustReport = ApiSchema<'MeetingTrustReport'>
+export type MeetingTrustReview = ApiResourceModel<'MeetingTrustReviewAttributes', string | number>
+export type MeetingTrustReviewAttributes = ApiSchema<'MeetingTrustReviewAttributes'>
+export type MeetingRecapActionSuggestion = ApiSchema<'MeetingRecapActionSuggestion'>
+export type MeetingRecapActionReviewAttributes = ApiSchema<'MeetingRecapActionReviewAttributes'>
+export type MessageFeedbackTrainingSample = ApiResourceModel<'MessageFeedbackTrainingSampleAttributes'>
+export type MessageFeedbackEvaluation = ApiResourceModel<'MessageFeedbackEvaluationAttributes', string | number>
+export type MessageFeedbackTrainingSnapshot = ApiResourceModel<'MessageFeedbackTrainingSnapshotAttributes', string | number>
+export type MessageFeedbackTrainingExport = ApiResourceModel<'MessageFeedbackTrainingExportAttributes', string | number>
+export type MessageSourceTrust = ApiResourceModel<'MessageSourceTrustAttributes', string | number>
+export type MessageSourceTrustReport = ApiResourceModel<'MessageSourceTrustReportAttributes', string | number>
+
+export type DashboardStatusItem = ApiSchema<'DashboardStatusItem'>
+
+export type DashboardSummary = ApiSchema<'DashboardSummary'>
+
+export type DashboardBusinessMetrics = Override<ApiSchema<'DashboardBusinessMetrics'>, {
+  paperTotalEquity: ApiDecimal
+  aiCostAmount24h?: ApiDecimal
+}>
+
+export type ProxySettings = ApiSchema<'ProxySettingAttributes'>
+
+export type SetupStep = ApiSchema<'SetupStep'>
+
+export type SetupReadiness = ApiResourceModel<'SetupReadinessAttributes', string | number>
+
+export type SetupActionResult = ApiResourceModel<'SetupActionResultAttributes', string | number>
+
+export type AdminUser = ApiResourceModel<'AdminUserAttributes'>
+
+export type AuthSession = ApiResourceModel<'AuthSessionAttributes'>
+
+export type AuditEvent = ApiResourceModel<'AuditEventAttributes'>
+
+export type MarketTask = ApiResourceModel<'MarketTaskAttributes', string | number>
+
+export type OpsProviderHealth = ApiResourceModelFromResource<'OpsProviderHealthResource', string | number>
+
+export type OpsJobs = ApiResourceModelFromResource<'OpsJobsResource', string | number>
+
+export type OpsRecentErrors = ApiSchema<'OpsRecentErrors'>
+
+export type OpsRecentErrorEntry = ApiSchema<'OpsRecentErrorEntry'>
+
+export interface OpsJobAction {
+  id?: string | number
+  status?: string
+  action?: string
+  retriedRetryCount?: number
+  retriedArchiveCount?: number
+  totalSubmitted?: number
+  queues?: Record<string, unknown>[]
+  queue?: string
+  taskId?: string
+  taskType?: string
+  state?: string
+  ranAt?: string
+  destructive?: boolean
+  detail?: string
+}
+
+export type OpsQueueDiagnostics = ApiSchema<'OpsQueueDiagnostics'> & {
+  filters?: OpsQueueFilters
+}
+
+export interface OpsQueueFilters {
+  queue?: string
+  type?: string
+  state?: 'retry' | 'archived' | ''
+  failedLimit?: number
+}
+
+export type OpsQueueInfo = ApiSchema<'OpsQueueInfo'>
+
+export type OpsQueueTotals = ApiSchema<'OpsQueueTotals'>
+
+export type OpsQueueFailedTask = ApiSchema<'OpsQueueFailedTask'>
+
+export type OpsQueueBacklogRisk = ApiSchema<'OpsQueueBacklogRisk'>
+
+export type OpsBackups = Override<ApiResourceModelFromResource<'OpsBackupsResource', string | number>, {
+  generatedAt: string
   status: string
-  triggerSource: string
-  summary?: string
-  conclusion?: string
-  tags: string[]
-  recapStatus?: string
-  recapUpdatedAt?: string
-  runAttempt?: number
-  heartbeatAt?: string | null
-  autoRequeueCount?: number
-  createdAt: string
-  startedAt?: string
-  completedAt?: string
-}
-
-export interface DashboardStatusItem {
-  key: string
-  title: string
-  status: 'ok' | 'warning' | 'error' | 'disabled'
-  summary: string
-  detail: string
-  checkedAt: string
-}
-
-export interface DashboardSummary {
-  appName: string
-  appEnv: string
-  deploymentModeLabel: string
-  meetingDispatchMode: string
-  databaseBackend: string
+  backupDir: string
+  archiveProvider: string
+  archiveProviderDetail: OpsBackupArchiveProvider
+  databaseBackend?: string
   databaseTarget?: string
-  paperExecutionMode: string
-}
+  retentionPolicy: string
+  retentionPolicyDetail?: Record<string, unknown>
+  retentionLastRun?: Record<string, unknown> | null
+  restoreDrill: string
+  restoreDrillDetail?: Record<string, unknown>
+  restoreDrillSchedule?: Record<string, unknown>
+  restoreDrillScheduleHint?: string
+  supportedActions: string[]
+  latestBackup?: OpsBackupArchive | null
+  backups: OpsBackupArchive[]
+}>
 
-export interface DashboardBusinessMetrics {
-  meetingsTotal: number
-  meetingsRunning: number
-  meetingsFailed24h: number
-  messageSubscriptionEnabledCount: number
-  ingestedMessages24h: number
-  ingestedUnfilteredCount: number
-  platformAdapterEnabledCount: number
-  paperAccountCount: number
-  paperActiveAccountCount: number
-  paperTotalEquity: string | number
-  paperPendingOrderCount: number
-  wakeActiveCount: number
-  wakeOverdueCount: number
-  aiEnabledProviderCount: number
-  aiReadyProviderCount: number
-  newsFilterReady: boolean
-  marketSymbolCount: number
-  marketWatchlistCount: number
-  marketActiveWatchlistCount: number
-  paperIsTradingTime: boolean
-}
+export type OpsBackupArchive = ApiSchema<'OpsBackupArchive'>
 
-export interface ProxySettings {
-  proxyUrl: string
-  enabledAi: boolean
-  enabledTelegram: boolean
-  enabledMarket: boolean
-  enabledWeb: boolean
-  noProxy: string[]
-  revision?: string
-  updatedAt?: string
-}
+export type OpsBackupArchiveProvider = ApiSchema<'OpsBackupArchiveProvider'>
 
-export interface DashboardRecentIngestedMessage {
-  id: number
-  subscriptionId: number
-  subscriptionTitle?: string | null
-  sourceRef?: string | null
-  messageTime: string
-  text: string
-  filterDecision?: string | null
-}
+export type OpsBackupRun = Override<ApiResourceModelFromResource<'OpsBackupRunResource', string | number>, {
+  databaseBackend?: string
+  databaseTarget?: string
+}>
 
-export interface DashboardRecentMeeting {
-  id: number
-  topic: string
-  status: string
-  triggerSource: string
-  summary?: string | null
-  conclusion?: string | null
-  tags: string[]
-  recapStatus?: string | null
-  recapUpdatedAt?: string | null
-  runAttempt?: number
-  heartbeatAt?: string | null
-  autoRequeueCount?: number
-  createdAt: string
-  startedAt?: string | null
-  completedAt?: string | null
-}
+export type OpsBackupRestoreDryRun = ApiResourceModel<'OpsBackupRestoreDryRunAttributes', string | number>
 
-export interface DashboardRecentActivity {
-  recentMeetings: DashboardRecentMeeting[]
-  recentIngestedMessages: DashboardRecentIngestedMessage[]
-}
+export type DashboardRecentIngestedMessage = ApiSchema<'DashboardRecentIngestedMessage'>
 
-export interface DashboardAlert {
-  level: 'warning' | 'error'
-  title: string
-  detail: string
-  link: string
-}
+export type DashboardRecentMeeting = ApiSchema<'DashboardRecentMeeting'>
 
-export interface DashboardOverview {
+export type DashboardRecentActivity = ApiSchema<'DashboardRecentActivity'>
+
+export type DashboardAlert = ApiSchema<'DashboardAlert'>
+
+export type DashboardOverview = Override<ApiResourceModelFromResource<'DashboardResource', string | number>, {
   summary: DashboardSummary
-  systemStatus: {
-    database: DashboardStatusItem
-    redis: DashboardStatusItem
-    worker: DashboardStatusItem
-    scheduler: DashboardStatusItem
-    messageSubscriptionListener: DashboardStatusItem
-    platformAdapter: DashboardStatusItem
-    paperEngine: DashboardStatusItem
-  }
   businessMetrics: DashboardBusinessMetrics
-  recentActivity: DashboardRecentActivity
-  alerts: DashboardAlert[]
-}
+}>
 
-export interface LogEntry {
-  id: string
-  time?: string | null
-  level: string
-  role: string
-  source: string
-  event: string
-  message: string
-  caller: string
-  file: string
-  group: string
-  method: string
-  path: string
-  status: string
-  durationMs?: number | null
-  noise: boolean
-  fields: Record<string, unknown>
-  raw: Record<string, unknown>
-  stacktrace?: string
-}
+export type LogEntry = ApiResourceModel<'LogEntryAttributes', string>
 
-export interface LogFile {
-  id: string
-  name: string
-  sizeBytes: number
-  modified: string
-  active: boolean
-  role: string
-}
+export type LogFile = ApiResourceModel<'LogFileAttributes', string>
 
-export interface LogConfigSummary {
-  dir?: string
-  level?: string
-  rotationMode?: string
-  rotationSizeMB?: number
-  rotationTotalSizeMB?: number
-  rotationMaxAgeDays?: number
-}
+export type LogConfigSummary = ApiSchema<'LogConfigSummary'>
 
-export interface MeetingEvent {
-  id: number
-  meetingId: number
-  sequence: number
-  type: string
-  roleKey?: string
-  content: string
-  payload: Record<string, unknown>
-  createdAt: string
-}
+export type MeetingEvent = ApiResourceModelFromResource<'MeetingEventResource'>
 
 export interface TelegramChannel {
   id: number
@@ -301,267 +270,185 @@ export interface TelegramMessage {
   updatedAt: string
 }
 
-export interface MessageSubscription {
-  id: number
-  provider: string
-  title: string
-  sourceRef: string
-  enabled: boolean
-  filterId: number
-  filterName?: string
-  teamIds: number[]
-  backfillLimit: number
-  pollIntervalSeconds: number
-  collectFrom: string
-  lastCollectedAt?: string | null
-  nextCollectAt?: string | null
-  lastCollectError?: string | null
-  config?: Record<string, unknown>
-  createdAt?: string
-  updatedAt?: string
-}
+export type MessageSubscription = ApiResourceModelFromResource<'MessageSubscriptionResource'>
 
-export interface MessageSubscriptionFilter {
-  id: number
-  name: string
-  description: string
-  promptTemplate: string
-  providerId?: number | null
-  model?: string | null
-  enabled: boolean
-  isDefault: boolean
-  toolNames: string[]
-  skillNames: string[]
-  createdAt?: string
-  updatedAt?: string
-}
+export type MessageSubscriptionDiagnostic = ApiResourceModel<'MessageSubscriptionDiagnosticAttributes'>
 
-export interface IngestedMessage {
-  id: number
-  subscriptionId: number
-  subscriptionTitle?: string
-  sourceRef?: string
-  provider: string
-  sourceMessageId: string
-  messageTime: string
-  text: string
-  filterDecision?: string | null
-  filterReason?: string | null
-  filterStatus?: 'unfiltered' | 'filtering' | 'filtered' | 'failed'
-  relatedSymbols: string[]
-  filteredAt?: string | null
-  filterId?: number | null
-  createdAt: string
-  updatedAt: string
-}
+export type MessageSubscriptionFilter = ApiResourceModel<'MessageSubscriptionFilterAttributes'>
 
-export interface ResearchTeam {
-  id: number
-  name: string
-  description: string
-  paperAccountId: number
-  active: boolean
-  createdAt?: string
-  updatedAt?: string
-}
+export type IngestedMessage = ApiResourceModel<'IngestedMessageAttributes'>
 
-export interface ResearchTeamRole {
-  id: number | string
-  researchTeamId: number
-  key: string
-  name: string
-  responsibility: string
-  promptTemplate: string
-  providerId?: number | null
-  model?: string | null
-  toolNames: string[]
-  skillNames: string[]
-  enabled: boolean
-  sortOrder: number
-}
+export type ResearchTeam = ApiResourceModel<'ResearchTeamAttributes'>
 
-export interface PlatformAdapter {
-  id: number
-  provider: string
-  displayName: string
-  enabled: boolean
-  config?: Record<string, unknown>
-  hasBotToken: boolean
-  hasChatId: boolean
-  chatId?: string
-  createdAt?: string
-  updatedAt?: string
-}
+export type ResearchTeamRole = ApiResourceModel<'ResearchTeamRoleAttributes', string | number>
 
-export interface MeetingReference {
-  id: number
-  sourceMeetingId: number
-  targetMeetingId?: number | null
-  referenceType: string
-  note?: string | null
-  targetTopicSnapshot: string
-  targetSummarySnapshot?: string | null
-  targetDeleted: boolean
-  externalRef?: string | null
-  createdAt: string
-}
+export type PlatformAdapter = ApiResourceModelFromResource<'PlatformAdapterResource'>
 
-export interface WakePlan {
-  id: number
-  researchTeamId: number
-  meetingId?: number | null
-  triggerType: string
-  triggerConfig: Record<string, unknown>
-  reason: string
-  sourceMeetingEventId?: number | null
-  sourceRoleKey?: string | null
-  status: string
-  nextCheckAt?: string | null
-  firedAt?: string | null
-  lastRunAt?: string | null
-  resultSummary?: string | null
-}
+export type MeetingReference = ApiResourceModelFromResource<'MeetingReferenceResource'>
 
-export interface PaperOrder {
-  id: number
-  accountId: number
-  meetingId?: number | null
-  code: string
-  symbolName?: string | null
-  side: string
-  quantity: number
-  status: string
-  suggestedPrice?: string | number | null
-  filledPrice?: string | number | null
-  reason?: string | null
-  submittedAt?: string | null
-  executeAfter?: string | null
-  expireAt?: string | null
-  sourceMeetingEventId?: number | null
-  executionNote?: string | null
-  commission?: string | number | null
-  stampDuty?: string | number | null
-  transferFee?: string | number | null
-  netAmount?: string | number | null
-  createdAt: string
-  filledAt?: string | null
-}
+export type WakePlan = ApiResourceModel<'WakePlanAttributes'>
 
-export interface RiskConfig {
-  id: number
-  name: string
-  initialCash: string | number
-  maxPositionPct: string | number
-  maxOrderPct: string | number
-  allowShort: boolean
-  allowMargin: boolean
-  allowShMain: boolean
-  allowSzMain: boolean
-  allowBj: boolean
-  allowStar: boolean
-  allowChinext: boolean
-  allowEtfLof: boolean
-  commissionRate: string | number
-  minCommission: string | number
-  stampDutyRate: string | number
-  transferFeeRate: string | number
-  enabled: boolean
-  accountIds?: number[]
-  accountCount?: number
-}
+export type PaperOrder = Override<ApiResourceModel<'PaperOrderAttributes'>, {
+  filledQuantity: number
+  remainingQuantity: number
+  partialFillCount: number
+  approvalRiskReasons?: string[]
+  approvalRiskMetrics?: Record<string, unknown>
+  suggestedPrice: ApiNullableDecimal
+  filledPrice: ApiNullableDecimal
+  commission: ApiNullableDecimal
+  stampDuty: ApiNullableDecimal
+  transferFee: ApiNullableDecimal
+  netAmount: ApiNullableDecimal
+}>
 
-export interface PaperAccount {
-  id: number
-  name: string
-  initialCash: string | number
-  cash: string | number
-  riskConfigId?: number | null
-  researchTeamId?: number | null
-  researchTeamName?: string | null
-  active: boolean
-  marketValue: string | number
-  totalEquity: string | number
-  unrealizedPnl: string | number
-  realizedPnl: string | number
-  totalReturnPct: string | number
-  positionCount: number
-  pendingOrderCount: number
-}
+export type RiskConfig = Override<ApiResourceModel<'PaperRiskConfigAttributes'>, {
+  initialCash: ApiDecimal
+  maxPositionPct: ApiDecimal
+  maxOrderPct: ApiDecimal
+  commissionRate: ApiDecimal
+  minCommission: ApiDecimal
+  stampDutyRate: ApiDecimal
+  transferFeeRate: ApiDecimal
+}>
 
-export interface PaperPosition {
-  id: number
-  accountId: number
-  code: string
-  symbolName?: string | null
-  quantity: number
-  avgCost: string | number
-  costAmount: string | number
-  lastPrice?: string | number | null
-  marketValue: string | number
-  unrealizedPnl: string | number
-  realizedPnl: string | number
-  updatedAt: string
-}
+export type PaperAccount = Override<ApiResourceModel<'PaperAccountAttributes'>, {
+  initialCash: ApiDecimal
+  cash: ApiDecimal
+  marketValue: ApiDecimal
+  totalEquity: ApiDecimal
+  unrealizedPnl: ApiDecimal
+  realizedPnl: ApiDecimal
+  totalReturnPct: ApiDecimal
+}>
 
-export interface PaperFill {
-  id: number
-  orderId: number
-  accountId: number
-  code: string
-  symbolName?: string | null
-  side: string
-  quantity: number
-  price: string | number
-  grossAmount: string | number
-  commission: string | number
-  stampDuty: string | number
-  transferFee: string | number
-  netAmount: string | number
-  realizedPnl: string | number
-  filledAt: string
-}
+export type PaperPosition = Override<ApiResourceModel<'PaperPositionAttributes'>, {
+  avgCost: ApiDecimal
+  costAmount: ApiDecimal
+  lastPrice: ApiNullableDecimal
+  marketValue: ApiDecimal
+  unrealizedPnl: ApiDecimal
+  realizedPnl: ApiDecimal
+}>
 
-export interface PaperPerformancePoint {
-  id: number
-  accountId: number
-  snapshotTime: string
-  cash: string | number
-  marketValue: string | number
-  totalEquity: string | number
-  unrealizedPnl: string | number
-  realizedPnl: string | number
-  dailyPnl: string | number
-}
+export type PaperFill = Override<ApiResourceModel<'PaperFillAttributes'>, {
+  price: ApiDecimal
+  grossAmount: ApiDecimal
+  commission: ApiDecimal
+  stampDuty: ApiDecimal
+  transferFee: ApiDecimal
+  netAmount: ApiDecimal
+  realizedPnl: ApiDecimal
+}>
 
-export interface PaperPerformance {
-  accountId: number
-  initialCash: string | number
-  latestEquity: string | number
-  latestCash: string | number
-  latestMarketValue: string | number
-  unrealizedPnl: string | number
-  realizedPnl: string | number
-  totalReturnPct: string | number
-  maxDrawdownPct: string | number
-  winRatePct: string | number
-  fillsCount: number
+export type PaperCorporateAction = Override<ApiResourceModel<'PaperCorporateActionAttributes'>, {
+  cashPerShare: ApiNullableDecimal
+  shareRatio: ApiNullableDecimal
+  cashAmount: ApiNullableDecimal
+}>
+
+export type PaperReplayEvent = Required<ApiSchema<'PaperReplayEvent'>>
+
+export type PaperReplay = ApiResourceModel<'PaperReplayAttributes', string | number>
+
+export type PaperBacktestInput = Override<ApiSchema<'PaperBacktestInput'>, {
+  initialCash?: ApiDecimal
+  buyThresholdPct?: ApiDecimal
+  sellThresholdPct?: ApiDecimal
+  orderPct?: ApiDecimal
+  slippageBps?: ApiDecimal
+}>
+
+export type PaperBacktestPolicy = Override<Required<ApiSchema<'PaperBacktestPolicy'>>, {
+  limitBandPct: ApiDecimal
+  slippageBps: ApiDecimal
+  rules: string[]
+}>
+
+export type PaperBacktestSummary = Override<Required<ApiSchema<'PaperBacktestSummary'>>, {
+  initialCash: ApiDecimal
+  finalCash: ApiDecimal
+  finalMarketValue: ApiDecimal
+  finalEquity: ApiDecimal
+  totalReturnPct: ApiDecimal
+  maxDrawdownPct: ApiDecimal
+}>
+
+export type PaperBacktestPoint = Override<Required<ApiSchema<'PaperBacktestPoint'>>, {
+  close: ApiDecimal
+  signalPct: ApiDecimal
+  cash: ApiDecimal
+  marketValue: ApiDecimal
+  totalEquity: ApiDecimal
+  dailyReturnPct: ApiDecimal
+  drawdownPct: ApiDecimal
+}>
+
+export type PaperBacktestOrder = Override<Required<ApiSchema<'PaperBacktestOrder'>>, {
+  signalPct: ApiDecimal
+  referencePrice: ApiDecimal
+  filledPrice: ApiDecimal
+  grossAmount: ApiDecimal
+  fees: ApiDecimal
+  cashAfter: ApiDecimal
+}>
+
+export type PaperBacktest = Override<Required<ApiSchema<'PaperBacktestAttributes'>>, {
+  input: PaperBacktestInput
+  policy: PaperBacktestPolicy
+  summary: PaperBacktestSummary
+  series: PaperBacktestPoint[]
+  orders: PaperBacktestOrder[]
+}>
+
+export type PaperPerformancePoint = Override<ApiSchema<'PaperPerformancePoint'>, {
+  cash: ApiDecimal
+  marketValue: ApiDecimal
+  totalEquity: ApiDecimal
+  unrealizedPnl: ApiDecimal
+  realizedPnl: ApiDecimal
+  dailyPnl: ApiDecimal
+}>
+
+export type PaperAttributionItem = Override<Required<ApiSchema<'PaperAttributionItem'>>, {
+  costAmount: ApiDecimal
+  marketValue: ApiDecimal
+  weightPct: ApiDecimal
+  unrealizedPnl: ApiDecimal
+  realizedPnl: ApiDecimal
+  totalPnl: ApiDecimal
+  returnPct: ApiDecimal
+  contributionPct: ApiDecimal
+}>
+
+export type PaperRiskAlert = Override<ApiSchema<'PaperRiskAlert'>, {
+  metric?: ApiNullableDecimal
+  threshold?: ApiNullableDecimal
+}>
+
+export type PaperRiskSummary = Required<ApiSchema<'PaperRiskSummary'>>
+
+export type PaperPerformance = Override<Required<ApiSchema<'PaperPerformanceAttributes'>>, {
+  initialCash: ApiDecimal
+  latestEquity: ApiDecimal
+  latestCash: ApiDecimal
+  latestMarketValue: ApiDecimal
+  unrealizedPnl: ApiDecimal
+  realizedPnl: ApiDecimal
+  totalReturnPct: ApiDecimal
+  maxDrawdownPct: ApiDecimal
+  winRatePct: ApiDecimal
   series: PaperPerformancePoint[]
-}
+  attribution: PaperAttributionItem[]
+  riskAlerts: PaperRiskAlert[]
+  riskSummary: PaperRiskSummary
+}>
 
-export interface PaperOverview {
-  accountCount: number
-  activeAccountCount: number
-  totalCash: string | number
-  totalMarketValue: string | number
-  totalEquity: string | number
-  totalUnrealizedPnl: string | number
-  totalRealizedPnl: string | number
-  totalReturnPct: string | number
-  positionCount: number
-  fillCount: number
-  suggestedOrderCount: number
-  pendingOrderCount: number
-  filledOrderCount: number
-  rejectedOrderCount: number
-  cancelledOrderCount: number
-}
+export type PaperOverview = Override<Required<ApiSchema<'PaperOverviewAttributes'>>, {
+  totalCash: ApiDecimal
+  totalMarketValue: ApiDecimal
+  totalEquity: ApiDecimal
+  totalUnrealizedPnl: ApiDecimal
+  totalRealizedPnl: ApiDecimal
+  totalReturnPct: ApiDecimal
+}>

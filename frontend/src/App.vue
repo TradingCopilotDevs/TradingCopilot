@@ -29,6 +29,9 @@
             <span>{{ item.label }}</span>
           </el-menu-item>
         </el-menu>
+        <div class="sidebar-actions">
+          <el-button :icon="SwitchButton" plain @click="logout">退出</el-button>
+        </div>
       </el-aside>
       <el-main class="content">
         <router-view />
@@ -49,6 +52,9 @@
           <span>{{ item.label }}</span>
         </el-menu-item>
       </el-menu>
+      <div class="sidebar-actions">
+        <el-button :icon="SwitchButton" plain @click="logout">退出</el-button>
+      </div>
     </el-drawer>
   </template>
 </template>
@@ -62,15 +68,21 @@ import {
   DataBoard,
   Menu,
   Message,
+  Monitor,
   OfficeBuilding,
   Tickets,
   Setting,
+  SwitchButton,
   Timer,
   TrendCharts,
+  UserFilled,
   Wallet
 } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { api, apiErrorText } from './api'
+import { clearAuthToken } from './auth'
 import { useResponsive } from './composables/useResponsive'
 
 const router = useRouter()
@@ -79,7 +91,10 @@ const { isMobileNav } = useResponsive()
 const mobileMenuOpen = ref(false)
 
 const menuItems = [
+  { path: '/admin', label: '团队安全', icon: UserFilled },
+  { path: '/ops', label: '运维状态', icon: Monitor },
   { path: '/', label: '总览', icon: DataBoard },
+  { path: '/setup', label: '设置向导', icon: Setting },
   { path: '/meetings', label: '会议', icon: ChatLineRound },
   { path: '/ingested-messages', label: '消息库', icon: Message },
   { path: '/paper', label: '模拟盘', icon: Wallet },
@@ -111,5 +126,16 @@ watch(
 
 function handleMenuSelect(path: string) {
   router.push(path)
+}
+
+async function logout() {
+  try {
+    await api.post('/auth/logout')
+  } catch (error) {
+    ElMessage.warning(apiErrorText(error, '退出时未能撤销服务端会话'))
+  } finally {
+    clearAuthToken()
+    router.replace('/login')
+  }
 }
 </script>

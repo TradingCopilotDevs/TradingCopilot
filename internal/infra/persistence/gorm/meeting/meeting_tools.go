@@ -65,17 +65,26 @@ func runRoleAnalysisWithToolsWithContext(ctx context.Context, db *gorm.DB, meeti
 		{"role": "system", "content": role.PromptTemplate},
 		{"role": "user", "content": BuildRolePrompt(db, meeting, role, toolResults)},
 	}
+	roleForSnapshot := role
+	roleForSnapshot.Provider = &provider
+	promptSnapshot := rolePromptSnapshot(roleForSnapshot, model, messages, tokenLabel(role.Key, "legacy"), legacyMeetingPromptVersion)
 	reserved := chatPromptTokens(model, messages)
 	if err := reserveMeetingTokens(ctx, db, meeting.ID, reserved, tokenLabel(role.Key, "legacy_prompt")); err != nil {
 		return fmt.Sprintf("%s token budget check failed: %v", role.Name, err), map[string]any{"status": "role_error", "error": err.Error(), "tool_results": toolResultsPublic(toolResults)}
 	}
+	started := time.Now()
 	result, err := client.ChatWithUsageWithContext(ctx, messages, model)
+	latency := time.Since(started)
 	if err != nil {
 		return fmt.Sprintf("%s AI provider call failed: %v", role.Name, err), map[string]any{"status": "role_error", "error": err.Error(), "tool_results": toolResultsPublic(toolResults)}
 	}
 	actual := actualChatTokens(model, messages, result.Content, result.Usage)
 	_ = settleMeetingTokenUsage(ctx, db, meeting.ID, reserved, actual, tokenLabel(role.Key, "legacy"))
-	return result.Content, map[string]any{"status": "role_completed", "provider_id": provider.ID, "model": firstNonEmptyString(model, provider.DefaultModel), "tool_results": toolResultsPublic(toolResults), "token_usage": result.Usage}
+	return result.Content, map[string]any{
+		"status": "role_completed", "provider_id": provider.ID, "provider_name": provider.Name, "model": firstNonEmptyString(model, provider.DefaultModel),
+		"prompt_version": legacyMeetingPromptVersion, "prompt_snapshot": promptSnapshot, "tool_results": toolResultsPublic(toolResults), "token_usage": tokenUsagePayload(result.Usage, reserved, actual),
+		"latency_ms": latency.Milliseconds(),
+	}
 }
 
 func ExecuteRoleTools(db *gorm.DB, meeting domainmeeting.Meeting, role domainai.AgentRole) []MeetingToolResult {

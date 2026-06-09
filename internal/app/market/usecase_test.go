@@ -79,6 +79,61 @@ func TestCurrentQuoteFallsBackToCachedQuoteWhenRefreshFails(t *testing.T) {
 	}
 }
 
+func TestProcessTaskReturnsQuoteRefreshErrorForQueueRetry(t *testing.T) {
+	ctx := context.Background()
+	expected := errors.New("provider unavailable")
+	repo := &fakeMarketRepo{}
+	service := fakeMarketData{refreshErr: expected}
+
+	_, err := NewUsecase(repo, service, fakeMarketTx{repo: &fakeMarketRepo{}}).ProcessTask(ctx, Task{Action: TaskRefreshQuote, Code: "600519"})
+	if !errors.Is(err, expected) {
+		t.Fatalf("ProcessTask error = %v, want provider error", err)
+	}
+}
+
+func TestProcessTaskPersistsDailyBarsThroughTransaction(t *testing.T) {
+	ctx := context.Background()
+	baseRepo := &fakeMarketRepo{}
+	txRepo := &fakeMarketRepo{}
+	service := fakeMarketData{
+		dailyBars: []domainmarket.DailyBar{
+			{Code: "600519", TradeDate: time.Date(2026, 6, 8, 0, 0, 0, 0, time.UTC), Provider: "fixture"},
+			{Code: "600519", TradeDate: time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC), Provider: "fixture"},
+		},
+	}
+
+	result, err := NewUsecase(baseRepo, service, fakeMarketTx{repo: txRepo}).ProcessTask(ctx, Task{Action: TaskRefreshDailyBars, Code: "600519"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Count != 2 || result.Provider != "fixture" {
+		t.Fatalf("unexpected result: %+v", result)
+	}
+	if txRepo.upsertDailyBars != 2 {
+		t.Fatalf("transaction repository daily upsert count = %d, want 2", txRepo.upsertDailyBars)
+	}
+	if baseRepo.upsertDailyBars != 0 {
+		t.Fatalf("base repository received daily writes outside the unit of work")
+	}
+}
+
+func TestEnqueueTaskNormalizesAndDelegatesToQueue(t *testing.T) {
+	ctx := context.Background()
+	queue := &fakeMarketTaskQueue{}
+	usecase := NewUsecase(&fakeMarketRepo{}, fakeMarketData{}, fakeMarketTx{repo: &fakeMarketRepo{}}).WithTaskQueue(queue)
+
+	result, err := usecase.EnqueueTask(ctx, Task{Action: TaskRefreshDailyBars, Code: "600519"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Status != "queued" || result.TaskID != "task-1" {
+		t.Fatalf("unexpected enqueue result: %+v", result)
+	}
+	if queue.task.Action != TaskRefreshDailyBars || queue.task.Code != "600519" {
+		t.Fatalf("queued task = %+v", queue.task)
+	}
+}
+
 type fakeMarketTx struct {
 	repo *fakeMarketRepo
 }
@@ -91,6 +146,7 @@ type fakeMarketData struct {
 	symbolProvider string
 	symbols        []domainmarket.Symbol
 	quotes         map[string]*domainmarket.RealtimeQuote
+	dailyBars      []domainmarket.DailyBar
 	refreshErr     error
 }
 
@@ -103,7 +159,7 @@ func (f fakeMarketData) Series(context.Context, string, string) ([]map[string]an
 	return nil, nil
 }
 func (f fakeMarketData) FetchDailyBars(context.Context, string) ([]domainmarket.DailyBar, error) {
-	return nil, nil
+	return f.dailyBars, nil
 }
 func (f fakeMarketData) RefreshQuotes(context.Context, []string) (map[string]*domainmarket.RealtimeQuote, error) {
 	if f.refreshErr != nil {
@@ -113,10 +169,11 @@ func (f fakeMarketData) RefreshQuotes(context.Context, []string) (map[string]*do
 }
 
 type fakeMarketRepo struct {
-	upsertSymbols int
-	createdQuotes int
-	latestQuote   *domainmarket.RealtimeQuote
-	latestFound   bool
+	upsertSymbols   int
+	upsertDailyBars int
+	createdQuotes   int
+	latestQuote     *domainmarket.RealtimeQuote
+	latestFound     bool
 }
 
 func (r *fakeMarketRepo) ListSymbols(context.Context, string, int, string) ([]domainmarket.Symbol, error) {
@@ -136,6 +193,7 @@ func (r *fakeMarketRepo) DailyBars(context.Context, string, int, *time.Time) ([]
 	return nil, nil
 }
 func (r *fakeMarketRepo) UpsertDailyBar(context.Context, domainmarket.DailyBar) error {
+	r.upsertDailyBars++
 	return nil
 }
 func (r *fakeMarketRepo) CreateRealtimeQuote(_ context.Context, row *domainmarket.RealtimeQuote) error {
@@ -165,4 +223,15 @@ func (r *fakeMarketRepo) ToolDailyBars(context.Context, string, int) ([]domainma
 }
 func (r *fakeMarketRepo) ToolPaperPositions(context.Context) ([]domainpaper.Position, error) {
 	return nil, nil
+}
+
+type fakeMarketTaskQueue struct {
+	task appmarketTask
+}
+
+type appmarketTask = Task
+
+func (q *fakeMarketTaskQueue) EnqueueMarketTask(_ context.Context, task Task) (string, error) {
+	q.task = task
+	return "task-1", nil
 }

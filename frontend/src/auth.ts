@@ -1,15 +1,25 @@
-const TOKEN_STORAGE_KEY = 'tradingcopilot_token'
+export const TOKEN_STORAGE_KEY = 'tradingcopilot_session_token'
+const LEGACY_TOKEN_STORAGE_KEY = 'tradingcopilot_token'
 
 export function getAuthToken(): string | null {
-  return localStorage.getItem(TOKEN_STORAGE_KEY)
+  const token = sessionStorage.getItem(TOKEN_STORAGE_KEY)
+  if (token) return token
+  const legacy = localStorage.getItem(LEGACY_TOKEN_STORAGE_KEY)
+  if (legacy) {
+    sessionStorage.setItem(TOKEN_STORAGE_KEY, legacy)
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY)
+  }
+  return legacy
 }
 
 export function setAuthToken(token: string) {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token)
+  sessionStorage.setItem(TOKEN_STORAGE_KEY, token)
+  localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY)
 }
 
 export function clearAuthToken() {
-  localStorage.removeItem(TOKEN_STORAGE_KEY)
+  sessionStorage.removeItem(TOKEN_STORAGE_KEY)
+  localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY)
 }
 
 export function getAuthTokenExpiresAt(token: string | null): number | null {

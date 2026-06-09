@@ -195,10 +195,24 @@ func CreateOrderFromSpec(db *gorm.DB, spec map[string]any) (*domainpaper.Order, 
 	if err := savePaperOrderRecord(db, &order); err != nil {
 		return nil, err
 	}
+	if orderRequiresApproval(spec) {
+		order.ExecutionNote = strPtr("Awaiting manual approval before risk submission.")
+		if err := savePaperOrderRecord(db, &order); err != nil {
+			return nil, err
+		}
+		return &order, nil
+	}
 	if err := SubmitOrder(db, &order); err != nil {
 		return nil, err
 	}
 	return &order, nil
+}
+
+func orderRequiresApproval(spec map[string]any) bool {
+	if value, ok := spec["requires_approval"]; ok {
+		return boolFromPayload(value, false)
+	}
+	return optionalUintPtr(spec["meeting_id"]) != nil || optionalUintPtr(spec["source_meeting_event_id"]) != nil
 }
 
 func SubmitOrder(db *gorm.DB, order *domainpaper.Order) error {
@@ -269,6 +283,12 @@ func SubmitOrder(db *gorm.DB, order *domainpaper.Order) error {
 		if err := db.Where("account_id = ? AND code = ?", account.ID, order.Code).First(&pos).Error; err != nil || pos.Quantity < order.Quantity {
 			order.Status = domainkernel.OrderRejected
 			order.Reason = strPtr("insufficient position")
+			return savePaperOrderRecord(db, order)
+		}
+		now := paperNow()
+		if available := sellableQuantityTPlusOne(db, account.ID, order.Code, now); available < order.Quantity {
+			order.Status = domainkernel.OrderRejected
+			order.Reason = strPtr(fmt.Sprintf("insufficient T+1 sellable position: %d shares available", available))
 			return savePaperOrderRecord(db, order)
 		}
 	}
@@ -351,8 +371,15 @@ func DeleteOrderRecord(db *gorm.DB, order *domainpaper.Order) error {
 }
 
 func FillOrder(db *gorm.DB, order *domainpaper.Order, price decimal.Decimal) error {
+	return FillOrderWithInput(db, order, domainpaper.OrderFillInput{Price: price})
+}
+
+func FillOrderWithInput(db *gorm.DB, order *domainpaper.Order, input domainpaper.OrderFillInput) error {
 	repo := gormrepo.NewPaperRepository(db)
 	ctx := dbContext(db)
+	if order.Status != domainkernel.OrderPending {
+		return errors.New("only pending orders can be filled")
+	}
 	account, found, err := repo.FindAccount(ctx, order.AccountID)
 	if err != nil || !found {
 		order.Status = domainkernel.OrderRejected
@@ -377,8 +404,35 @@ func FillOrder(db *gorm.DB, order *domainpaper.Order, price decimal.Decimal) err
 		order.Reason = strPtr(err.Error())
 		return repo.SaveOrder(ctx, order)
 	}
-	price = q4(price)
-	gross := q4(price.Mul(decimal.NewFromInt(int64(order.Quantity))))
+	price := q4(input.Price)
+	if !price.IsPositive() {
+		return errors.New("fill price must be positive")
+	}
+	progress := paperOrderFillProgress(db, []domainpaper.Order{*order})[order.ID]
+	if progress.RemainingQuantity <= 0 {
+		order.Status = domainkernel.OrderFilled
+		return repo.SaveOrder(ctx, order)
+	}
+	if input.Quantity < 0 {
+		return errors.New("fill quantity cannot be negative")
+	}
+	fillQuantity := input.Quantity
+	if fillQuantity == 0 {
+		fillQuantity = progress.RemainingQuantity
+	}
+	if fillQuantity <= 0 {
+		return errors.New("fill quantity must be positive")
+	}
+	if fillQuantity > progress.RemainingQuantity {
+		return fmt.Errorf("fill quantity exceeds remaining quantity: %d shares remaining", progress.RemainingQuantity)
+	}
+	executionOrder := *order
+	executionOrder.Quantity = fillQuantity
+	if check := validateFillExecution(db, executionOrder, price, paperNow()); check.Blocked {
+		order.ExecutionNote = strPtr(check.Note)
+		return repo.SaveOrder(ctx, order)
+	}
+	gross := q4(price.Mul(decimal.NewFromInt(int64(fillQuantity))))
 	fees := calculateFees(order.Side, gross, *cfg)
 	totalFees := fees["commission"].Add(fees["transfer_fee"]).Add(fees["stamp_duty"])
 	pos, found, err := repo.FindPosition(ctx, order.AccountID, order.Code)
@@ -392,6 +446,7 @@ func FillOrder(db *gorm.DB, order *domainpaper.Order, price decimal.Decimal) err
 		}
 	}
 	realized := decimal.Zero
+	fillNetAmount := decimal.Zero
 	if order.Side == domainkernel.OrderBuy {
 		needed := q2(gross.Add(totalFees))
 		if account.Cash.LessThan(needed) {
@@ -401,18 +456,18 @@ func FillOrder(db *gorm.DB, order *domainpaper.Order, price decimal.Decimal) err
 		}
 		account.Cash = q2(account.Cash.Sub(needed))
 		pos.CostAmount = q4(pos.CostAmount.Add(gross).Add(totalFees))
-		pos.Quantity += order.Quantity
+		pos.Quantity += fillQuantity
 		pos.AvgCost = q4(pos.CostAmount.Div(decimal.NewFromInt(int64(pos.Quantity))))
-		order.NetAmount = q4(gross.Add(totalFees))
+		fillNetAmount = q4(gross.Add(totalFees))
 	} else {
-		if pos.Quantity < order.Quantity {
+		if pos.Quantity < fillQuantity {
 			order.Status = domainkernel.OrderRejected
 			order.Reason = strPtr("insufficient position")
 			return repo.SaveOrder(ctx, order)
 		}
-		costReleased := q4(pos.AvgCost.Mul(decimal.NewFromInt(int64(order.Quantity))))
+		costReleased := q4(pos.AvgCost.Mul(decimal.NewFromInt(int64(fillQuantity))))
 		realized = q4(gross.Sub(totalFees).Sub(costReleased))
-		pos.Quantity -= order.Quantity
+		pos.Quantity -= fillQuantity
 		pos.CostAmount = q4(pos.CostAmount.Sub(costReleased))
 		pos.RealizedPNL = q4(pos.RealizedPNL.Add(realized))
 		if pos.Quantity > 0 {
@@ -422,7 +477,7 @@ func FillOrder(db *gorm.DB, order *domainpaper.Order, price decimal.Decimal) err
 			pos.CostAmount = decimal.Zero
 		}
 		account.Cash = q2(account.Cash.Add(gross).Sub(totalFees))
-		order.NetAmount = q4(gross.Sub(totalFees))
+		fillNetAmount = q4(gross.Sub(totalFees))
 	}
 	now := paperNow()
 	pos.LastPrice = price
@@ -430,14 +485,24 @@ func FillOrder(db *gorm.DB, order *domainpaper.Order, price decimal.Decimal) err
 	pos.UnrealizedPNL = q4(pos.MarketValue.Sub(pos.CostAmount))
 	pos.UpdatedAt = now
 	account.UpdatedAt = now
-	order.Status = domainkernel.OrderFilled
-	order.FilledPrice = price
-	order.FilledAt = &now
-	order.ExecutionNote = strPtr("Filled manually.")
-	order.Commission = fees["commission"]
-	order.TransferFee = fees["transfer_fee"]
-	order.StampDuty = fees["stamp_duty"]
-	order.NetAmount = q4(order.NetAmount)
+	filledQuantity := progress.FilledQuantity + fillQuantity
+	remainingQuantity := order.Quantity - filledQuantity
+	if remainingQuantity < 0 {
+		remainingQuantity = 0
+	}
+	order.FilledPrice = weightedAverageFillPrice(progress.FilledGross.Add(gross), filledQuantity)
+	if remainingQuantity == 0 {
+		order.Status = domainkernel.OrderFilled
+		order.FilledAt = &now
+	} else {
+		order.Status = domainkernel.OrderPending
+		order.FilledAt = nil
+	}
+	order.ExecutionNote = strPtr(fillExecutionNote(order.ExecutionNote, filledQuantity, order.Quantity, remainingQuantity, price))
+	order.Commission = q4(order.Commission.Add(fees["commission"]))
+	order.TransferFee = q4(order.TransferFee.Add(fees["transfer_fee"]))
+	order.StampDuty = q4(order.StampDuty.Add(fees["stamp_duty"]))
+	order.NetAmount = q4(order.NetAmount.Add(fillNetAmount))
 	if err := repo.SaveAccount(ctx, account); err != nil {
 		return err
 	}
@@ -456,16 +521,58 @@ func FillOrder(db *gorm.DB, order *domainpaper.Order, price decimal.Decimal) err
 		AccountID:   order.AccountID,
 		Code:        order.Code,
 		Side:        order.Side,
-		Quantity:    order.Quantity,
+		Quantity:    fillQuantity,
 		Price:       price,
 		GrossAmount: gross,
 		Commission:  fees["commission"],
 		StampDuty:   fees["stamp_duty"],
 		TransferFee: fees["transfer_fee"],
-		NetAmount:   order.NetAmount,
+		NetAmount:   fillNetAmount,
 		RealizedPNL: realized,
 		FilledAt:    now,
 	})
+}
+
+func weightedAverageFillPrice(gross decimal.Decimal, quantity int) decimal.Decimal {
+	if quantity <= 0 || gross.IsZero() {
+		return decimal.Zero
+	}
+	return q4(gross.Div(decimal.NewFromInt(int64(quantity))))
+}
+
+func fillExecutionNote(previous *string, filledQuantity int, orderQuantity int, remainingQuantity int, price decimal.Decimal) string {
+	prefix := ""
+	mode := "manually"
+	if previous != nil && (strings.Contains(*previous, "slippage") || strings.Contains(*previous, "daily limit band") || strings.Contains(*previous, "volume participation")) {
+		prefix = strings.TrimSpace(*previous) + " "
+		mode = "automatically"
+	}
+	if remainingQuantity > 0 {
+		return fmt.Sprintf("%sPartially filled %s: %d/%d shares at %s; %d remaining.", prefix, mode, filledQuantity, orderQuantity, price.StringFixed(4), remainingQuantity)
+	}
+	if filledQuantity < orderQuantity {
+		return fmt.Sprintf("%sFilled %s: %d/%d shares completed at %s.", prefix, mode, filledQuantity, orderQuantity, price.StringFixed(4))
+	}
+	return fmt.Sprintf("%sFilled %s.", prefix, mode)
+}
+
+func nonEmptyStrings(values ...string) []string {
+	out := []string{}
+	for _, value := range values {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
+func firstNonEmptyString(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func DuePendingOrders(db *gorm.DB, limit int) ([]domainpaper.Order, error) {
@@ -486,7 +593,14 @@ func ExecuteDueOrders(db *gorm.DB, limit int) ([]domainpaper.Order, error) {
 	if err != nil {
 		return nil, err
 	}
+	volumeBudgets := map[string]int{}
 	for i := range orders {
+		if orders[i].ExpireAt != nil && !orders[i].ExpireAt.After(now) {
+			orders[i].Status = domainkernel.OrderExpired
+			orders[i].ExecutionNote = strPtr("Expired before the next executable trading window.")
+			_ = savePaperOrderRecord(db, &orders[i])
+			continue
+		}
 		price := orders[i].SuggestedPrice
 		if price.IsZero() {
 			price = latestQuotePrice(db, orders[i].Code)
@@ -496,7 +610,33 @@ func ExecuteDueOrders(db *gorm.DB, limit int) ([]domainpaper.Order, error) {
 			_ = savePaperOrderRecord(db, &orders[i])
 			continue
 		}
-		_ = FillOrder(db, &orders[i], price)
+		fillQuantity, quantityNote := autoExecutionQuantity(db, orders[i], now, volumeBudgets)
+		if fillQuantity <= 0 {
+			orders[i].ExecutionNote = strPtr(firstNonEmptyString(quantityNote, "No executable quantity is available."))
+			_ = savePaperOrderRecord(db, &orders[i])
+			continue
+		}
+		executionOrder := orders[i]
+		executionOrder.Quantity = fillQuantity
+		if check := validateFillExecution(db, executionOrder, price, now); check.Blocked {
+			orders[i].ExecutionNote = strPtr(check.Note)
+			_ = savePaperOrderRecord(db, &orders[i])
+			continue
+		}
+		price, note := autoExecutionPrice(db, executionOrder, price, now)
+		note = strings.Join(nonEmptyStrings(note, quantityNote), " ")
+		if note != "" {
+			orders[i].ExecutionNote = strPtr(note)
+			_ = savePaperOrderRecord(db, &orders[i])
+		}
+		if err := FillOrderWithInput(db, &orders[i], domainpaper.OrderFillInput{Price: price, Quantity: fillQuantity}); err == nil {
+			if _, ok := volumeBudgets[orders[i].Code]; ok {
+				volumeBudgets[orders[i].Code] -= fillQuantity
+				if volumeBudgets[orders[i].Code] < 0 {
+					volumeBudgets[orders[i].Code] = 0
+				}
+			}
+		}
 	}
 	return orders, nil
 }

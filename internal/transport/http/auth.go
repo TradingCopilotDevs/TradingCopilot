@@ -60,6 +60,15 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	writeAuthToken(w, token)
 }
 
+func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
+	row, err := s.auth.Logout(r.Context(), currentPrincipal(r), requestMeta(r))
+	if err != nil {
+		writeAdminError(w, err, "auth-logout-failed", "Logout failed")
+		return
+	}
+	jsonapi.WriteData(w, http.StatusOK, adminSessionResource(*row))
+}
+
 func writeAuthToken(w http.ResponseWriter, token string) {
 	jsonapi.WriteData(w, http.StatusOK, jsonapi.NewResource("auth-tokens", "current", map[string]any{
 		"accessToken": token,

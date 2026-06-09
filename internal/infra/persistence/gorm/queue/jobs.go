@@ -5,12 +5,15 @@ import (
 	"sync"
 	"time"
 
+	appmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/app/market"
 	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
 	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
+	appops "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ops"
 	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
 	appsystem "github.com/TradingCopilotDevs/TradingCopilot/internal/app/system"
 	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	infrabackup "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/backup"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 	infralogging "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/logging"
 	inframarketdata "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/marketdata"
@@ -33,9 +36,12 @@ const (
 	TypeEvaluateWakePlans     = infraqueue.TypeEvaluateWakePlans
 	TypeRunPaperMaintenance   = infraqueue.TypeRunPaperMaintenance
 	TypeRecoverQueuedMeetings = infraqueue.TypeRecoverQueuedMeetings
+	TypeRunBackupRestoreDrill = infraqueue.TypeRunBackupRestoreDrill
+	TypeRunMarketTask         = infraqueue.TypeRunMarketTask
 )
 
 type RunMeetingPayload = infraqueue.RunMeetingPayload
+type MarketTask = appmarket.Task
 type PeriodicJob = infraqueue.PeriodicJob
 
 func RedisClientOpt(redisURL string) asynq.RedisClientOpt {
@@ -44,6 +50,10 @@ func RedisClientOpt(redisURL string) asynq.RedisClientOpt {
 
 func EnqueueRunMeeting(settings config.Settings, meetingID uint) error {
 	return infraqueue.EnqueueRunMeeting(settings, meetingID)
+}
+
+func EnqueueRunMeetingContext(ctx context.Context, settings config.Settings, meetingID uint) error {
+	return infraqueue.EnqueueRunMeetingContext(ctx, settings, meetingID)
 }
 
 func EnqueueDuePeriodicJobs(client *asynq.Client, now time.Time, jobs []PeriodicJob, next map[string]time.Time) error {
@@ -74,16 +84,18 @@ func RunWorker(settings config.Settings) error {
 }
 
 func NewServeMux(db *gorm.DB, settings config.Settings) *asynq.ServeMux {
-	return newServeMux(db, settings, func(meetingID uint) error {
-		return EnqueueRunMeeting(settings, meetingID)
+	return newServeMux(db, settings, func(ctx context.Context, meetingID uint) error {
+		return EnqueueRunMeetingContext(ctx, settings, meetingID)
 	})
 }
 
-func newServeMux(db *gorm.DB, settings config.Settings, enqueueMeeting appmeeting.EnqueueMeeting) *asynq.ServeMux {
+func newServeMux(db *gorm.DB, settings config.Settings, enqueueMeeting appmeeting.EnqueueMeetingContext) *asynq.ServeMux {
 	sec := security.New(settings)
-	meetingUsecase := newMeetingUsecase(db, settings, enqueueMeeting)
+	meetingUsecase := newMeetingUsecaseContext(db, settings, enqueueMeeting)
+	marketUsecase := appmarket.NewUsecase(gormrepo.NewMarketRepository(db), inframarketdata.NewService(settings, gormmarketdata.NewStore(db, settings, sec)), gormuow.NewMarketUnitOfWork(db, settings))
 	wakeUsecase := appwake.NewUsecase(gormrepo.NewWakeRepository(db), inframarketdata.NewService(settings, gormmarketdata.NewStore(db, settings, sec)), gormuow.NewWakeUnitOfWork(db, settings))
 	paperUsecase := apppaper.NewUsecase(gormrepo.NewPaperRepository(db), infrapaper.NewService(db), gormuow.NewPaperUnitOfWork(db))
+	opsBackupUsecase := appops.NewBackupService(opsBackupSettings(settings), nil).WithArchiveStore(infrabackup.StoreForSettings(settings))
 	messageQueue := infraqueue.NewRedisMessageTaskQueue(settings)
 	messagingUsecase := appmessaging.NewUsecase(gormrepo.NewMessagingRepository(db), inframessaging.NewService(settings), sec, gormuow.NewMessagingUnitOfWork(db, settings)).WithTaskQueue(messageQueue)
 	return infraqueue.NewServeMux(infraqueue.Handlers{
@@ -92,7 +104,7 @@ func newServeMux(db *gorm.DB, settings config.Settings, enqueueMeeting appmeetin
 		},
 		EvaluateWakePlans: func(ctx context.Context) error {
 			_, err := wakeUsecase.ProcessDue(ctx, 100, func(meeting *domainmeeting.Meeting) error {
-				return EnqueueRunMeeting(settings, meeting.ID)
+				return EnqueueRunMeetingContext(ctx, settings, meeting.ID)
 			})
 			return err
 		},
@@ -103,6 +115,16 @@ func newServeMux(db *gorm.DB, settings config.Settings, enqueueMeeting appmeetin
 		RecoverQueuedMeetings: func(context.Context) error {
 			_, err := RecoverQueuedMeetings(db, settings, 100, 5*time.Second)
 			return err
+		},
+		RunBackupRestoreDrill: func(ctx context.Context) error {
+			_, err := opsBackupUsecase.RunLatestRestoreDrill(ctx)
+			return err
+		},
+		MarketTasks: infraqueue.MarketTaskHandlers{
+			Run: func(ctx context.Context, payload appmarket.Task) error {
+				_, err := marketUsecase.ProcessTask(ctx, payload)
+				return err
+			},
 		},
 		MessageTasks: infraqueue.MessageTaskHandlers{
 			Collect: func(ctx context.Context, payload appmessaging.CollectTask) error {
@@ -136,6 +158,42 @@ func newMeetingUsecase(db *gorm.DB, settings config.Settings, enqueueMeeting app
 	return usecase
 }
 
+func newMeetingUsecaseContext(db *gorm.DB, settings config.Settings, enqueueMeeting appmeeting.EnqueueMeetingContext) appmeeting.Usecase {
+	usecase := appmeeting.NewUsecase(gormrepo.NewMeetingRepository(db), inframeeting.NewService(db), appmeeting.Settings{
+		MeetingDispatchMode: settings.MeetingDispatchMode,
+	}, gormuow.NewMeetingUnitOfWork(db))
+	if enqueueMeeting != nil {
+		usecase = usecase.WithMeetingEnqueuerContext(enqueueMeeting)
+	}
+	return usecase
+}
+
+func opsBackupSettings(settings config.Settings) appops.BackupSettings {
+	return appops.BackupSettings{
+		AppName:                    settings.AppName,
+		AppEnv:                     settings.AppEnv,
+		DatabaseURL:                settings.DatabaseURL,
+		LogDir:                     settings.LogDir,
+		RuntimeEnvFile:             settings.RuntimeEnvFile,
+		BackupArchiveProvider:      settings.BackupArchiveProvider,
+		BackupArchiveS3Bucket:      settings.BackupArchiveS3Bucket,
+		BackupArchiveS3Region:      settings.BackupArchiveS3Region,
+		BackupArchiveS3Endpoint:    settings.BackupArchiveS3Endpoint,
+		BackupArchiveS3AccessKeyID: settings.BackupArchiveS3AccessKeyID,
+		BackupArchiveS3SecretKey:   settings.BackupArchiveS3SecretAccessKey,
+		BackupArchiveS3Prefix:      settings.BackupArchiveS3Prefix,
+		BackupArchiveOSSBucket:     settings.BackupArchiveOSSBucket,
+		BackupArchiveOSSRegion:     settings.BackupArchiveOSSRegion,
+		BackupArchiveOSSEndpoint:   settings.BackupArchiveOSSEndpoint,
+		BackupArchiveOSSAccessKey:  settings.BackupArchiveOSSAccessKeyID,
+		BackupArchiveOSSSecretKey:  settings.BackupArchiveOSSAccessKeySecret,
+		BackupArchiveOSSPrefix:     settings.BackupArchiveOSSPrefix,
+		BackupRetentionCopies:      settings.BackupRetentionCopies,
+		BackupRetentionDays:        settings.BackupRetentionDays,
+		BackupRestoreDrillInterval: settings.BackupRestoreDrillInterval,
+	}
+}
+
 func dispatchMessageSubscriptionMeetings(ctx context.Context, meetingUsecase appmeeting.Usecase, meetings []*domainmeeting.Meeting) error {
 	for _, meeting := range meetings {
 		if meeting == nil {
@@ -164,6 +222,9 @@ func RunScheduler(settings config.Settings) error {
 		{Type: TypeEvaluateWakePlans, Interval: 20 * time.Second},
 		{Type: TypeRunPaperMaintenance, Interval: 10 * time.Second},
 		{Type: TypeRecoverQueuedMeetings, Interval: 60 * time.Second},
+	}
+	if settings.BackupRestoreDrillInterval > 0 {
+		jobs = append(jobs, PeriodicJob{Type: TypeRunBackupRestoreDrill, Interval: settings.BackupRestoreDrillInterval})
 	}
 	next := map[string]time.Time{}
 	for {

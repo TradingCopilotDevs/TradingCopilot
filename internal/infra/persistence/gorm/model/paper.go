@@ -127,3 +127,22 @@ type PaperEquitySnapshot struct {
 }
 
 func (PaperEquitySnapshot) TableName() string { return "paper_equity_snapshots" }
+
+type PaperCorporateAction struct {
+	ID             uint            `gorm:"primaryKey"`
+	AccountID      uint            `gorm:"index"`
+	Account        *PaperAccount   `gorm:"foreignKey:AccountID;constraint:OnDelete:CASCADE"`
+	Code           string          `gorm:"size:16;index"`
+	ActionType     string          `gorm:"size:32;index"`
+	ExDate         time.Time       `gorm:"index"`
+	CashPerShare   decimal.Decimal `gorm:"type:numeric(18,6)"`
+	ShareRatio     decimal.Decimal `gorm:"type:numeric(18,6)"`
+	AffectedShares int
+	CashAmount     decimal.Decimal `gorm:"type:numeric(18,4)"`
+	Status         string          `gorm:"size:32;index;default:applied"`
+	Note           *string         `gorm:"type:text"`
+	AppliedAt      *time.Time
+	CreatedAt      time.Time
+}
+
+func (PaperCorporateAction) TableName() string { return "paper_corporate_actions" }

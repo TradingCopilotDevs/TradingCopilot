@@ -124,6 +124,11 @@ type OrderInput struct {
 	MeetingConclusion    string
 }
 
+type OrderFillInput struct {
+	Price    decimal.Decimal
+	Quantity int
+}
+
 type Position struct {
 	ID            uint
 	AccountID     uint
@@ -169,4 +174,31 @@ type EquitySnapshot struct {
 	UnrealizedPNL decimal.Decimal
 	RealizedPNL   decimal.Decimal
 	DailyPNL      decimal.Decimal
+}
+
+type CorporateAction struct {
+	ID             uint
+	AccountID      uint
+	Account        *Account
+	Code           string
+	ActionType     string
+	ExDate         time.Time
+	CashPerShare   decimal.Decimal
+	ShareRatio     decimal.Decimal
+	AffectedShares int
+	CashAmount     decimal.Decimal
+	Status         string
+	Note           *string
+	AppliedAt      *time.Time
+	CreatedAt      time.Time
+}
+
+type CorporateActionInput struct {
+	AccountID    uint
+	Code         string
+	ActionType   string
+	ExDate       time.Time
+	CashPerShare decimal.Decimal
+	ShareRatio   decimal.Decimal
+	Note         *string
 }

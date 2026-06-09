@@ -262,17 +262,18 @@ func TestRunTelegramBotListenerHeartbeatsWhenLeaseHeld(t *testing.T) {
 	}()
 
 	deadline := time.Now().Add(time.Second)
+	var lastHeartbeat *appsystem.Heartbeat
 	for time.Now().Before(deadline) {
 		heartbeat, err := appsystem.NewUsecase(gormrepo.NewSystemRepository(db), gormuow.NewSystemUnitOfWork(db)).LoadHeartbeat(context.Background(), "telegram_bot_listener")
 		if err == nil && heartbeat != nil {
-			if heartbeat.Status != "running" || !strings.Contains(heartbeat.Error, "lease") {
-				t.Fatalf("unexpected heartbeat: %+v", heartbeat)
+			lastHeartbeat = heartbeat
+			if heartbeat.Status == "running" && strings.Contains(heartbeat.Error, "lease") {
+				return
 			}
-			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	t.Fatal("expected heartbeat while bot listener lease is held")
+	t.Fatalf("expected lease-held heartbeat while bot listener lease is held, last=%+v", lastHeartbeat)
 }
 
 func TestRunTelegramBotListenerHeartbeatsBeforeLongPollReturns(t *testing.T) {
