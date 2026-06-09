@@ -324,6 +324,75 @@ func TestMeetingRuntimeDiagnosticsSummarizesDurationsAndEvents(t *testing.T) {
 	}
 }
 
+func TestDashboardWakeAlertIdentifiesOverduePlans(t *testing.T) {
+	db := newDashboardTestDB(t)
+	now := time.Now()
+	account := persistmodel.PaperAccount{Name: "Default", InitialCash: decimal.NewFromInt(100000), Cash: decimal.NewFromInt(100000), Active: true}
+	if err := db.Create(&account).Error; err != nil {
+		t.Fatal(err)
+	}
+	team := persistmodel.ResearchTeam{Name: "Wake Team", PaperAccountID: account.ID, Active: true}
+	if err := db.Create(&team).Error; err != nil {
+		t.Fatal(err)
+	}
+	overdueAt := now.Add(-45 * time.Minute)
+	futureAt := now.Add(45 * time.Minute)
+	overdue := persistmodel.WakePlan{
+		ResearchTeamID: team.ID,
+		TriggerType:    domainkernel.WakeTime,
+		TriggerConfig:  datatypes.JSON(domainkernel.NewJSON(map[string]any{"topic": "overdue follow-up"})),
+		Reason:         "check overdue plan details",
+		Status:         domainkernel.WakeActive,
+		NextCheckAt:    &overdueAt,
+	}
+	future := persistmodel.WakePlan{
+		ResearchTeamID: team.ID,
+		TriggerType:    domainkernel.WakeTime,
+		TriggerConfig:  datatypes.JSON(domainkernel.NewJSON(map[string]any{"topic": "future follow-up"})),
+		Reason:         "future plan",
+		Status:         domainkernel.WakeActive,
+		NextCheckAt:    &futureAt,
+	}
+	if err := db.Create(&overdue).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&future).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	payload, err := NewLoader(db, config.Settings{MeetingDispatchMode: "local"}).Load(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics := payload["businessMetrics"].(map[string]any)
+	if metrics["wakeOverdueCount"] != int64(1) {
+		t.Fatalf("wake overdue count mismatch: %+v", metrics)
+	}
+	alerts := payload["alerts"].([]any)
+	var wakeAlert map[string]any
+	for _, raw := range alerts {
+		alert := raw.(map[string]any)
+		if alert["title"] == "Overdue wake plans" {
+			wakeAlert = alert
+			break
+		}
+	}
+	if wakeAlert == nil {
+		t.Fatalf("missing overdue wake alert: %+v", alerts)
+	}
+	if wakeAlert["link"] != "/wake?overdue=true" || wakeAlert["totalCount"] != int64(1) {
+		t.Fatalf("wake alert should point to overdue plan focus view: %+v", wakeAlert)
+	}
+	summaries := wakeAlert["wakePlanSummaries"].([]any)
+	if len(summaries) != 1 {
+		t.Fatalf("wake alert summaries should include only overdue active plans: %+v", wakeAlert)
+	}
+	summary := summaries[0].(map[string]any)
+	if summary["id"] != overdue.ID || summary["researchTeamName"] != "Wake Team" || summary["reason"] != "check overdue plan details" {
+		t.Fatalf("wake alert summary should identify the overdue plan: %+v", summary)
+	}
+}
+
 func newDashboardTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})

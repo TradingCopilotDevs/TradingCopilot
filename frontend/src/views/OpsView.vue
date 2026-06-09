@@ -565,9 +565,9 @@ async function dryRunBackup(name: string) {
   try {
     const { data } = await api.post(`/ops/backups/${encodeURIComponent(name)}/restore-dry-run`)
     restoreDryRun.value = unwrapJsonApiResource<OpsBackupRestoreDryRun>(data)
-    ElMessage.success('Backup dry-run completed')
+    ElMessage.success(`备份恢复演练已完成：${name}`)
   } catch (error) {
-    ElMessage.error(apiErrorText(error, 'Backup dry-run failed'))
+    ElMessage.error(apiErrorText(error, `备份恢复演练失败：${name}`))
   } finally {
     backupDryRunning.value = ''
   }

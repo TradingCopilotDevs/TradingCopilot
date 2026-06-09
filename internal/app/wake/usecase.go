@@ -37,9 +37,10 @@ type Repository interface {
 	Find(ctx context.Context, id uint) (*domainwake.Plan, bool, error)
 	Save(ctx context.Context, row *domainwake.Plan) error
 	Delete(ctx context.Context, id uint) error
-	FindMeetingTopic(ctx context.Context, id uint) (string, bool, error)
+	FindMeetingSnapshot(ctx context.Context, id uint) (*domainmeeting.Meeting, bool, error)
 	CreateMeeting(ctx context.Context, meeting *domainmeeting.Meeting) error
 	AppendMeetingEvent(ctx context.Context, event *domainmeeting.Event) error
+	CreateMeetingReference(ctx context.Context, ref *domainmeeting.Reference) error
 	ResearchTeamReady(ctx context.Context, teamID uint) (bool, string, error)
 	LatestRealtimeQuote(ctx context.Context, code string) (*domainmarket.RealtimeQuote, bool, error)
 	LatestDailyBar(ctx context.Context, code string) (*domainmarket.DailyBar, bool, error)
@@ -50,6 +51,7 @@ type RepositoryListFilter struct {
 	ResearchTeamID string
 	Status         string
 	MeetingID      string
+	Overdue        bool
 	Limit          int
 	CursorID       uint64
 }
@@ -80,6 +82,7 @@ type ListFilter struct {
 	ResearchTeamID string
 	Status         string
 	MeetingID      string
+	Overdue        bool
 	Page           Page
 }
 
@@ -109,7 +112,7 @@ func (u Usecase) List(ctx context.Context, filter ListFilter) (ListResult, error
 	if page.Cursor != "" {
 		cursorID, _ = strconv.ParseUint(page.Cursor, 10, 64)
 	}
-	rows, err := u.repo.List(ctx, RepositoryListFilter{ResearchTeamID: filter.ResearchTeamID, Status: filter.Status, MeetingID: filter.MeetingID, Limit: page.Limit + 1, CursorID: cursorID})
+	rows, err := u.repo.List(ctx, RepositoryListFilter{ResearchTeamID: filter.ResearchTeamID, Status: filter.Status, MeetingID: filter.MeetingID, Overdue: filter.Overdue, Limit: page.Limit + 1, CursorID: cursorID})
 	if err != nil {
 		return ListResult{}, err
 	}
@@ -244,6 +247,9 @@ func (u Usecase) Fire(ctx context.Context, id uint) (*FireResult, bool, error) {
 		row, found, err = repo.Find(ctx, id)
 		if err != nil || !found {
 			return err
+		}
+		if row.Status != domainkernel.WakeActive {
+			return fmt.Errorf("only active wake plans can be fired; current status is %s", row.Status)
 		}
 		if err := ValidatePlan(row); err != nil {
 			return err
@@ -445,11 +451,15 @@ func (u Usecase) firePlan(ctx context.Context, repo Repository, plan *domainwake
 	config := wakeConfig(plan)
 	topic := strings.TrimSpace(stringFromConfig(config["topic"]))
 	sourceTopic := "Follow-up meeting"
+	var sourceMeeting *domainmeeting.Meeting
 	if plan.MeetingID != nil {
-		if foundTopic, found, err := repo.FindMeetingTopic(ctx, *plan.MeetingID); err != nil {
+		if foundMeeting, found, err := repo.FindMeetingSnapshot(ctx, *plan.MeetingID); err != nil {
 			return nil, err
-		} else if found && strings.TrimSpace(foundTopic) != "" {
-			sourceTopic = foundTopic
+		} else if found {
+			sourceMeeting = foundMeeting
+			if strings.TrimSpace(foundMeeting.Topic) != "" {
+				sourceTopic = foundMeeting.Topic
+			}
 		}
 	}
 	if topic == "" {
@@ -459,6 +469,20 @@ func (u Usecase) firePlan(ctx context.Context, repo Repository, plan *domainwake
 	meeting := domainmeeting.Meeting{ResearchTeamID: plan.ResearchTeamID, Topic: topic, TriggerSource: "wake_plan", Status: domainkernel.MeetingQueued, Tags: u.service.JSON(nil)}
 	if err := repo.CreateMeeting(ctx, &meeting); err != nil {
 		return nil, err
+	}
+	if sourceMeeting != nil {
+		note := fmt.Sprintf("Automatically linked from wake plan #%d.", plan.ID)
+		ref := domainmeeting.Reference{
+			SourceMeetingID:       meeting.ID,
+			TargetMeetingID:       &sourceMeeting.ID,
+			ReferenceType:         "meeting",
+			Note:                  &note,
+			TargetTopicSnapshot:   sourceMeeting.Topic,
+			TargetSummarySnapshot: sourceMeeting.Summary,
+		}
+		if err := repo.CreateMeetingReference(ctx, &ref); err != nil {
+			return nil, err
+		}
 	}
 	if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{
 		MeetingID: meeting.ID,

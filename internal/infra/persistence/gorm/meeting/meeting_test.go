@@ -131,6 +131,11 @@ func TestFireWakePlanUsesSourceMeetingWhenTopicMissing(t *testing.T) {
 	if !strings.Contains(event.Content, "Source meeting: source topic") || !strings.Contains(string(event.Payload), "source_topic") {
 		t.Fatalf("unexpected wake event: %+v payload=%s", event, event.Payload)
 	}
+	var ref domainmeeting.Reference
+	mustMeeting(t, db.First(&ref, "source_meeting_id = ? AND target_meeting_id = ? AND reference_type = ?", meeting.ID, source.ID, "meeting").Error)
+	if ref.TargetTopicSnapshot != source.Topic || ref.Note == nil || !strings.Contains(*ref.Note, "wake plan") {
+		t.Fatalf("wake follow-up reference mismatch: %+v", ref)
+	}
 }
 
 func TestApplyMeetingRecapActionsRejectsInvalidWakePlan(t *testing.T) {

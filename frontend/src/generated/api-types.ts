@@ -6083,6 +6083,8 @@ export interface components {
         ProviderQuery: string;
         FeedbackLabelQuery: "helpful" | "noise" | "misclassified" | "neutral";
         OnlyUnfiltered: boolean;
+        /** @description Only return active wake plans whose nextCheckAt is due. */
+        Overdue: boolean;
         FilterDecision: string;
         FilterStatus: string;
         LogFrom: string;
@@ -8108,6 +8110,8 @@ export interface operations {
                 researchTeamId?: components["parameters"]["ResearchTeamId"];
                 status?: components["parameters"]["Status"];
                 meetingId?: components["parameters"]["MeetingIdQuery"];
+                /** @description Only return active wake plans whose nextCheckAt is due. */
+                overdue?: components["parameters"]["Overdue"];
                 "page[limit]"?: components["parameters"]["PageLimit"];
                 "page[cursor]"?: components["parameters"]["PageCursor"];
             };

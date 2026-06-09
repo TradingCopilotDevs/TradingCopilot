@@ -36,6 +36,9 @@ func (r WakeRepository) List(ctx context.Context, filter appwake.RepositoryListF
 	if filter.MeetingID != "" {
 		q = q.Where("meeting_id = ?", filter.MeetingID)
 	}
+	if filter.Overdue {
+		q = applyWakeDueFilter(q, false, time.Now())
+	}
 	if filter.CursorID > 0 {
 		q = q.Where("id < ?", filter.CursorID)
 	}
@@ -53,14 +56,27 @@ func (r WakeRepository) ListDue(ctx context.Context, limit int) ([]domainwake.Pl
 		limit = 100
 	}
 	var rows []persistmodel.WakePlan
-	if err := r.db.WithContext(ctx).
-		Where("status = ? AND (next_check_at IS NULL OR next_check_at <= ?)", domainkernel.WakeActive, time.Now()).
+	if err := applyWakeDueFilter(r.db.WithContext(ctx), true, time.Now()).
 		Order("COALESCE(next_check_at, created_at) asc, id asc").
 		Limit(limit).
 		Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	return wakePlansToDomain(rows), nil
+}
+
+func applyWakeDueFilter(q *gorm.DB, includeMissingNextCheck bool, now time.Time) *gorm.DB {
+	now = now.UTC()
+	if q.Dialector != nil && q.Dialector.Name() == "sqlite" {
+		if includeMissingNextCheck {
+			return q.Where("status = ? AND (next_check_at IS NULL OR datetime(next_check_at) <= datetime(?))", domainkernel.WakeActive, now)
+		}
+		return q.Where("status = ? AND next_check_at IS NOT NULL AND datetime(next_check_at) <= datetime(?)", domainkernel.WakeActive, now)
+	}
+	if includeMissingNextCheck {
+		return q.Where("status = ? AND (next_check_at IS NULL OR next_check_at <= ?)", domainkernel.WakeActive, now)
+	}
+	return q.Where("status = ? AND next_check_at IS NOT NULL AND next_check_at <= ?", domainkernel.WakeActive, now)
 }
 
 func (r WakeRepository) Create(ctx context.Context, row *domainwake.Plan) error {
@@ -98,16 +114,17 @@ func (r WakeRepository) Delete(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Delete(&persistmodel.WakePlan{}, id).Error
 }
 
-func (r WakeRepository) FindMeetingTopic(ctx context.Context, id uint) (string, bool, error) {
+func (r WakeRepository) FindMeetingSnapshot(ctx context.Context, id uint) (*domainmeeting.Meeting, bool, error) {
 	var row persistmodel.Meeting
-	err := r.db.WithContext(ctx).Select("topic").First(&row, id).Error
+	err := r.db.WithContext(ctx).Select("id, topic, summary").First(&row, id).Error
 	if err == nil {
-		return row.Topic, true, nil
+		out := meetingFromModel(row)
+		return &out, true, nil
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return "", false, nil
+		return nil, false, nil
 	}
-	return "", false, err
+	return nil, false, err
 }
 
 func (r WakeRepository) CreateMeeting(ctx context.Context, meeting *domainmeeting.Meeting) error {
@@ -134,6 +151,15 @@ func (r WakeRepository) AppendMeetingEvent(ctx context.Context, event *domainmee
 		return err
 	}
 	*event = meetingEventFromModel(row)
+	return nil
+}
+
+func (r WakeRepository) CreateMeetingReference(ctx context.Context, ref *domainmeeting.Reference) error {
+	row := meetingReferenceToModel(*ref)
+	if err := r.db.WithContext(ctx).Create(&row).Error; err != nil {
+		return err
+	}
+	*ref = meetingReferenceFromModel(row)
 	return nil
 }
 

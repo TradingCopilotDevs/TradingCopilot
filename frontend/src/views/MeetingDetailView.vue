@@ -122,7 +122,7 @@
               </div>
               <div class="trust-action-spec">{{ recapActionSpecText(item.spec) }}</div>
               <div class="muted trust-action-reason">{{ item.reason || '需要人工复核后再执行' }}</div>
-              <div class="muted">{{ recapActionEvidenceText(item.evidenceSummary) }}</div>
+              <div class="muted trust-action-evidence">{{ recapActionEvidenceText(item.evidenceSummary) }}</div>
               <div v-if="recapActionLatestReview(item)" class="trust-action-review">
                 <el-tag size="small" :type="recapActionReviewTag(recapActionLatestReview(item)?.decision)" effect="plain">
                   {{ recapActionReviewLabel(recapActionLatestReview(item)?.decision) }}
@@ -1215,6 +1215,17 @@ useAutoRefresh({
 </script>
 
 <style scoped>
+.detail-side,
+.detail-side .panel,
+.trust-section,
+.trust-action-item,
+.trust-binding-item,
+.trust-review-item,
+.reference-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .reference-card-deleted {
   border-style: dashed;
   background: #f8fafc;
@@ -1233,6 +1244,7 @@ useAutoRefresh({
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+  min-width: 0;
 }
 
 .reference-depth {
@@ -1250,9 +1262,16 @@ useAutoRefresh({
 }
 
 .reference-path-text {
+  min-width: 0;
   color: #64748b;
   font-size: 12px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.reference-head strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .reference-summary {
@@ -1276,6 +1295,7 @@ useAutoRefresh({
 }
 
 .trust-metrics div {
+  min-width: 0;
   border: 1px solid #dbe3ee;
   border-radius: 8px;
   background: #fbfdff;
@@ -1305,6 +1325,14 @@ useAutoRefresh({
   padding: 10px 12px;
 }
 
+.trust-gate > div {
+  min-width: 0;
+}
+
+.trust-gate .el-tag {
+  flex: 0 0 auto;
+}
+
 .trust-gate strong {
   display: block;
   color: #0f172a;
@@ -1317,6 +1345,7 @@ useAutoRefresh({
   color: #64748b;
   font-size: 12px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .trust-gate-pass {
@@ -1344,12 +1373,30 @@ useAutoRefresh({
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
+}
+
+.trust-claims .el-tag {
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  align-items: flex-start;
+  padding: 4px 8px;
+  white-space: normal;
+}
+
+.trust-claims :deep(.el-tag__content) {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .trust-gap-list {
   margin: 0;
   padding-left: 18px;
   color: #64748b;
+  overflow-wrap: anywhere;
 }
 
 .trust-diff-list {
@@ -1372,6 +1419,12 @@ useAutoRefresh({
   line-height: 1.45;
 }
 
+.trust-binding-item .muted {
+  grid-column: 2 / -1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .trust-binding-claim {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -1388,6 +1441,12 @@ useAutoRefresh({
   color: #475569;
   font-size: 13px;
   line-height: 1.45;
+  min-width: 0;
+}
+
+.trust-diff-item span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .trust-action-list {
@@ -1411,9 +1470,16 @@ useAutoRefresh({
   gap: 6px;
   font-size: 12px;
   line-height: 1.4;
+  min-width: 0;
+}
+
+.trust-action-head .muted {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .trust-action-spec {
+  min-width: 0;
   color: #1e293b;
   font-size: 13px;
   line-height: 1.45;
@@ -1421,6 +1487,12 @@ useAutoRefresh({
 }
 
 .trust-action-reason {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.trust-action-evidence {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -1431,6 +1503,12 @@ useAutoRefresh({
   gap: 6px;
   font-size: 12px;
   line-height: 1.4;
+  min-width: 0;
+}
+
+.trust-action-review .muted {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .trust-review-list {
@@ -1448,6 +1526,7 @@ useAutoRefresh({
 }
 
 .trust-review-sentence {
+  min-width: 0;
   color: #1e293b;
   font-size: 13px;
   line-height: 1.5;
@@ -1461,5 +1540,21 @@ useAutoRefresh({
   gap: 6px;
   font-size: 12px;
   line-height: 1.4;
+  min-width: 0;
+}
+
+.trust-review-meta .muted {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .trust-binding-item {
+    grid-template-columns: 1fr;
+  }
+
+  .trust-binding-item .muted {
+    grid-column: 1;
+  }
 }
 </style>

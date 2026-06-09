@@ -553,6 +553,30 @@ func TestSetupWizardSmokeE2ECreatesMeetingActions(t *testing.T) {
 	}
 }
 
+func TestWakePlanListCanFocusOverdueActivePlans(t *testing.T) {
+	server := newTestServer(t)
+	tokenDoc := requestJSON(t, server, http.MethodPost, "/api/auth/bootstrap", `{"username":"admin","password":"password123"}`)
+	token := resourceAttribute(t, tokenDoc, "accessToken").(string)
+	teamID := createReadyResearchTeam(t, server, token)
+
+	dueAt := time.Now().Add(-2 * time.Hour).UTC().Format(time.RFC3339)
+	futureAt := time.Now().Add(2 * time.Hour).UTC().Format(time.RFC3339)
+	pausedDueAt := time.Now().Add(-3 * time.Hour).UTC().Format(time.RFC3339)
+	requestJSONWithToken(t, server, http.MethodPost, "/api/wake-plans", fmt.Sprintf(`{"data":{"type":"wake-plans","attributes":{"researchTeamId":%s,"triggerType":"time","triggerConfig":{"topic":"overdue follow-up"},"reason":"overdue plan","status":"active","nextCheckAt":"%s"}}}`, teamID, dueAt), token)
+	requestJSONWithToken(t, server, http.MethodPost, "/api/wake-plans", fmt.Sprintf(`{"data":{"type":"wake-plans","attributes":{"researchTeamId":%s,"triggerType":"time","triggerConfig":{"topic":"future follow-up"},"reason":"future plan","status":"active","nextCheckAt":"%s"}}}`, teamID, futureAt), token)
+	requestJSONWithToken(t, server, http.MethodPost, "/api/wake-plans", fmt.Sprintf(`{"data":{"type":"wake-plans","attributes":{"researchTeamId":%s,"triggerType":"time","triggerConfig":{"topic":"paused follow-up"},"reason":"paused overdue plan","status":"paused","nextCheckAt":"%s"}}}`, teamID, pausedDueAt), token)
+
+	doc := requestJSONWithToken(t, server, http.MethodGet, "/api/wake-plans?overdue=true", "", token)
+	data, ok := doc["data"].([]any)
+	if !ok || len(data) != 1 {
+		t.Fatalf("overdue wake plan collection mismatch: %+v", doc)
+	}
+	attrs := collectionResourceAttributes(t, doc, 0)
+	if attrs["reason"] != "overdue plan" || attrs["status"] != "active" {
+		t.Fatalf("unexpected overdue wake plan: %+v", attrs)
+	}
+}
+
 func TestAdminSecurityRoutesManageUsersSessionsAndAudit(t *testing.T) {
 	server := newTestServer(t)
 	tokenDoc := requestJSON(t, server, http.MethodPost, "/api/auth/bootstrap", `{"username":"admin","password":"password123"}`)

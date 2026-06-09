@@ -701,11 +701,11 @@ async function auditTelegramAccess() {
 
 async function rotateRSSAuth() {
   if (rssRotationForm.rssAuthType === 'basic' && !rssRotationForm.rssUsername.trim()) {
-    ElMessage.warning('RSS Basic auth requires a username')
+    ElMessage.warning('RSS Basic 认证需要填写用户名。请在 RSS 凭据轮换弹窗中补充用户名。')
     return
   }
   if (!rssRotationForm.rssPassword.trim()) {
-    ElMessage.warning('RSS auth requires a password or token')
+    ElMessage.warning('当前 RSS 认证方式需要密码或 Token。请填写后再轮换凭据。')
     return
   }
   await runAction('rotateRssAuth', async () => {
@@ -737,11 +737,11 @@ async function saveSubscription() {
     return
   }
   if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType === 'basic' && !subscriptionForm.rssUsername.trim()) {
-    ElMessage.warning('RSS Basic auth requires a username')
+    ElMessage.warning('RSS Basic 认证需要填写用户名。请在订阅来源表单中补充用户名。')
     return
   }
   if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType !== 'none' && !subscriptionForm.rssPassword.trim() && !subscriptionForm.hasRssPassword) {
-    ElMessage.warning('RSS auth requires a password or token')
+    ElMessage.warning('当前 RSS 认证方式需要密码或 Token。请填写后再保存订阅来源。')
     return
   }
   await runAction('saveSubscription', async () => {
@@ -825,11 +825,11 @@ async function testDraft() {
     return
   }
   if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType === 'basic' && !subscriptionForm.rssUsername.trim()) {
-    ElMessage.warning('RSS Basic auth requires a username')
+    ElMessage.warning('RSS Basic 认证需要填写用户名。请在订阅来源表单中补充用户名后再测试。')
     return
   }
   if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType !== 'none' && !subscriptionForm.rssPassword.trim()) {
-    ElMessage.warning('RSS draft test requires a password or token')
+    ElMessage.warning('测试 RSS 草稿需要密码或 Token。请先填写认证凭据。')
     return
   }
   testingDraft.value = true

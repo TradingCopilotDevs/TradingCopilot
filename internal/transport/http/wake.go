@@ -17,6 +17,7 @@ func (s *Server) listWakePlans(w http.ResponseWriter, r *http.Request) {
 		ResearchTeamID: r.URL.Query().Get("researchTeamId"),
 		Status:         r.URL.Query().Get("status"),
 		MeetingID:      r.URL.Query().Get("meetingId"),
+		Overdue:        boolQueryValue(r.URL.Query().Get("overdue")),
 		Page:           appwake.Page{Limit: page.Limit, Cursor: page.Cursor},
 	})
 	if err != nil {
@@ -108,6 +109,11 @@ func (s *Server) deleteWakePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonapi.WriteData(w, http.StatusOK, jsonapi.NewResource("deletions", "wake-plan:"+strconv.FormatUint(uint64(id), 10), map[string]any{"status": "deleted"}))
+}
+
+func boolQueryValue(value string) bool {
+	parsed, _ := strconv.ParseBool(value)
+	return parsed
 }
 
 func decodeWakePlanPayload(w http.ResponseWriter, r *http.Request) (domainwake.Plan, bool) {

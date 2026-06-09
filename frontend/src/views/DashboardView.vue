@@ -8,17 +8,32 @@
 
   <div v-if="alerts.length" class="dashboard-alerts">
     <el-alert
-      v-for="item in alerts"
-      :key="`${item.level}-${item.title}`"
+      v-for="(item, index) in alerts"
+      :key="`${item.level}-${item.title}-${index}`"
       :title="item.title"
       :type="item.level"
       :closable="false"
-      class="dashboard-alert"
+      show-icon
+      :class="['dashboard-alert', item.actionLabel !== '查看' ? 'dashboard-alert--actionable' : '']"
     >
       <template #default>
         <div class="dashboard-alert__body">
-          <span>{{ item.detail }}</span>
-          <el-button link type="primary" @click="router.push(item.link)">查看</el-button>
+          <div class="dashboard-alert__copy">
+            <span>{{ item.detail }}</span>
+            <div v-if="item.wakePlanSummaries?.length" class="dashboard-alert__objects">
+              <div v-for="plan in item.wakePlanSummaries" :key="plan.id" class="dashboard-alert__object">
+                <strong>#{{ plan.id }} {{ wakeTriggerLabel(plan.triggerType) }}</strong>
+                <span>
+                  投研团队：{{ wakeSummaryTeamLabel(plan) }} · 来源会议：{{ wakeSummaryMeetingLabel(plan) }} · 到期：{{ formatDateTimeUtc8(plan.nextCheckAt) }}
+                </span>
+                <span>{{ plan.reason || '未填写唤醒原因' }}</span>
+              </div>
+              <div v-if="item.remainingCount && item.remainingCount > 0" class="muted dashboard-alert__more">
+                还有 {{ item.remainingCount }} 个逾期计划，进入唤醒计划页可查看完整列表。
+              </div>
+            </div>
+          </div>
+          <el-button link type="primary" @click="router.push(item.link)">{{ item.actionLabel }}</el-button>
         </div>
       </template>
     </el-alert>
@@ -189,7 +204,23 @@ const { isMobile } = useResponsive()
 const dashboard = ref<DashboardOverview | null>(null)
 const loading = ref(false)
 
-const alerts = computed<DashboardAlert[]>(() => dashboard.value?.alerts || [])
+type DashboardWakePlanSummary = {
+  id: number
+  researchTeamId?: number
+  researchTeamName?: string
+  meetingId?: number | null
+  triggerType?: string
+  reason?: string
+  nextCheckAt?: string | null
+}
+
+type DashboardAlertView = DashboardAlert & {
+  actionLabel: string
+  wakePlanSummaries?: DashboardWakePlanSummary[]
+  remainingCount?: number
+}
+
+const alerts = computed<DashboardAlertView[]>(() => (dashboard.value?.alerts || []).map(localizeDashboardAlert))
 const recentMeetings = computed<DashboardRecentMeeting[]>(() => dashboard.value?.recentActivity.recentMeetings || [])
 const recentIngestedMessages = computed(() => dashboard.value?.recentActivity.recentIngestedMessages || [])
 const statusCards = computed<DashboardStatusItem[]>(() => {
@@ -325,6 +356,141 @@ function statusLabel(value: string) {
   return map[value] || value || '-'
 }
 
+function localizeDashboardAlert(item: DashboardAlert): DashboardAlertView {
+  if (item.title === 'Overdue wake plans') {
+    const summaries = dashboardWakePlanSummaries(item)
+    const totalCount = numberFromUnknown((item as Record<string, unknown>).totalCount) ?? numberFromText(item.detail)
+    const count = totalCount ? String(totalCount) : overdueWakePlanCount(item.detail)
+    return {
+      ...item,
+      title: '唤醒计划待处理',
+      detail: `${count} 个生效中的唤醒计划已经到期但尚未被后台调度处理。下方列出具体计划；进入唤醒计划页后可手动触发、暂停或取消。若计划应自动处理，请检查后台工作进程和定时调度器。`,
+      link: '/wake?overdue=true',
+      actionLabel: '处理唤醒计划',
+      wakePlanSummaries: summaries,
+      remainingCount: Math.max(0, (totalCount || summaries.length) - summaries.length)
+    }
+  }
+  if (item.title === 'Message filter AI is not ready') {
+    return {
+      ...item,
+      title: '消息过滤模型未就绪',
+      detail: '消息订阅过滤器缺少可用的模型服务商、API Key 或默认模型，自动过滤不会运行。请先配置模型提供商，再回到消息订阅页确认过滤器已启用。',
+      link: '/model-providers',
+      actionLabel: '配置模型'
+    }
+  }
+  if (item.title === 'Paper engine is unhealthy') {
+    return {
+      ...item,
+      title: '模拟盘引擎异常',
+      detail: '存在启用中的模拟盘账户，但模拟盘执行环境不健康。请进入模拟盘查看待执行订单；若当前为队列模式，请检查后台工作进程和定时调度器心跳。',
+      link: '/paper',
+      actionLabel: '检查模拟盘'
+    }
+  }
+  return localizeDependencyAlert(item)
+}
+
+function overdueWakePlanCount(detail: string) {
+  const match = String(detail || '').match(/\d+/)
+  return match ? match[0] : '有'
+}
+
+function localizeDependencyAlert(item: DashboardAlert): DashboardAlertView {
+  const key = statusKeyFromAlertTitle(item.title)
+  const title = statusTitleLabel(key, item.title)
+  return {
+    ...item,
+    title: `${title}异常`,
+    detail: `${statusDetailLabel(item.detail)} ${dashboardAlertFixText(item.title, item.link)}`.trim(),
+    actionLabel: dashboardAlertActionLabel(item.title, item.link)
+  }
+}
+
+function statusKeyFromAlertTitle(title: string) {
+  const map: Record<string, string> = {
+    Database: 'database',
+    Redis: 'redis',
+    Worker: 'worker',
+    Scheduler: 'scheduler',
+    'Message Subscription Listener': 'message_subscription_listener',
+    'Platform Adapter': 'platform_adapter',
+    'Paper Engine': 'paper_engine'
+  }
+  return map[title] || title
+}
+
+function dashboardAlertFixText(title: string, link: string) {
+  const map: Record<string, string> = {
+    Redis: '影响：队列模式下会议、唤醒计划和模拟盘任务可能不会自动执行。处理：进入系统设置检查 REDIS_URL 和 Redis 服务状态，或切换为本地执行模式。',
+    Worker: '影响：后台队列任务可能堆积，包括自动会议、唤醒处理和模拟盘执行。处理：确认 worker 进程已启动，并能写入心跳。',
+    Scheduler: '影响：定时扫描不会按时处理唤醒计划。处理：确认 scheduler 进程已启动，并能写入心跳。',
+    'Message Subscription Listener': '影响：实时订阅消息不会自动进入系统。处理：进入消息订阅页检查 Telegram 凭据、MTProto 会话和已启用订阅源。',
+    'Platform Adapter': '影响：系统无法发送外部通知。处理：进入平台适配器页配置并启用通知通道。',
+    'Paper Engine': '影响：模拟盘订单和维护任务可能无法继续执行。处理：进入模拟盘查看账户与订单，并检查后台 worker/scheduler 心跳。'
+  }
+  return map[title] || `处理：进入${link || '对应页面'}查看异常详情并修复配置。`
+}
+
+function dashboardAlertActionLabel(title: string, link: string) {
+  const map: Record<string, string> = {
+    Database: '检查数据库',
+    Redis: '检查 Redis',
+    Worker: '检查后台进程',
+    Scheduler: '检查定时调度',
+    'Message Subscription Listener': '检查订阅监听',
+    'Platform Adapter': '配置通知通道',
+    'Paper Engine': '检查模拟盘'
+  }
+  return map[title] || (link ? '去处理' : '查看')
+}
+
+function dashboardWakePlanSummaries(item: DashboardAlert): DashboardWakePlanSummary[] {
+  const raw = (item as Record<string, unknown>).wakePlanSummaries
+  if (!Array.isArray(raw)) return []
+  const summaries: DashboardWakePlanSummary[] = []
+  for (const entry of raw) {
+    const object = entry as Record<string, unknown>
+    const id = numberFromUnknown(object.id)
+    if (!id) continue
+    summaries.push({
+      id,
+      researchTeamId: numberFromUnknown(object.researchTeamId),
+      researchTeamName: stringFromUnknown(object.researchTeamName),
+      meetingId: numberFromUnknown(object.meetingId) ?? null,
+      triggerType: stringFromUnknown(object.triggerType),
+      reason: stringFromUnknown(object.reason),
+      nextCheckAt: stringFromUnknown(object.nextCheckAt)
+    })
+  }
+  return summaries
+}
+
+function wakeSummaryTeamLabel(plan: DashboardWakePlanSummary) {
+  return plan.researchTeamName || (plan.researchTeamId ? `#${plan.researchTeamId}` : '-')
+}
+
+function wakeSummaryMeetingLabel(plan: DashboardWakePlanSummary) {
+  return plan.meetingId ? `#${plan.meetingId}` : '-'
+}
+
+function numberFromText(value: string) {
+  const match = String(value || '').match(/\d+/)
+  return match ? Number(match[0]) : undefined
+}
+
+function numberFromUnknown(value: unknown) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}
+
+function stringFromUnknown(value: unknown) {
+  if (value === null || value === undefined) return undefined
+  const text = String(value).trim()
+  return text || undefined
+}
+
 function localizeStatusItem(item: DashboardStatusItem): DashboardStatusItem {
   return {
     ...item,
@@ -345,6 +511,20 @@ function statusTitleLabel(key: string, fallback: string) {
     paper_engine: '模拟盘引擎'
   }
   return map[key] || fallback || '-'
+}
+
+function wakeTriggerLabel(value: string | null | undefined) {
+  const map: Record<string, string> = {
+    time: '定时',
+    indicator: '指标',
+    event: '事件',
+    interval: '周期',
+    condition: '条件',
+    manual: '手动',
+    market: '行情',
+    news: '消息'
+  }
+  return map[String(value || '')] || value || '-'
 }
 
 function statusSummaryLabel(value: string) {
@@ -508,11 +688,56 @@ useAutoRefresh({
   border-radius: 10px;
 }
 
+.dashboard-alert--actionable {
+  border-left: 4px solid #d97706;
+}
+
 .dashboard-alert__body {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+}
+
+.dashboard-alert__copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-alert__body span,
+.dashboard-alert__object strong {
+  min-width: 0;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-alert__body .el-button {
+  flex: 0 0 auto;
+}
+
+.dashboard-alert__objects {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-alert__object {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  border: 1px solid #f4d37a;
+  border-radius: 8px;
+  background: #fffaf0;
+  padding: 8px 10px;
+}
+
+.dashboard-alert__object strong {
+  color: #7c2d12;
+}
+
+.dashboard-alert__more {
+  font-size: 12px;
 }
 
 .dashboard-summary-grid {

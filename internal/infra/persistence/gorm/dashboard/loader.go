@@ -38,7 +38,8 @@ func NewLoader(db *gorm.DB, settings config.Settings) Loader {
 func (u Loader) Load(context.Context) (map[string]any, error) {
 	overview, _ := infrapaper.Overview(u.db)
 	var meetingsTotal, running, failed int64
-	since24h := time.Now().Add(-24 * time.Hour)
+	now := time.Now()
+	since24h := now.Add(-24 * time.Hour)
 	u.db.Model(&persistmodel.Meeting{}).Count(&meetingsTotal)
 	u.db.Model(&persistmodel.Meeting{}).Where("status = ?", domainkernel.MeetingRunning).Count(&running)
 	u.db.Model(&persistmodel.Meeting{}).Where("status = ? AND created_at >= ?", domainkernel.MeetingFailed, since24h).Count(&failed)
@@ -52,7 +53,8 @@ func (u Loader) Load(context.Context) (map[string]any, error) {
 	databaseStatus := u.databaseStatus(databaseInfo)
 	aiUsage := aiUsageDiagnostics(u.db, since24h, u.settings)
 	meetingRuntime := meetingRuntimeDiagnostics(u.db, since24h)
-	wakeOverdueCount := countWhere(u.db, &persistmodel.WakePlan{}, "status = ? AND next_check_at IS NOT NULL AND next_check_at < ?", domainkernel.WakeActive, time.Now())
+	wakeOverdueCount := countOverdueWakePlans(u.db, now)
+	wakeOverdueSummaries := overdueWakePlanSummaries(u.db, now, 5)
 	newsFilterReady := newsFilterReady(u.db)
 	activeAccountCount := int64FromDashboardValue(overview["active_account_count"])
 	payload := map[string]any{
@@ -81,7 +83,7 @@ func (u Loader) Load(context.Context) (map[string]any, error) {
 		},
 		"recent_activity":        map[string]any{"recent_meetings": recentMeetings(u.db), "recent_ingested_messages": recentIngestedMessages(u.db)},
 		"dependency_diagnostics": dashboardDependencyDiagnostics(u.db, u.settings, redisStatus, workerStatus, schedulerStatus, subscriptionStatus, platformAdapterStatus, paperStatus, newsFilterReady, aiUsage, meetingRuntime),
-		"alerts":                 dashboardAlerts(redisStatus, workerStatus, schedulerStatus, subscriptionStatus, platformAdapterStatus, paperStatus, wakeOverdueCount, newsFilterReady, activeAccountCount),
+		"alerts":                 dashboardAlerts(redisStatus, workerStatus, schedulerStatus, subscriptionStatus, platformAdapterStatus, paperStatus, wakeOverdueCount, wakeOverdueSummaries, newsFilterReady, activeAccountCount),
 	}
 	return camelizeJSONKeys(payload).(map[string]any), nil
 }
@@ -361,13 +363,19 @@ func newsFilterReady(db *gorm.DB) bool {
 	return false
 }
 
-func dashboardAlerts(redisStatus, workerStatus, schedulerStatus, subscriptionStatus, platformAdapterStatus, paperStatus map[string]any, wakeOverdueCount int64, newsFilterReady bool, activeAccountCount int64) []map[string]any {
+func dashboardAlerts(redisStatus, workerStatus, schedulerStatus, subscriptionStatus, platformAdapterStatus, paperStatus map[string]any, wakeOverdueCount int64, wakeOverdueSummaries []map[string]any, newsFilterReady bool, activeAccountCount int64) []map[string]any {
 	alerts := make([]map[string]any, 0, 6)
-	add := func(level, title, detail, link string) {
+	add := func(level, title, detail, link string, extra ...map[string]any) {
 		if len(alerts) >= 6 {
 			return
 		}
-		alerts = append(alerts, map[string]any{"level": level, "title": title, "detail": detail, "link": link})
+		alert := map[string]any{"level": level, "title": title, "detail": detail, "link": link}
+		for _, item := range extra {
+			for key, value := range item {
+				alert[key] = value
+			}
+		}
+		alerts = append(alerts, alert)
 	}
 	for _, item := range []struct {
 		status map[string]any
@@ -381,7 +389,17 @@ func dashboardAlerts(redisStatus, workerStatus, schedulerStatus, subscriptionSta
 		add("warning", "Message filter AI is not ready", "Message subscription filters require an enabled provider, API key, and model before automatic filtering can run.", "/message-subscriptions")
 	}
 	if wakeOverdueCount > 0 {
-		add("warning", "Overdue wake plans", fmt.Sprintf("%d active wake plan(s) are due and have not been processed.", wakeOverdueCount), "/wake")
+		add(
+			"warning",
+			"Overdue wake plans",
+			fmt.Sprintf("%d active wake plan(s) are due and have not been processed. Open /wake?overdue=true to review the specific plan(s).", wakeOverdueCount),
+			"/wake?overdue=true",
+			map[string]any{
+				"wake_plan_summaries": wakeOverdueSummaries,
+				"total_count":         wakeOverdueCount,
+				"remaining_count":     wakeOverdueCount - int64(len(wakeOverdueSummaries)),
+			},
+		)
 	}
 	if activeAccountCount > 0 && fmt.Sprint(paperStatus["status"]) != "ok" {
 		add("error", "Paper engine is unhealthy", "There are active paper accounts, but paper execution is not currently healthy.", "/paper")
@@ -1202,6 +1220,53 @@ func countWhere(db *gorm.DB, model any, cond string, args ...any) int64 {
 	}
 	q.Count(&count)
 	return count
+}
+
+func countOverdueWakePlans(db *gorm.DB, now time.Time) int64 {
+	q := applyDashboardWakeDueFilter(db.Model(&persistmodel.WakePlan{}), now)
+	var count int64
+	q.Count(&count)
+	return count
+}
+
+func overdueWakePlanSummaries(db *gorm.DB, now time.Time, limit int) []map[string]any {
+	if limit <= 0 {
+		return nil
+	}
+	var rows []persistmodel.WakePlan
+	err := applyDashboardWakeDueFilter(db.Preload("ResearchTeam"), now).
+		Order("next_check_at asc, id asc").
+		Limit(limit).
+		Find(&rows).Error
+	if err != nil {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		teamName := ""
+		if row.ResearchTeam != nil {
+			teamName = row.ResearchTeam.Name
+		}
+		out = append(out, map[string]any{
+			"id":                 row.ID,
+			"research_team_id":   row.ResearchTeamID,
+			"research_team_name": teamName,
+			"meeting_id":         row.MeetingID,
+			"trigger_type":       row.TriggerType,
+			"reason":             row.Reason,
+			"next_check_at":      row.NextCheckAt,
+			"last_run_at":        row.LastRunAt,
+		})
+	}
+	return out
+}
+
+func applyDashboardWakeDueFilter(q *gorm.DB, now time.Time) *gorm.DB {
+	now = now.UTC()
+	if q.Dialector != nil && q.Dialector.Name() == "sqlite" {
+		return q.Where("status = ? AND next_check_at IS NOT NULL AND datetime(next_check_at) <= datetime(?)", domainkernel.WakeActive, now)
+	}
+	return q.Where("status = ? AND next_check_at IS NOT NULL AND next_check_at <= ?", domainkernel.WakeActive, now)
 }
 
 func hasUsableSecret(db *gorm.DB, settings config.Settings, kind domainkernel.SecretKind, name string) bool {

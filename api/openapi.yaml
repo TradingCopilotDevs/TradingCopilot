@@ -936,6 +936,7 @@ paths:
         - $ref: "#/components/parameters/ResearchTeamId"
         - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/MeetingIdQuery"
+        - $ref: "#/components/parameters/Overdue"
         - $ref: "#/components/parameters/PageLimit"
         - $ref: "#/components/parameters/PageCursor"
       responses:
@@ -2098,6 +2099,11 @@ components:
       name: onlyUnfiltered
       in: query
       schema: { type: boolean }
+    Overdue:
+      name: overdue
+      in: query
+      schema: { type: boolean }
+      description: Only return active wake plans whose nextCheckAt is due.
     FilterDecision:
       name: filterDecision
       in: query
