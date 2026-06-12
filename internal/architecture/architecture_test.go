@@ -382,9 +382,19 @@ func TestResearchTeamContractIsExplicit(t *testing.T) {
 		t.Fatal(err)
 	}
 	modelText := string(modelRaw)
-	for _, required := range []string{"uniqueIndex", "message_subscription_research_teams", "research_team_roles"} {
+	for _, required := range []string{"uniqueIndex", "research_team_roles"} {
 		if !strings.Contains(modelText, required) {
 			t.Fatalf("research persistence model must declare %q", required)
+		}
+	}
+	messagingModelRaw, err := os.ReadFile(filepath.Join(root, "internal", "infra", "persistence", "gorm", "model", "messaging.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	messagingModelText := string(messagingModelRaw)
+	for _, required := range []string{"message_subscription_assignments", "ingested_message_filter_results", "uq_message_subscription_assignment"} {
+		if !strings.Contains(messagingModelText, required) {
+			t.Fatalf("messaging persistence model must declare %q", required)
 		}
 	}
 

@@ -802,6 +802,30 @@ func (e IngestedMessageFeedbackDocumentDataType) Valid() bool {
 	}
 }
 
+// Defines values for IngestedMessageFilterResultFilterStatus.
+const (
+	IngestedMessageFilterResultFilterStatusFailed     IngestedMessageFilterResultFilterStatus = "failed"
+	IngestedMessageFilterResultFilterStatusFiltered   IngestedMessageFilterResultFilterStatus = "filtered"
+	IngestedMessageFilterResultFilterStatusFiltering  IngestedMessageFilterResultFilterStatus = "filtering"
+	IngestedMessageFilterResultFilterStatusUnfiltered IngestedMessageFilterResultFilterStatus = "unfiltered"
+)
+
+// Valid indicates whether the value is a known member of the IngestedMessageFilterResultFilterStatus enum.
+func (e IngestedMessageFilterResultFilterStatus) Valid() bool {
+	switch e {
+	case IngestedMessageFilterResultFilterStatusFailed:
+		return true
+	case IngestedMessageFilterResultFilterStatusFiltered:
+		return true
+	case IngestedMessageFilterResultFilterStatusFiltering:
+		return true
+	case IngestedMessageFilterResultFilterStatusUnfiltered:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IngestedMessageRefilterDocumentDataType.
 const (
 	IngestedMessageRefilters IngestedMessageRefilterDocumentDataType = "ingested-message-refilters"
@@ -2592,16 +2616,16 @@ func (e OpsBackupRestoreDryRunResourceType) Valid() bool {
 
 // Defines values for OpsBackupRunAttributesStatus.
 const (
-	Created OpsBackupRunAttributesStatus = "created"
-	Failed  OpsBackupRunAttributesStatus = "failed"
+	OpsBackupRunAttributesStatusCreated OpsBackupRunAttributesStatus = "created"
+	OpsBackupRunAttributesStatusFailed  OpsBackupRunAttributesStatus = "failed"
 )
 
 // Valid indicates whether the value is a known member of the OpsBackupRunAttributesStatus enum.
 func (e OpsBackupRunAttributesStatus) Valid() bool {
 	switch e {
-	case Created:
+	case OpsBackupRunAttributesStatusCreated:
 		return true
-	case Failed:
+	case OpsBackupRunAttributesStatusFailed:
 		return true
 	default:
 		return false
@@ -4875,6 +4899,7 @@ type IngestedMessageAttributes struct {
 	FilterDecision              *string                                 `json:"filterDecision,omitempty"`
 	FilterId                    *int                                    `json:"filterId,omitempty"`
 	FilterReason                *string                                 `json:"filterReason,omitempty"`
+	FilterResults               *[]IngestedMessageFilterResult          `json:"filterResults,omitempty"`
 	FilterStatus                *IngestedMessageAttributesFilterStatus  `json:"filterStatus,omitempty"`
 	FilteredAt                  *time.Time                              `json:"filteredAt,omitempty"`
 	MessageTime                 *time.Time                              `json:"messageTime,omitempty"`
@@ -4967,6 +4992,27 @@ type IngestedMessageFeedbackDocumentDataAttributesLabel string
 
 // IngestedMessageFeedbackDocumentDataType defines model for IngestedMessageFeedbackDocument.Data.Type.
 type IngestedMessageFeedbackDocumentDataType string
+
+// IngestedMessageFilterResult defines model for IngestedMessageFilterResult.
+type IngestedMessageFilterResult struct {
+	AssignmentId   *int                                     `json:"assignmentId,omitempty"`
+	CreatedAt      *time.Time                               `json:"createdAt,omitempty"`
+	FilterDecision *string                                  `json:"filterDecision,omitempty"`
+	FilterId       *int                                     `json:"filterId,omitempty"`
+	FilterName     *string                                  `json:"filterName,omitempty"`
+	FilterReason   *string                                  `json:"filterReason,omitempty"`
+	FilterStatus   *IngestedMessageFilterResultFilterStatus `json:"filterStatus,omitempty"`
+	FilteredAt     *time.Time                               `json:"filteredAt,omitempty"`
+	Id             *int                                     `json:"id,omitempty"`
+	MessageId      *int                                     `json:"messageId,omitempty"`
+	RelatedSymbols *[]string                                `json:"relatedSymbols,omitempty"`
+	ResearchTeamId *int                                     `json:"researchTeamId,omitempty"`
+	SubscriptionId *int                                     `json:"subscriptionId,omitempty"`
+	UpdatedAt      *time.Time                               `json:"updatedAt,omitempty"`
+}
+
+// IngestedMessageFilterResultFilterStatus defines model for IngestedMessageFilterResult.FilterStatus.
+type IngestedMessageFilterResultFilterStatus string
 
 // IngestedMessageRefilterDocument defines model for IngestedMessageRefilterDocument.
 type IngestedMessageRefilterDocument struct {
@@ -6114,6 +6160,18 @@ type MessageSubscriptionAppConfigRequestDocumentDataId string
 // MessageSubscriptionAppConfigRequestDocumentDataType defines model for MessageSubscriptionAppConfigRequestDocument.Data.Type.
 type MessageSubscriptionAppConfigRequestDocumentDataType string
 
+// MessageSubscriptionAssignment defines model for MessageSubscriptionAssignment.
+type MessageSubscriptionAssignment struct {
+	CreatedAt      *time.Time `json:"createdAt,omitempty"`
+	Enabled        *bool      `json:"enabled,omitempty"`
+	FilterId       *int       `json:"filterId,omitempty"`
+	FilterName     *string    `json:"filterName,omitempty"`
+	Id             *int       `json:"id,omitempty"`
+	ResearchTeamId *int       `json:"researchTeamId,omitempty"`
+	SubscriptionId *int       `json:"subscriptionId,omitempty"`
+	UpdatedAt      *time.Time `json:"updatedAt,omitempty"`
+}
+
 // MessageSubscriptionCollectDocument defines model for MessageSubscriptionCollectDocument.
 type MessageSubscriptionCollectDocument struct {
 	Data struct {
@@ -6384,6 +6442,7 @@ type MessageSubscriptionMaintenanceSkip struct {
 // MessageSubscriptionResource defines model for MessageSubscriptionResource.
 type MessageSubscriptionResource struct {
 	Attributes struct {
+		Assignments         *[]MessageSubscriptionAssignment                  `json:"assignments,omitempty"`
 		BackfillLimit       *int                                              `json:"backfillLimit,omitempty"`
 		CollectFrom         *time.Time                                        `json:"collectFrom,omitempty"`
 		Config              *map[string]interface{}                           `json:"config,omitempty"`
@@ -6467,6 +6526,7 @@ type MessageSubscriptionTestRequestDocumentDataType string
 type MessageSubscriptionUpsertDocument struct {
 	Data struct {
 		Attributes struct {
+			Assignments         *[]MessageSubscriptionAssignment                            `json:"assignments,omitempty"`
 			BackfillLimit       *int                                                        `json:"backfillLimit,omitempty"`
 			Config              *map[string]interface{}                                     `json:"config,omitempty"`
 			Enabled             *bool                                                       `json:"enabled,omitempty"`

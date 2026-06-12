@@ -609,7 +609,7 @@ func decodeMessageSubscriptionInput(w http.ResponseWriter, r *http.Request) (app
 		Enabled:       boolAttrWithDefault(attrs, true, "enabled"),
 		BackfillLimit: 20,
 	}
-	for _, name := range []string{"provider", "title", "sourceRef", "enabled", "filterId", "config", "rssAuthType", "rssUsername", "rssPassword"} {
+	for _, name := range []string{"provider", "title", "sourceRef", "enabled", "filterId", "assignments", "config", "rssAuthType", "rssUsername", "rssPassword"} {
 		if _, ok := attrValue(attrs, name); ok {
 			fields[name] = true
 		}
@@ -621,6 +621,11 @@ func decodeMessageSubscriptionInput(w http.ResponseWriter, r *http.Request) (app
 		input.TeamIDs = teamIDs
 		input.TeamIDsSet = true
 		fields["teamIds"] = true
+	}
+	if assignments, set := subscriptionAssignmentInputsAttr(attrs, "assignments"); set {
+		input.Assignments = assignments
+		input.AssignmentsSet = true
+		fields["assignments"] = true
 	}
 	if value, ok := numberAttrValue(attrs, "backfillLimit"); ok {
 		input.BackfillLimit = int(value)
@@ -677,6 +682,31 @@ func decodeMessageSubscriptionMaintenanceInput(w http.ResponseWriter, r *http.Re
 		input.RSSPasswordSet = true
 	}
 	return input, true
+}
+
+func subscriptionAssignmentInputsAttr(attrs map[string]any, keys ...string) ([]appmessaging.SubscriptionAssignmentInput, bool) {
+	value, ok := attrValue(attrs, keys...)
+	if !ok || value == nil {
+		return nil, ok
+	}
+	items, ok := value.([]any)
+	if !ok {
+		return nil, true
+	}
+	out := make([]appmessaging.SubscriptionAssignmentInput, 0, len(items))
+	for _, item := range items {
+		raw, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		filterID := uint(numberAttrValueOrZero(raw, "filterId"))
+		teamID := uint(numberAttrValueOrZero(raw, "researchTeamId", "teamId"))
+		if filterID == 0 || teamID == 0 {
+			continue
+		}
+		out = append(out, appmessaging.SubscriptionAssignmentInput{FilterID: filterID, ResearchTeamID: teamID})
+	}
+	return out, true
 }
 
 func decodeMessageSubscriptionFilterInput(w http.ResponseWriter, r *http.Request) (appmessaging.SubscriptionFilterInput, map[string]bool, bool) {
@@ -813,6 +843,7 @@ func messageSubscriptionResource(row domainmsg.MessageSubscription) jsonapi.Reso
 		"provider": row.Provider, "title": row.Title, "sourceRef": row.SourceRef, "enabled": row.Enabled,
 		"filterId": row.FilterID, "filterName": filterName,
 		"teamIds":       row.TeamIDs,
+		"assignments":   messageSubscriptionAssignmentAttrs(row.Assignments),
 		"backfillLimit": row.BackfillLimit, "pollIntervalSeconds": row.PollIntervalSeconds,
 		"collectFrom": row.CollectFrom, "lastCollectedAt": row.LastCollectedAt, "nextCollectAt": row.NextCollectAt,
 		"lastCollectError": row.LastCollectError, "config": config,
@@ -825,6 +856,27 @@ func messageSubscriptionResource(row domainmsg.MessageSubscription) jsonapi.Reso
 		}
 	}
 	return resource
+}
+
+func messageSubscriptionAssignmentAttrs(rows []domainmsg.MessageSubscriptionAssignment) []map[string]any {
+	out := make([]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		filterName := ""
+		if row.Filter != nil {
+			filterName = row.Filter.Name
+		}
+		out = append(out, map[string]any{
+			"id":             row.ID,
+			"subscriptionId": row.SubscriptionID,
+			"filterId":       row.FilterID,
+			"filterName":     filterName,
+			"researchTeamId": row.ResearchTeamID,
+			"enabled":        row.Enabled,
+			"createdAt":      row.CreatedAt,
+			"updatedAt":      row.UpdatedAt,
+		})
+	}
+	return out
 }
 
 func messageSubscriptionConfigValue(row domainmsg.MessageSubscription) (any, string, string, bool) {
@@ -938,6 +990,7 @@ func ingestedMessageResource(row appmessaging.MessageRow) jsonapi.Resource {
 		"provider": message.Provider, "sourceMessageId": message.SourceMessageID, "messageTime": message.MessageTime,
 		"text": message.Text, "filterDecision": message.FilterDecision, "filterReason": message.FilterReason,
 		"filterStatus": message.FilterStatus, "relatedSymbols": rawJSONValue(message.RelatedSymbols), "filteredAt": message.FilteredAt,
+		"filterResults":            ingestedMessageFilterResultAttrs(message.FilterResults),
 		"relatedPredictionMarkets": predictionMatches, "predictionMarketMatchStatus": ingestedMessagePredictionMatchStatus(row.PredictionMatches),
 		"filterId": message.FilterID, "feedbackLabel": message.FeedbackLabel, "feedbackComment": message.FeedbackComment, "feedbackAt": message.FeedbackAt,
 		"createdAt": message.CreatedAt, "updatedAt": message.UpdatedAt,
@@ -946,6 +999,33 @@ func ingestedMessageResource(row appmessaging.MessageRow) jsonapi.Resource {
 		"subscription": {Data: map[string]string{"type": "message-subscriptions", "id": strconv.FormatUint(uint64(message.SubscriptionID), 10)}},
 	}
 	return resource
+}
+
+func ingestedMessageFilterResultAttrs(rows []domainmsg.IngestedMessageFilterResult) []map[string]any {
+	out := make([]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		filterName := ""
+		if row.Filter != nil {
+			filterName = row.Filter.Name
+		}
+		out = append(out, map[string]any{
+			"id":             row.ID,
+			"messageId":      row.MessageID,
+			"subscriptionId": row.SubscriptionID,
+			"assignmentId":   row.AssignmentID,
+			"filterId":       row.FilterID,
+			"filterName":     filterName,
+			"researchTeamId": row.ResearchTeamID,
+			"filterDecision": row.FilterDecision,
+			"filterReason":   row.FilterReason,
+			"filterStatus":   row.FilterStatus,
+			"relatedSymbols": rawJSONValue(row.RelatedSymbols),
+			"filteredAt":     row.FilteredAt,
+			"createdAt":      row.CreatedAt,
+			"updatedAt":      row.UpdatedAt,
+		})
+	}
+	return out
 }
 
 func ingestedMessagePredictionMatches(matches []domainprediction.Match) []map[string]any {

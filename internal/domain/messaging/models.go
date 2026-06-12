@@ -35,6 +35,7 @@ type MessageSubscription struct {
 	FilterID            uint
 	Filter              *MessageSubscriptionFilter
 	TeamIDs             []uint
+	Assignments         []MessageSubscriptionAssignment
 	BackfillLimit       int
 	PollIntervalSeconds int
 	CollectFrom         time.Time
@@ -44,6 +45,17 @@ type MessageSubscription struct {
 	Config              kernel.JSON
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
+}
+
+type MessageSubscriptionAssignment struct {
+	ID             uint
+	SubscriptionID uint
+	FilterID       uint
+	Filter         *MessageSubscriptionFilter
+	ResearchTeamID uint
+	Enabled        bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type MessageSubscriptionFilter struct {
@@ -74,11 +86,29 @@ type IngestedMessage struct {
 	RelatedSymbols  kernel.JSON
 	FilteredAt      *time.Time
 	FilterID        *uint
+	FilterResults   []IngestedMessageFilterResult
 	FeedbackLabel   *string
 	FeedbackComment *string
 	FeedbackAt      *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+}
+
+type IngestedMessageFilterResult struct {
+	ID             uint
+	MessageID      uint
+	SubscriptionID uint
+	AssignmentID   *uint
+	FilterID       uint
+	Filter         *MessageSubscriptionFilter
+	ResearchTeamID uint
+	FilterDecision *kernel.NewsDecision
+	FilterReason   *string
+	FilterStatus   string
+	RelatedSymbols kernel.JSON
+	FilteredAt     *time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type PlatformAdapter struct {

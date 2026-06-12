@@ -124,7 +124,16 @@ func (r MessagingRepository) ClearDefaultSubscriptionFiltersExcept(ctx context.C
 }
 
 func (r MessagingRepository) AssignDefaultFilterToUnboundSubscriptions(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Model(&persistmodel.MessageSubscription{}).Where("filter_id = ? OR filter_id IS NULL", 0).Update("filter_id", id).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&persistmodel.MessageSubscription{}).Where("filter_id = ? OR filter_id IS NULL", 0).Update("filter_id", id).Error; err != nil {
+			return err
+		}
+		return tx.Exec(`
+			UPDATE message_subscription_assignments
+			SET filter_id = ?
+			WHERE filter_id = 0 OR filter_id IS NULL
+		`, id).Error
+	})
 }
 
 func (r MessagingRepository) DeleteLegacyNewsFilterRole(ctx context.Context) error {
@@ -133,7 +142,7 @@ func (r MessagingRepository) DeleteLegacyNewsFilterRole(ctx context.Context) err
 
 func (r MessagingRepository) ListSubscriptions(ctx context.Context) ([]domainmsg.MessageSubscription, error) {
 	var rows []persistmodel.MessageSubscription
-	if err := r.db.WithContext(ctx).Preload("Filter").Preload("ResearchTeams").Order("id").Find(&rows).Error; err != nil {
+	if err := preloadSubscriptionGraph(r.db.WithContext(ctx)).Order("id").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	return messageSubscriptionsToDomain(rows), nil
@@ -150,7 +159,7 @@ func (r MessagingRepository) CreateSubscription(ctx context.Context, subscriptio
 
 func (r MessagingRepository) FindSubscription(ctx context.Context, id uint) (*domainmsg.MessageSubscription, bool, error) {
 	var row persistmodel.MessageSubscription
-	err := r.db.WithContext(ctx).Preload("Filter").Preload("ResearchTeams").First(&row, id).Error
+	err := preloadSubscriptionGraph(r.db.WithContext(ctx)).First(&row, id).Error
 	if err == nil {
 		out := messageSubscriptionFromModel(row)
 		return &out, true, nil
@@ -163,7 +172,7 @@ func (r MessagingRepository) FindSubscription(ctx context.Context, id uint) (*do
 
 func (r MessagingRepository) FindSubscriptionByProviderAndSourceRef(ctx context.Context, provider string, sourceRef string) (*domainmsg.MessageSubscription, bool, error) {
 	var row persistmodel.MessageSubscription
-	err := r.db.WithContext(ctx).Preload("Filter").Preload("ResearchTeams").Where("provider = ? AND source_ref = ?", provider, sourceRef).First(&row).Error
+	err := preloadSubscriptionGraph(r.db.WithContext(ctx)).Where("provider = ? AND source_ref = ?", provider, sourceRef).First(&row).Error
 	if err == nil {
 		out := messageSubscriptionFromModel(row)
 		return &out, true, nil
@@ -184,8 +193,40 @@ func (r MessagingRepository) SaveSubscription(ctx context.Context, subscription 
 }
 
 func (r MessagingRepository) ReplaceSubscriptionTeams(ctx context.Context, subscriptionID uint, teamIDs []uint) error {
+	subscription, found, err := r.FindSubscription(ctx, subscriptionID)
+	if err != nil {
+		return err
+	}
+	if !found || subscription == nil {
+		return errors.New("message subscription not found")
+	}
+	assignments := make([]domainmsg.MessageSubscriptionAssignment, 0, len(teamIDs))
+	for _, teamID := range uniqueUintIDs(teamIDs) {
+		assignments = append(assignments, domainmsg.MessageSubscriptionAssignment{SubscriptionID: subscriptionID, FilterID: subscription.FilterID, ResearchTeamID: teamID, Enabled: true})
+	}
+	return r.ReplaceSubscriptionAssignments(ctx, subscriptionID, assignments)
+}
+
+func (r MessagingRepository) ReplaceSubscriptionAssignments(ctx context.Context, subscriptionID uint, assignments []domainmsg.MessageSubscriptionAssignment) error {
+	assignments = uniqueSubscriptionAssignments(assignments)
+	filterIDs := make([]uint, 0, len(assignments))
+	teamIDs := make([]uint, 0, len(assignments))
+	for _, assignment := range assignments {
+		filterIDs = append(filterIDs, assignment.FilterID)
+		teamIDs = append(teamIDs, assignment.ResearchTeamID)
+	}
+	filterIDs = uniqueUintIDs(filterIDs)
 	teamIDs = uniqueUintIDs(teamIDs)
 	db := r.db.WithContext(ctx)
+	if len(filterIDs) > 0 {
+		var count int64
+		if err := db.Model(&persistmodel.MessageSubscriptionFilter{}).Where("id IN ?", filterIDs).Count(&count).Error; err != nil {
+			return err
+		}
+		if count != int64(len(filterIDs)) {
+			return errors.New("one or more message subscription filters were not found")
+		}
+	}
 	if len(teamIDs) > 0 {
 		var count int64
 		if err := db.Model(&persistmodel.ResearchTeam{}).Where("id IN ?", teamIDs).Count(&count).Error; err != nil {
@@ -195,27 +236,42 @@ func (r MessagingRepository) ReplaceSubscriptionTeams(ctx context.Context, subsc
 			return errors.New("one or more research teams were not found")
 		}
 	}
-	if err := db.Delete(&persistmodel.MessageSubscriptionResearchTeam{}, "message_subscription_id = ?", subscriptionID).Error; err != nil {
-		return err
-	}
-	for _, teamID := range teamIDs {
-		row := persistmodel.MessageSubscriptionResearchTeam{MessageSubscriptionID: subscriptionID, ResearchTeamID: teamID}
-		if err := db.Create(&row).Error; err != nil {
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&persistmodel.MessageSubscriptionAssignment{}, "subscription_id = ?", subscriptionID).Error; err != nil {
 			return err
 		}
-	}
-	return nil
+		for _, assignment := range assignments {
+			row := messageSubscriptionAssignmentToModel(assignment)
+			row.SubscriptionID = subscriptionID
+			if err := tx.Create(&row).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (r MessagingRepository) ListSubscriptionTeamIDs(ctx context.Context, subscriptionID uint) ([]uint, error) {
 	var ids []uint
-	if err := r.db.WithContext(ctx).Model(&persistmodel.MessageSubscriptionResearchTeam{}).
-		Where("message_subscription_id = ?", subscriptionID).
+	if err := r.db.WithContext(ctx).Model(&persistmodel.MessageSubscriptionAssignment{}).
+		Where("subscription_id = ? AND enabled = ?", subscriptionID, true).
 		Order("research_team_id").
+		Distinct().
 		Pluck("research_team_id", &ids).Error; err != nil {
 		return nil, err
 	}
 	return ids, nil
+}
+
+func (r MessagingRepository) ListSubscriptionAssignments(ctx context.Context, subscriptionID uint) ([]domainmsg.MessageSubscriptionAssignment, error) {
+	var rows []persistmodel.MessageSubscriptionAssignment
+	if err := r.db.WithContext(ctx).Preload("Filter").
+		Where("subscription_id = ? AND enabled = ?", subscriptionID, true).
+		Order("id").
+		Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return messageSubscriptionAssignmentsToDomain(rows), nil
 }
 
 func (r MessagingRepository) ResearchTeamAssetClasses(ctx context.Context, teamIDs []uint) (map[uint]string, error) {
@@ -240,13 +296,13 @@ func (r MessagingRepository) ResearchTeamReady(ctx context.Context, teamID uint)
 func (r MessagingRepository) ListSubscriptionsForCollect(ctx context.Context, subscriptionID *uint) ([]domainmsg.MessageSubscription, error) {
 	var rows []persistmodel.MessageSubscription
 	q := r.db.WithContext(ctx).
-		Joins("JOIN message_subscription_research_teams ON message_subscription_research_teams.message_subscription_id = message_subscriptions.id").
+		Joins("JOIN message_subscription_assignments ON message_subscription_assignments.subscription_id = message_subscriptions.id AND message_subscription_assignments.enabled = ?", true).
 		Where("message_subscriptions.enabled = ?", true).
 		Distinct("message_subscriptions.*")
 	if subscriptionID != nil {
 		q = q.Where("message_subscriptions.id = ?", *subscriptionID)
 	}
-	if err := q.Preload("Filter").Preload("ResearchTeams").Order("id").Find(&rows).Error; err != nil {
+	if err := preloadSubscriptionGraph(q).Order("id").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	return messageSubscriptionsToDomain(rows), nil
@@ -259,7 +315,7 @@ func (r MessagingRepository) DeleteSubscriptionGraph(ctx context.Context, id uin
 				return err
 			}
 		}
-		if err := tx.Delete(&persistmodel.MessageSubscriptionResearchTeam{}, "message_subscription_id = ?", id).Error; err != nil {
+		if err := tx.Delete(&persistmodel.MessageSubscriptionAssignment{}, "subscription_id = ?", id).Error; err != nil {
 			return err
 		}
 		if err := tx.Delete(&persistmodel.IngestedMessage{}, "subscription_id = ?", id).Error; err != nil {
@@ -271,7 +327,7 @@ func (r MessagingRepository) DeleteSubscriptionGraph(ctx context.Context, id uin
 
 func (r MessagingRepository) ListMessagesBySubscription(ctx context.Context, subscriptionID uint) ([]domainmsg.IngestedMessage, error) {
 	var rows []persistmodel.IngestedMessage
-	if err := r.db.WithContext(ctx).Where("subscription_id = ?", subscriptionID).Find(&rows).Error; err != nil {
+	if err := preloadMessageFilterResults(r.db.WithContext(ctx)).Where("subscription_id = ?", subscriptionID).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	return ingestedMessagesToDomain(rows), nil
@@ -286,23 +342,34 @@ func (r MessagingRepository) ListMessages(ctx context.Context, filter appmessagi
 		}
 	}
 	if strings.TrimSpace(filter.ResearchTeamID) != "" {
-		q = q.Joins("JOIN message_subscription_research_teams ON message_subscription_research_teams.message_subscription_id = ingested_messages.subscription_id").
-			Where("message_subscription_research_teams.research_team_id = ?", strings.TrimSpace(filter.ResearchTeamID))
+		q = q.Joins("JOIN ingested_message_filter_results ON ingested_message_filter_results.message_id = ingested_messages.id").
+			Where("ingested_message_filter_results.research_team_id = ?", strings.TrimSpace(filter.ResearchTeamID)).
+			Distinct("ingested_messages.*")
 	}
 	if strings.TrimSpace(filter.Query) != "" {
 		like := "%" + strings.TrimSpace(filter.Query) + "%"
 		q = q.Where("ingested_messages.text LIKE ? OR message_subscriptions.title LIKE ?", like, like)
 	}
 	if filter.OnlyUnfiltered {
-		q = q.Where("ingested_messages.filter_status = ? OR (ingested_messages.filter_status = '' AND ingested_messages.filter_decision IS NULL)", domainmsg.FilterStatusUnfiltered)
+		if strings.TrimSpace(filter.ResearchTeamID) != "" {
+			q = q.Where("ingested_message_filter_results.filter_status = ? OR (ingested_message_filter_results.filter_status = '' AND ingested_message_filter_results.filter_decision IS NULL)", domainmsg.FilterStatusUnfiltered)
+		} else {
+			q = q.Where("ingested_messages.filter_status = ? OR (ingested_messages.filter_status = '' AND ingested_messages.filter_decision IS NULL)", domainmsg.FilterStatusUnfiltered)
+		}
 	}
 	if strings.TrimSpace(filter.Decision) != "" {
+		decisionColumn := "ingested_messages.filter_decision"
+		statusColumn := "ingested_messages.filter_status"
+		if strings.TrimSpace(filter.ResearchTeamID) != "" {
+			decisionColumn = "ingested_message_filter_results.filter_decision"
+			statusColumn = "ingested_message_filter_results.filter_status"
+		}
 		if filter.Decision == "unfiltered" {
-			q = q.Where("ingested_messages.filter_status = ? OR (ingested_messages.filter_status = '' AND ingested_messages.filter_decision IS NULL)", domainmsg.FilterStatusUnfiltered)
+			q = q.Where(statusColumn+" = ? OR ("+statusColumn+" = '' AND "+decisionColumn+" IS NULL)", domainmsg.FilterStatusUnfiltered)
 		} else if filter.Decision == domainmsg.FilterStatusFiltering || filter.Decision == domainmsg.FilterStatusFailed {
-			q = q.Where("ingested_messages.filter_status = ?", filter.Decision)
+			q = q.Where(statusColumn+" = ?", filter.Decision)
 		} else {
-			q = q.Where("ingested_messages.filter_decision = ?", filter.Decision)
+			q = q.Where(decisionColumn+" = ?", filter.Decision)
 		}
 	}
 	if filter.CursorID > 0 {
@@ -311,7 +378,7 @@ func (r MessagingRepository) ListMessages(ctx context.Context, filter appmessagi
 	if filter.Limit <= 0 {
 		filter.Limit = 100
 	}
-	if err := q.Order("ingested_messages.id desc").Limit(filter.Limit).Find(&rows).Error; err != nil {
+	if err := preloadMessageFilterResults(q).Order("ingested_messages.id desc").Limit(filter.Limit).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	return ingestedMessagesToDomain(rows), nil
@@ -339,7 +406,7 @@ func (r MessagingRepository) ListFeedbackMessages(ctx context.Context, filter ap
 	if filter.Limit <= 0 {
 		filter.Limit = 100
 	}
-	if err := q.Order("id desc").Limit(filter.Limit).Find(&rows).Error; err != nil {
+	if err := preloadMessageFilterResults(q).Order("id desc").Limit(filter.Limit).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	return ingestedMessagesToDomain(rows), nil
@@ -356,7 +423,7 @@ func (r MessagingRepository) CreateMessage(ctx context.Context, message *domainm
 
 func (r MessagingRepository) FindMessage(ctx context.Context, id uint) (*domainmsg.IngestedMessage, bool, error) {
 	var row persistmodel.IngestedMessage
-	err := r.db.WithContext(ctx).First(&row, id).Error
+	err := preloadMessageFilterResults(r.db.WithContext(ctx)).First(&row, id).Error
 	if err == nil {
 		out := ingestedMessageFromModel(row)
 		return &out, true, nil
@@ -369,7 +436,7 @@ func (r MessagingRepository) FindMessage(ctx context.Context, id uint) (*domainm
 
 func (r MessagingRepository) FindMessageBySource(ctx context.Context, subscriptionID uint, sourceMessageID string) (*domainmsg.IngestedMessage, bool, error) {
 	var row persistmodel.IngestedMessage
-	err := r.db.WithContext(ctx).Where("subscription_id = ? AND source_message_id = ?", subscriptionID, sourceMessageID).First(&row).Error
+	err := preloadMessageFilterResults(r.db.WithContext(ctx)).Where("subscription_id = ? AND source_message_id = ?", subscriptionID, sourceMessageID).First(&row).Error
 	if err == nil {
 		out := ingestedMessageFromModel(row)
 		return &out, true, nil
@@ -387,6 +454,40 @@ func (r MessagingRepository) SaveMessage(ctx context.Context, message *domainmsg
 	}
 	*message = ingestedMessageFromModel(row)
 	return nil
+}
+
+func (r MessagingRepository) SaveMessageFilterResult(ctx context.Context, result *domainmsg.IngestedMessageFilterResult) error {
+	row := ingestedMessageFilterResultToModel(*result)
+	if row.FilterStatus == "" {
+		row.FilterStatus = domainmsg.FilterStatusUnfiltered
+	}
+	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "message_id"}, {Name: "filter_id"}, {Name: "research_team_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"subscription_id", "assignment_id", "filter_decision", "filter_reason", "filter_status", "related_symbols", "filtered_at", "updated_at",
+		}),
+	}).Create(&row).Error
+	if err != nil {
+		return err
+	}
+	var saved persistmodel.IngestedMessageFilterResult
+	if err := r.db.WithContext(ctx).Where("message_id = ? AND filter_id = ? AND research_team_id = ?", row.MessageID, row.FilterID, row.ResearchTeamID).First(&saved).Error; err != nil {
+		return err
+	}
+	*result = ingestedMessageFilterResultFromModel(saved)
+	return nil
+}
+
+func (r MessagingRepository) DeleteMessageFilterResults(ctx context.Context, messageID uint) error {
+	return r.db.WithContext(ctx).Delete(&persistmodel.IngestedMessageFilterResult{}, "message_id = ?", messageID).Error
+}
+
+func (r MessagingRepository) ListMessageFilterResults(ctx context.Context, messageID uint) ([]domainmsg.IngestedMessageFilterResult, error) {
+	var rows []persistmodel.IngestedMessageFilterResult
+	if err := r.db.WithContext(ctx).Preload("Filter").Where("message_id = ?", messageID).Order("id").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return ingestedMessageFilterResultsToDomain(rows), nil
 }
 
 func (r MessagingRepository) DeleteMessage(ctx context.Context, message *domainmsg.IngestedMessage, externalRefs []string) error {
@@ -426,7 +527,7 @@ func (r MessagingRepository) ListMessagesForRefilter(ctx context.Context, ids []
 	if limit <= 0 {
 		limit = 100
 	}
-	if err := q.Order("id desc").Limit(limit).Find(&rows).Error; err != nil {
+	if err := preloadMessageFilterResults(q).Order("id desc").Limit(limit).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	return ingestedMessagesToDomain(rows), nil
@@ -533,6 +634,41 @@ func messageSubscriptionsToDomain(rows []persistmodel.MessageSubscription) []dom
 	return out
 }
 
+func preloadSubscriptionGraph(db *gorm.DB) *gorm.DB {
+	return db.Preload("Filter").Preload("Assignments").Preload("Assignments.Filter")
+}
+
+func preloadMessageFilterResults(db *gorm.DB) *gorm.DB {
+	return db.Preload("FilterResults").Preload("FilterResults.Filter")
+}
+
+func messageSubscriptionAssignmentsToDomain(rows []persistmodel.MessageSubscriptionAssignment) []domainmsg.MessageSubscriptionAssignment {
+	out := make([]domainmsg.MessageSubscriptionAssignment, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, messageSubscriptionAssignmentFromModel(row))
+	}
+	return out
+}
+
+func messageSubscriptionAssignmentFromModel(row persistmodel.MessageSubscriptionAssignment) domainmsg.MessageSubscriptionAssignment {
+	var filter *domainmsg.MessageSubscriptionFilter
+	if row.Filter != nil {
+		value := messageSubscriptionFilterFromModel(*row.Filter)
+		filter = &value
+	}
+	return domainmsg.MessageSubscriptionAssignment{
+		ID: row.ID, SubscriptionID: row.SubscriptionID, FilterID: row.FilterID, Filter: filter,
+		ResearchTeamID: row.ResearchTeamID, Enabled: row.Enabled, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+	}
+}
+
+func messageSubscriptionAssignmentToModel(row domainmsg.MessageSubscriptionAssignment) persistmodel.MessageSubscriptionAssignment {
+	return persistmodel.MessageSubscriptionAssignment{
+		ID: row.ID, SubscriptionID: row.SubscriptionID, FilterID: row.FilterID, ResearchTeamID: row.ResearchTeamID,
+		Enabled: row.Enabled, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+	}
+}
+
 func messageSubscriptionFiltersToDomain(rows []persistmodel.MessageSubscriptionFilter) []domainmsg.MessageSubscriptionFilter {
 	out := make([]domainmsg.MessageSubscriptionFilter, 0, len(rows))
 	for _, row := range rows {
@@ -563,19 +699,30 @@ func messageSubscriptionFromModel(row persistmodel.MessageSubscription) domainms
 		value := messageSubscriptionFilterFromModel(*row.Filter)
 		filter = &value
 	}
+	assignments := messageSubscriptionAssignmentsToDomain(row.Assignments)
+	teamIDs := researchTeamIDsFromAssignments(assignments)
+	filterID := row.FilterID
+	if filterID == 0 && len(assignments) > 0 {
+		filterID = assignments[0].FilterID
+	}
 	return domainmsg.MessageSubscription{
 		ID: row.ID, Provider: row.Provider, Title: row.Title, SourceRef: row.SourceRef, Enabled: row.Enabled,
-		FilterID: row.FilterID, Filter: filter, TeamIDs: researchTeamIDsFromModel(row.ResearchTeams), BackfillLimit: row.BackfillLimit,
+		FilterID: filterID, Filter: filter, TeamIDs: teamIDs, Assignments: assignments, BackfillLimit: row.BackfillLimit,
 		PollIntervalSeconds: row.PollIntervalSeconds, CollectFrom: row.CollectFrom, LastCollectedAt: row.LastCollectedAt,
 		NextCollectAt: row.NextCollectAt, LastCollectError: row.LastCollectError, Config: domainkernel.JSON(row.Config),
 		CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 	}
 }
 
-func researchTeamIDsFromModel(rows []persistmodel.ResearchTeam) []uint {
+func researchTeamIDsFromAssignments(rows []domainmsg.MessageSubscriptionAssignment) []uint {
 	out := make([]uint, 0, len(rows))
+	seen := map[uint]bool{}
 	for _, row := range rows {
-		out = append(out, row.ID)
+		if !row.Enabled || row.ResearchTeamID == 0 || seen[row.ResearchTeamID] {
+			continue
+		}
+		seen[row.ResearchTeamID] = true
+		out = append(out, row.ResearchTeamID)
 	}
 	return out
 }
@@ -598,6 +745,39 @@ func ingestedMessagesToDomain(rows []persistmodel.IngestedMessage) []domainmsg.I
 	return out
 }
 
+func ingestedMessageFilterResultsToDomain(rows []persistmodel.IngestedMessageFilterResult) []domainmsg.IngestedMessageFilterResult {
+	out := make([]domainmsg.IngestedMessageFilterResult, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, ingestedMessageFilterResultFromModel(row))
+	}
+	return out
+}
+
+func ingestedMessageFilterResultFromModel(row persistmodel.IngestedMessageFilterResult) domainmsg.IngestedMessageFilterResult {
+	var filter *domainmsg.MessageSubscriptionFilter
+	if row.Filter != nil {
+		value := messageSubscriptionFilterFromModel(*row.Filter)
+		filter = &value
+	}
+	return domainmsg.IngestedMessageFilterResult{
+		ID: row.ID, MessageID: row.MessageID, SubscriptionID: row.SubscriptionID, AssignmentID: row.AssignmentID,
+		FilterID: row.FilterID, Filter: filter, ResearchTeamID: row.ResearchTeamID, FilterDecision: row.FilterDecision,
+		FilterReason: row.FilterReason, FilterStatus: normalizeFilterStatus(row.FilterStatus, row.FilterDecision, row.FilteredAt),
+		RelatedSymbols: domainkernel.JSON(row.RelatedSymbols), FilteredAt: row.FilteredAt,
+		CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+	}
+}
+
+func ingestedMessageFilterResultToModel(row domainmsg.IngestedMessageFilterResult) persistmodel.IngestedMessageFilterResult {
+	return persistmodel.IngestedMessageFilterResult{
+		ID: row.ID, MessageID: row.MessageID, SubscriptionID: row.SubscriptionID, AssignmentID: row.AssignmentID,
+		FilterID: row.FilterID, ResearchTeamID: row.ResearchTeamID, FilterDecision: row.FilterDecision,
+		FilterReason: row.FilterReason, FilterStatus: normalizeFilterStatus(row.FilterStatus, row.FilterDecision, row.FilteredAt),
+		RelatedSymbols: datatypes.JSON(row.RelatedSymbols), FilteredAt: row.FilteredAt,
+		CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+	}
+}
+
 func ingestedMessageFromModel(row persistmodel.IngestedMessage) domainmsg.IngestedMessage {
 	out := domainmsg.IngestedMessage{
 		ID: row.ID, SubscriptionID: row.SubscriptionID, Provider: row.Provider, SourceMessageID: row.SourceMessageID,
@@ -607,6 +787,7 @@ func ingestedMessageFromModel(row persistmodel.IngestedMessage) domainmsg.Ingest
 		FilterID: row.FilterID, FeedbackLabel: row.FeedbackLabel, FeedbackComment: row.FeedbackComment, FeedbackAt: row.FeedbackAt,
 		CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 	}
+	out.FilterResults = ingestedMessageFilterResultsToDomain(row.FilterResults)
 	if row.Subscription != nil {
 		subscription := messageSubscriptionFromModel(*row.Subscription)
 		out.Subscription = &subscription
@@ -659,4 +840,22 @@ func platformAdapterToModel(row domainmsg.PlatformAdapter) persistmodel.Platform
 		ID: row.ID, Provider: row.Provider, DisplayName: row.DisplayName, Enabled: row.Enabled,
 		Config: datatypes.JSON(row.Config), CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 	}
+}
+
+func uniqueSubscriptionAssignments(values []domainmsg.MessageSubscriptionAssignment) []domainmsg.MessageSubscriptionAssignment {
+	seen := map[string]bool{}
+	out := make([]domainmsg.MessageSubscriptionAssignment, 0, len(values))
+	for _, value := range values {
+		if value.FilterID == 0 || value.ResearchTeamID == 0 {
+			continue
+		}
+		key := strconv.FormatUint(uint64(value.FilterID), 10) + ":" + strconv.FormatUint(uint64(value.ResearchTeamID), 10)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		value.Enabled = true
+		out = append(out, value)
+	}
+	return out
 }

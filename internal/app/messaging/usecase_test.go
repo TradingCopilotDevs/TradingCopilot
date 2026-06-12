@@ -20,7 +20,7 @@ import (
 func TestFilterMessageOwnsPersistenceAndMeetingWritesInTransaction(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
-	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, Assignments: testSubscriptionAssignments(1, 1, 1)}
 	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
 	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
 	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
@@ -48,11 +48,163 @@ func TestFilterMessageOwnsPersistenceAndMeetingWritesInTransaction(t *testing.T)
 	}
 }
 
+func TestFilterMessageAppliesEachSubscriptionAssignmentIndependently(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderTelegramChannel,
+		Title:     "News",
+		SourceRef: "@news",
+		Enabled:   true,
+		FilterID:  1,
+		TeamIDs:   []uint{1, 2},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 1, ResearchTeamID: 1, Enabled: true},
+			{ID: 2, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 2, Enabled: true},
+		},
+	}
+	repo.teamAssetClasses[2] = "a_share"
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "observe filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.filters[2] = domainmsg.MessageSubscriptionFilter{ID: 2, Name: "meeting filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{filtersByID: map[uint]FilterResult{
+		1: {Decision: ptrDecision(domainkernel.NewsObserve), Reason: ptrString("watch"), RelatedSymbols: jsonBytes(t, []string{"600000"}), FilterID: 1},
+		2: {Decision: ptrDecision(domainkernel.NewsMeeting), Reason: ptrString("meet"), RelatedSymbols: jsonBytes(t, []string{"600000"}), FilterID: 2},
+	}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, found, err := usecase.FilterMessage(ctx, 1)
+	if err != nil || !found {
+		t.Fatalf("FilterMessage found=%v err=%v", found, err)
+	}
+	results := repo.filterResults[1]
+	if len(results) != 2 {
+		t.Fatalf("expected two assignment filter results, got %+v", results)
+	}
+	if results[0].ResearchTeamID != 1 || *results[0].FilterDecision != domainkernel.NewsObserve {
+		t.Fatalf("first assignment result mismatch: %+v", results[0])
+	}
+	if results[1].ResearchTeamID != 2 || *results[1].FilterDecision != domainkernel.NewsMeeting {
+		t.Fatalf("second assignment result mismatch: %+v", results[1])
+	}
+	if result.Row.Message.FilterDecision == nil || *result.Row.Message.FilterDecision != domainkernel.NewsMeeting {
+		t.Fatalf("message summary should aggregate to meeting: %+v", result.Row.Message)
+	}
+	if repo.createMeetingCalls != 1 || len(result.CreatedMeetings) != 1 || result.CreatedMeetings[0].ResearchTeamID != 2 {
+		t.Fatalf("expected one meeting for team 2, calls=%d meetings=%+v", repo.createMeetingCalls, result.CreatedMeetings)
+	}
+}
+
+func TestFilterMessageSkipsDisabledSubscriptionAssignments(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderTelegramChannel,
+		Title:     "News",
+		SourceRef: "@news",
+		Enabled:   true,
+		FilterID:  1,
+		TeamIDs:   []uint{1},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 1, ResearchTeamID: 1, Enabled: true},
+			{ID: 2, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 2, Enabled: false},
+		},
+	}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "enabled filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.filters[2] = domainmsg.MessageSubscriptionFilter{ID: 2, Name: "disabled filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{filtersByID: map[uint]FilterResult{
+		1: {Decision: ptrDecision(domainkernel.NewsObserve), Reason: ptrString("watch"), RelatedSymbols: jsonBytes(t, []string{"600000"}), FilterID: 1},
+		2: {Decision: ptrDecision(domainkernel.NewsMeeting), Reason: ptrString("should not run"), RelatedSymbols: jsonBytes(t, []string{"600001"}), FilterID: 2},
+	}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, found, err := usecase.FilterMessage(ctx, 1)
+	if err != nil || !found {
+		t.Fatalf("FilterMessage found=%v err=%v", found, err)
+	}
+	if len(repo.filterResults[1]) != 1 {
+		t.Fatalf("expected only enabled assignment to produce a result, got %+v", repo.filterResults[1])
+	}
+	if len(service.appliedFilterIDs) != 1 || service.appliedFilterIDs[0] != 1 {
+		t.Fatalf("disabled assignment filter should not be applied, got calls %+v", service.appliedFilterIDs)
+	}
+	if result.Row.Message.FilterDecision == nil || *result.Row.Message.FilterDecision != domainkernel.NewsObserve {
+		t.Fatalf("message summary should come from enabled assignment only: %+v", result.Row.Message)
+	}
+}
+
+func TestFilterMessageRequiresPersistedSubscriptionAssignments(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderTelegramChannel,
+		Title:     "Legacy shape",
+		SourceRef: "@legacy",
+		Enabled:   true,
+		FilterID:  1,
+		TeamIDs:   []uint{1},
+	}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{filter: FilterResult{Decision: ptrDecision(domainkernel.NewsMeeting), FilterID: 1}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	_, found, err := usecase.FilterMessage(ctx, 1)
+	if !found || err == nil || !strings.Contains(err.Error(), "no enabled filter-research team assignments") {
+		t.Fatalf("FilterMessage found=%v err=%v, want missing assignment error", found, err)
+	}
+	if len(service.appliedFilterIDs) != 0 || len(repo.filterResults[1]) != 0 {
+		t.Fatalf("legacy filterId/teamIds shape must not drive filtering directly, calls=%+v results=%+v", service.appliedFilterIDs, repo.filterResults[1])
+	}
+}
+
+func TestFilterMessageReplacesStaleAssignmentResults(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderTelegramChannel,
+		Title:     "News",
+		SourceRef: "@news",
+		Enabled:   true,
+		FilterID:  1,
+		TeamIDs:   []uint{1},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 1, ResearchTeamID: 1, Enabled: true},
+		},
+	}
+	staleDecision := domainkernel.NewsMeeting
+	repo.filterResults[1] = []domainmsg.IngestedMessageFilterResult{
+		{ID: 99, MessageID: 1, SubscriptionID: 1, FilterID: 9, ResearchTeamID: 9, FilterDecision: &staleDecision, FilterStatus: domainmsg.FilterStatusFiltered},
+	}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered", FilterResults: repo.filterResults[1]}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "enabled filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{filter: FilterResult{Decision: ptrDecision(domainkernel.NewsObserve), Reason: ptrString("watch"), RelatedSymbols: jsonBytes(t, []string{"600000"}), FilterID: 1}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	_, found, err := usecase.FilterMessage(ctx, 1)
+	if err != nil || !found {
+		t.Fatalf("FilterMessage found=%v err=%v", found, err)
+	}
+	results := repo.filterResults[1]
+	if len(results) != 1 || results[0].FilterID != 1 || results[0].ResearchTeamID != 1 {
+		t.Fatalf("expected stale assignment result to be replaced, got %+v", results)
+	}
+}
+
 func TestFilterMessageDoesNotPersistFailureWhenParentContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	repo := newFakeMessagingRepo()
-	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", FilterID: 1}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", FilterID: 1, TeamIDs: []uint{1}, Assignments: testSubscriptionAssignments(1, 1, 1)}
 	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
 	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
 	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
@@ -70,7 +222,7 @@ func TestFilterMessageDoesNotPersistFailureWhenParentContextCanceled(t *testing.
 func TestProcessFilterTaskReturnsRetryableErrorAfterPersistingFilterFailure(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
-	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", Enabled: true, FilterID: 1}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "News", SourceRef: "@news", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, Assignments: testSubscriptionAssignments(1, 1, 1)}
 	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
 	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
 	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
@@ -92,7 +244,7 @@ func TestProcessFilterTaskReturnsRetryableErrorAfterPersistingFilterFailure(t *t
 func TestFilterMessageAppliesSourceTrustDownrank(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
-	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "Noisy Feed", SourceRef: "@noisy", Enabled: true, FilterID: 1, TeamIDs: []uint{1}}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderTelegramChannel, Title: "Noisy Feed", SourceRef: "@noisy", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, Assignments: testSubscriptionAssignments(1, 1, 1)}
 	repo.messages[10] = domainmsg.IngestedMessage{ID: 10, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
 	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, IsDefault: true, ProviderID: uintPtr(1)}
 	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
@@ -347,6 +499,41 @@ func TestSubscriptionDiagnosticsRejectRSSURLCredentials(t *testing.T) {
 	}
 }
 
+func TestSubscriptionDiagnosticsChecksEveryEnabledAssignmentFilter(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderRSSFeed,
+		Title:     "Multi Filter RSS",
+		SourceRef: "https://example.test/feed.xml",
+		Enabled:   true,
+		FilterID:  1,
+		TeamIDs:   []uint{1, 2},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 1, ResearchTeamID: 1, Enabled: true},
+			{ID: 2, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 2, Enabled: true},
+		},
+	}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "ready filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.filters[2] = domainmsg.MessageSubscriptionFilter{ID: 2, Name: "missing provider", PromptTemplate: "return JSON", Enabled: true}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	diagnostics, err := usecase.SubscriptionDiagnostics(ctx)
+	if err != nil {
+		t.Fatalf("SubscriptionDiagnostics: %v", err)
+	}
+	diagnostic := diagnostics[0]
+	if diagnostic.Status != "warning" {
+		t.Fatalf("secondary assignment filter warning should affect diagnostic status: %+v", diagnostic)
+	}
+	filterCheck := findSubscriptionDiagnosticCheck(t, diagnostic, "filter_provider")
+	if filterCheck.Status != "warning" || !strings.Contains(filterCheck.Detail, "filter #2") {
+		t.Fatalf("filter_provider check should identify the failing assignment filter: %+v", filterCheck)
+	}
+}
+
 func TestCreateRSSSubscriptionStoresAuthSecret(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
@@ -389,7 +576,7 @@ func TestSubscriptionDiagnosticsReportReadyRSSAuth(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
 	repo.secrets[string(domainkernel.SecretKindMessageSubscription)+":"+rssPasswordSecretName(1)] = domainsettings.Secret{Kind: domainkernel.SecretKindMessageSubscription, Name: rssPasswordSecretName(1), EncryptedValue: "enc:feed-pass"}
-	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Private RSS", SourceRef: "https://example.test/feed.xml", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, Config: domainkernel.JSON(`{"rssAuth":{"type":"basic","username":"feed-user","passwordSecretName":"rss:1:password"}}`)}
+	repo.subscriptions[1] = domainmsg.MessageSubscription{ID: 1, Provider: domainmsg.ProviderRSSFeed, Title: "Private RSS", SourceRef: "https://example.test/feed.xml", Enabled: true, FilterID: 1, TeamIDs: []uint{1}, Assignments: testSubscriptionAssignments(1, 1, 1), Config: domainkernel.JSON(`{"rssAuth":{"type":"basic","username":"feed-user","passwordSecretName":"rss:1:password"}}`)}
 	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
 	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
 	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
@@ -1151,6 +1338,8 @@ func (fakeMessagingSecurity) DecryptSecret(value string) (string, error) {
 
 type fakeMessagingService struct {
 	filter              FilterResult
+	filtersByID         map[uint]FilterResult
+	appliedFilterIDs    []uint
 	filterErr           error
 	fetched             FetchedMessages
 	fetchCalls          int
@@ -1206,7 +1395,13 @@ func (s *fakeMessagingService) JSON(value any) domainkernel.JSON {
 	return domainkernel.JSON(raw)
 }
 func (s *fakeMessagingService) ExtractRelatedSymbols(string) []string { return nil }
-func (s *fakeMessagingService) ApplyFilter(context.Context, domainmsg.IngestedMessage, SecurityService, domainmsg.MessageSubscriptionFilter, domainai.Provider, ProxyConfig) (FilterResult, error) {
+func (s *fakeMessagingService) ApplyFilter(_ context.Context, _ domainmsg.IngestedMessage, _ SecurityService, filter domainmsg.MessageSubscriptionFilter, _ domainai.Provider, _ ProxyConfig) (FilterResult, error) {
+	s.appliedFilterIDs = append(s.appliedFilterIDs, filter.ID)
+	if s.filtersByID != nil {
+		if result, ok := s.filtersByID[filter.ID]; ok {
+			return result, s.filterErr
+		}
+	}
 	return s.filter, s.filterErr
 }
 
@@ -1242,6 +1437,7 @@ type fakeMessagingRepo struct {
 	providers            map[uint]domainai.Provider
 	filters              map[uint]domainmsg.MessageSubscriptionFilter
 	subscriptions        map[uint]domainmsg.MessageSubscription
+	filterResults        map[uint][]domainmsg.IngestedMessageFilterResult
 	teamAssetClasses     map[uint]string
 	messages             map[uint]domainmsg.IngestedMessage
 	meetings             map[uint]domainmeeting.Meeting
@@ -1262,6 +1458,7 @@ func newFakeMessagingRepo() *fakeMessagingRepo {
 		providers:          map[uint]domainai.Provider{},
 		filters:            map[uint]domainmsg.MessageSubscriptionFilter{},
 		subscriptions:      map[uint]domainmsg.MessageSubscription{},
+		filterResults:      map[uint][]domainmsg.IngestedMessageFilterResult{},
 		teamAssetClasses:   map[uint]string{1: "a_share"},
 		messages:           map[uint]domainmsg.IngestedMessage{},
 		meetings:           map[uint]domainmeeting.Meeting{},
@@ -1272,8 +1469,8 @@ func newFakeMessagingRepo() *fakeMessagingRepo {
 }
 
 func (r *fakeMessagingRepo) ensureDefaultTeamIDs(subscription *domainmsg.MessageSubscription) {
-	if subscription.Enabled && len(subscription.TeamIDs) == 0 {
-		subscription.TeamIDs = []uint{1}
+	if len(subscription.TeamIDs) == 0 && len(subscription.Assignments) > 0 {
+		subscription.TeamIDs = subscriptionAssignmentTeamIDs(subscription.Assignments)
 	}
 }
 
@@ -1386,6 +1583,7 @@ func (r *fakeMessagingRepo) CreateSubscription(_ context.Context, subscription *
 }
 func (r *fakeMessagingRepo) FindSubscription(_ context.Context, id uint) (*domainmsg.MessageSubscription, bool, error) {
 	row, ok := r.subscriptions[id]
+	r.ensureDefaultTeamIDs(&row)
 	return &row, ok, nil
 }
 func (r *fakeMessagingRepo) FindSubscriptionByProviderAndSourceRef(_ context.Context, provider string, sourceRef string) (*domainmsg.MessageSubscription, bool, error) {
@@ -1408,6 +1606,26 @@ func (r *fakeMessagingRepo) ReplaceSubscriptionTeams(_ context.Context, subscrip
 	if row.Enabled && len(row.TeamIDs) == 0 {
 		row.TeamIDs = []uint{1}
 	}
+	row.Assignments = nil
+	for i, teamID := range row.TeamIDs {
+		row.Assignments = append(row.Assignments, domainmsg.MessageSubscriptionAssignment{ID: uint(i + 1), SubscriptionID: subscriptionID, FilterID: row.FilterID, ResearchTeamID: teamID, Enabled: true})
+	}
+	r.subscriptions[subscriptionID] = row
+	return nil
+}
+func (r *fakeMessagingRepo) ReplaceSubscriptionAssignments(_ context.Context, subscriptionID uint, assignments []domainmsg.MessageSubscriptionAssignment) error {
+	row := r.subscriptions[subscriptionID]
+	row.Assignments = uniqueDomainSubscriptionAssignments(assignments)
+	for i := range row.Assignments {
+		if row.Assignments[i].ID == 0 {
+			row.Assignments[i].ID = uint(i + 1)
+		}
+		row.Assignments[i].SubscriptionID = subscriptionID
+	}
+	row.TeamIDs = subscriptionAssignmentTeamIDs(row.Assignments)
+	if len(row.Assignments) > 0 {
+		row.FilterID = row.Assignments[0].FilterID
+	}
 	r.subscriptions[subscriptionID] = row
 	return nil
 }
@@ -1416,10 +1634,17 @@ func (r *fakeMessagingRepo) ListSubscriptionTeamIDs(_ context.Context, subscript
 	if !ok {
 		return nil, nil
 	}
-	if len(row.TeamIDs) == 0 && row.Enabled {
-		return []uint{1}, nil
+	if len(row.Assignments) > 0 {
+		return subscriptionAssignmentTeamIDs(row.Assignments), nil
 	}
 	return append([]uint(nil), row.TeamIDs...), nil
+}
+func (r *fakeMessagingRepo) ListSubscriptionAssignments(_ context.Context, subscriptionID uint) ([]domainmsg.MessageSubscriptionAssignment, error) {
+	row, ok := r.subscriptions[subscriptionID]
+	if !ok {
+		return nil, nil
+	}
+	return cloneSubscriptionAssignments(row.Assignments), nil
 }
 func (r *fakeMessagingRepo) ResearchTeamAssetClasses(_ context.Context, teamIDs []uint) (map[uint]string, error) {
 	out := map[uint]string{}
@@ -1500,11 +1725,13 @@ func (r *fakeMessagingRepo) CreateMessage(_ context.Context, message *domainmsg.
 		message.ID = r.nextMessageID
 		r.nextMessageID++
 	}
+	message.FilterResults = append([]domainmsg.IngestedMessageFilterResult(nil), r.filterResults[message.ID]...)
 	r.messages[message.ID] = *message
 	return nil
 }
 func (r *fakeMessagingRepo) FindMessage(_ context.Context, id uint) (*domainmsg.IngestedMessage, bool, error) {
 	row, ok := r.messages[id]
+	row.FilterResults = append([]domainmsg.IngestedMessageFilterResult(nil), r.filterResults[id]...)
 	return &row, ok, nil
 }
 func (r *fakeMessagingRepo) FindMessageBySource(_ context.Context, subscriptionID uint, sourceMessageID string) (*domainmsg.IngestedMessage, bool, error) {
@@ -1518,8 +1745,39 @@ func (r *fakeMessagingRepo) FindMessageBySource(_ context.Context, subscriptionI
 }
 func (r *fakeMessagingRepo) SaveMessage(_ context.Context, message *domainmsg.IngestedMessage) error {
 	r.saveMessageCalls++
+	message.FilterResults = append([]domainmsg.IngestedMessageFilterResult(nil), r.filterResults[message.ID]...)
 	r.messages[message.ID] = *message
 	return nil
+}
+func (r *fakeMessagingRepo) SaveMessageFilterResult(_ context.Context, result *domainmsg.IngestedMessageFilterResult) error {
+	rows := r.filterResults[result.MessageID]
+	for i := range rows {
+		if rows[i].FilterID == result.FilterID && rows[i].ResearchTeamID == result.ResearchTeamID {
+			if result.ID == 0 {
+				result.ID = rows[i].ID
+			}
+			rows[i] = *result
+			r.filterResults[result.MessageID] = rows
+			return nil
+		}
+	}
+	if result.ID == 0 {
+		result.ID = uint(len(rows) + 1)
+	}
+	rows = append(rows, *result)
+	r.filterResults[result.MessageID] = rows
+	return nil
+}
+func (r *fakeMessagingRepo) DeleteMessageFilterResults(_ context.Context, messageID uint) error {
+	delete(r.filterResults, messageID)
+	if row, ok := r.messages[messageID]; ok {
+		row.FilterResults = nil
+		r.messages[messageID] = row
+	}
+	return nil
+}
+func (r *fakeMessagingRepo) ListMessageFilterResults(_ context.Context, messageID uint) ([]domainmsg.IngestedMessageFilterResult, error) {
+	return append([]domainmsg.IngestedMessageFilterResult(nil), r.filterResults[messageID]...), nil
 }
 func (r *fakeMessagingRepo) DeleteMessage(context.Context, *domainmsg.IngestedMessage, []string) error {
 	return nil
@@ -1594,6 +1852,16 @@ func findSubscriptionDiagnosticCheck(t testing.TB, diagnostic SubscriptionDiagno
 func ptrDecision(value domainkernel.NewsDecision) *domainkernel.NewsDecision { return &value }
 func ptrString(value string) *string                                         { return &value }
 func uintPtr(value uint) *uint                                               { return &value }
+
+func testSubscriptionAssignments(subscriptionID uint, filterID uint, teamID uint) []domainmsg.MessageSubscriptionAssignment {
+	return []domainmsg.MessageSubscriptionAssignment{{
+		ID:             1,
+		SubscriptionID: subscriptionID,
+		FilterID:       filterID,
+		ResearchTeamID: teamID,
+		Enabled:        true,
+	}}
+}
 
 func jsonBytes(t testing.TB, value any) domainkernel.JSON {
 	if t != nil {

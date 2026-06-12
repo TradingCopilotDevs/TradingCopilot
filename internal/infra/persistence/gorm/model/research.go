@@ -38,15 +38,3 @@ type ResearchTeamRole struct {
 }
 
 func (ResearchTeamRole) TableName() string { return "research_team_roles" }
-
-type MessageSubscriptionResearchTeam struct {
-	MessageSubscriptionID uint                 `gorm:"primaryKey"`
-	MessageSubscription   *MessageSubscription `gorm:"foreignKey:MessageSubscriptionID;constraint:OnDelete:CASCADE"`
-	ResearchTeamID        uint                 `gorm:"primaryKey;index"`
-	ResearchTeam          *ResearchTeam        `gorm:"foreignKey:ResearchTeamID;constraint:OnDelete:RESTRICT"`
-	CreatedAt             time.Time
-}
-
-func (MessageSubscriptionResearchTeam) TableName() string {
-	return "message_subscription_research_teams"
-}

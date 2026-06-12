@@ -127,7 +127,7 @@ func (r ResearchRepository) DeleteTeamGraph(ctx context.Context, id uint) error 
 
 func (r ResearchRepository) CountSubscriptionBindingsByTeam(ctx context.Context, teamID uint) (int64, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&persistmodel.MessageSubscriptionResearchTeam{}).
+	err := r.db.WithContext(ctx).Model(&persistmodel.MessageSubscriptionAssignment{}).
 		Where("research_team_id = ?", teamID).
 		Count(&count).Error
 	return count, err

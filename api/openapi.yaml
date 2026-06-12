@@ -5793,6 +5793,10 @@ components:
             teamIds:
               type: array
               items: { type: integer }
+            assignments:
+              type: array
+              items:
+                $ref: "#/components/schemas/MessageSubscriptionAssignment"
             backfillLimit: { type: integer }
             pollIntervalSeconds: { type: integer }
             collectFrom: { type: string, format: date-time }
@@ -5817,6 +5821,17 @@ components:
             hasRssPassword: { type: boolean }
             createdAt: { type: string, format: date-time }
             updatedAt: { type: string, format: date-time }
+    MessageSubscriptionAssignment:
+      type: object
+      properties:
+        id: { type: integer }
+        subscriptionId: { type: integer }
+        filterId: { type: integer }
+        filterName: { type: string }
+        researchTeamId: { type: integer }
+        enabled: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     MessageSubscriptionUpsertDocument:
       type: object
       required: [data]
@@ -5843,6 +5858,10 @@ components:
                 teamIds:
                   type: array
                   items: { type: integer }
+                assignments:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/MessageSubscriptionAssignment"
                 backfillLimit: { type: integer }
                 pollIntervalSeconds: { type: integer }
                 config:
@@ -6173,6 +6192,10 @@ components:
           type: array
           items:
             type: string
+        filterResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngestedMessageFilterResult"
         relatedPredictionMarkets:
           type: array
           items:
@@ -6196,6 +6219,37 @@ components:
           type: string
           nullable: true
         feedbackAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    IngestedMessageFilterResult:
+      type: object
+      properties:
+        id: { type: integer }
+        messageId: { type: integer }
+        subscriptionId: { type: integer }
+        assignmentId:
+          type: integer
+          nullable: true
+        filterId: { type: integer }
+        filterName: { type: string }
+        researchTeamId: { type: integer }
+        filterDecision:
+          type: string
+          nullable: true
+        filterReason:
+          type: string
+          nullable: true
+        filterStatus:
+          type: string
+          enum: [unfiltered, filtering, filtered, failed]
+        relatedSymbols:
+          type: array
+          items:
+            type: string
+        filteredAt:
           type: string
           format: date-time
           nullable: true

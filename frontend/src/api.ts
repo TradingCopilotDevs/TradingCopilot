@@ -270,13 +270,43 @@ export interface TelegramMessage {
   updatedAt: string
 }
 
-export type MessageSubscription = ApiResourceModelFromResource<'MessageSubscriptionResource'>
+export interface MessageSubscriptionAssignment {
+  id?: number
+  subscriptionId?: number
+  filterId: number
+  filterName?: string
+  researchTeamId: number
+  enabled?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type MessageSubscription = ApiResourceModelFromResource<'MessageSubscriptionResource'> & {
+  assignments?: MessageSubscriptionAssignment[]
+}
 
 export type MessageSubscriptionDiagnostic = ApiResourceModel<'MessageSubscriptionDiagnosticAttributes'>
 
 export type MessageSubscriptionFilter = ApiResourceModel<'MessageSubscriptionFilterAttributes'>
 
-export type IngestedMessage = ApiResourceModel<'IngestedMessageAttributes'>
+export interface IngestedMessageFilterResult {
+  id?: number
+  messageId?: number
+  subscriptionId?: number
+  assignmentId?: number | null
+  filterId: number
+  filterName?: string
+  researchTeamId: number
+  filterDecision?: string | null
+  filterReason?: string | null
+  filterStatus?: string
+  relatedSymbols?: string[]
+  filteredAt?: string | null
+}
+
+export type IngestedMessage = ApiResourceModel<'IngestedMessageAttributes'> & {
+  filterResults?: IngestedMessageFilterResult[]
+}
 
 export type ResearchTeam = ApiResourceModel<'ResearchTeamAttributes'>
 

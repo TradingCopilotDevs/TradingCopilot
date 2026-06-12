@@ -7,6 +7,7 @@ import (
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -85,7 +86,9 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 	}
 	if err := db.AutoMigrate(
 		&previousVersionAdminUser{},
+		&previousVersionMessageSubscriptionFilter{},
 		&previousVersionMessageSubscription{},
+		&previousVersionMessageSubscriptionResearchTeam{},
 		&previousVersionIngestedMessage{},
 		&previousVersionPaperAccount{},
 		&previousVersionResearchTeam{},
@@ -98,11 +101,23 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 	if err := db.Create(&admin).Error; err != nil {
 		t.Fatal(err)
 	}
+	filter := previousVersionMessageSubscriptionFilter{
+		Name:           "legacy filter",
+		PromptTemplate: "legacy prompt",
+		Enabled:        true,
+		IsDefault:      true,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	if err := db.Create(&filter).Error; err != nil {
+		t.Fatal(err)
+	}
 	emptySubscription := previousVersionMessageSubscription{
 		Provider:    "rss_feed",
 		Title:       "empty",
 		SourceRef:   "https://example.test/empty.xml",
 		Enabled:     true,
+		FilterID:    filter.ID,
 		CollectFrom: now,
 		Config:      datatypes.JSON([]byte(`{}`)),
 		CreatedAt:   now,
@@ -113,6 +128,7 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 		Title:       "with-message",
 		SourceRef:   "https://example.test/feed.xml",
 		Enabled:     true,
+		FilterID:    filter.ID,
 		CollectFrom: now,
 		Config:      datatypes.JSON([]byte(`{}`)),
 		CreatedAt:   now,
@@ -162,6 +178,30 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 		UpdatedAt:      now,
 	}
 	if err := db.Create(&team).Error; err != nil {
+		t.Fatal(err)
+	}
+	secondAccount := previousVersionPaperAccount{
+		Name:        "legacy paper secondary",
+		InitialCash: decimal.NewFromInt(100000),
+		Cash:        decimal.NewFromInt(100000),
+		Active:      true,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	if err := db.Create(&secondAccount).Error; err != nil {
+		t.Fatal(err)
+	}
+	secondTeam := previousVersionResearchTeam{
+		Name:           "legacy research team secondary",
+		PaperAccountID: secondAccount.ID,
+		Active:         true,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	if err := db.Create(&secondTeam).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&previousVersionMessageSubscriptionResearchTeam{MessageSubscriptionID: withMessageSubscription.ID, ResearchTeamID: team.ID, CreatedAt: now}).Error; err != nil {
 		t.Fatal(err)
 	}
 
@@ -218,6 +258,27 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 	if upgradedMessage.Text != message.Text || upgradedMessage.FilterStatus != "failed" {
 		t.Fatalf("legacy message was not preserved and normalized: %+v", upgradedMessage)
 	}
+	var upgradedAssignment persistmodel.MessageSubscriptionAssignment
+	if err := db.First(&upgradedAssignment, "subscription_id = ? AND filter_id = ? AND research_team_id = ?", withMessageSubscription.ID, filter.ID, team.ID).Error; err != nil {
+		t.Fatalf("legacy subscription assignment was not migrated: %v", err)
+	}
+	var emptyAssignmentCount int64
+	if err := db.Model(&persistmodel.MessageSubscriptionAssignment{}).Where("subscription_id = ?", emptySubscription.ID).Count(&emptyAssignmentCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if emptyAssignmentCount != 1 {
+		t.Fatalf("legacy fallback should bind only one default active team, got %d", emptyAssignmentCount)
+	}
+	if db.Migrator().HasTable(&previousVersionMessageSubscriptionResearchTeam{}) {
+		t.Fatal("legacy message_subscription_research_teams table should be removed after migration")
+	}
+	var upgradedFilterResult persistmodel.IngestedMessageFilterResult
+	if err := db.First(&upgradedFilterResult, "message_id = ? AND filter_id = ? AND research_team_id = ?", message.ID, filter.ID, team.ID).Error; err != nil {
+		t.Fatalf("legacy message filter result was not migrated: %v", err)
+	}
+	if upgradedFilterResult.FilterStatus != "failed" || upgradedFilterResult.SubscriptionID != withMessageSubscription.ID {
+		t.Fatalf("legacy message filter result mismatch: %+v", upgradedFilterResult)
+	}
 	var upgradedTeam persistmodel.ResearchTeam
 	if err := db.First(&upgradedTeam, "name = ?", team.Name).Error; err != nil {
 		t.Fatal(err)
@@ -237,6 +298,102 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 	}
 	if err := db.Create(&action).Error; err != nil {
 		t.Fatalf("expected upgraded paper_corporate_actions table to accept rows: %v", err)
+	}
+}
+
+func TestAutoMigrateBackfillsMessageFilterResultsPerEnabledAssignment(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := AutoMigrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now().UTC().Truncate(time.Second)
+	filterOne := persistmodel.MessageSubscriptionFilter{Name: "filter one", PromptTemplate: "{}", Enabled: true, CreatedAt: now, UpdatedAt: now}
+	filterTwo := persistmodel.MessageSubscriptionFilter{Name: "filter two", PromptTemplate: "{}", Enabled: true, CreatedAt: now, UpdatedAt: now}
+	if err := db.Create(&filterOne).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&filterTwo).Error; err != nil {
+		t.Fatal(err)
+	}
+	accountOne := persistmodel.PaperAccount{Name: "assignment account one", InitialCash: decimal.NewFromInt(100000), Cash: decimal.NewFromInt(100000), Active: true}
+	accountTwo := persistmodel.PaperAccount{Name: "assignment account two", InitialCash: decimal.NewFromInt(100000), Cash: decimal.NewFromInt(100000), Active: true}
+	if err := db.Create(&accountOne).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&accountTwo).Error; err != nil {
+		t.Fatal(err)
+	}
+	teamOne := persistmodel.ResearchTeam{Name: "assignment team one", PaperAccountID: &accountOne.ID, Active: true, AssetClass: "a_share"}
+	teamTwo := persistmodel.ResearchTeam{Name: "assignment team two", PaperAccountID: &accountTwo.ID, Active: true, AssetClass: "a_share"}
+	if err := db.Create(&teamOne).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&teamTwo).Error; err != nil {
+		t.Fatal(err)
+	}
+	subscription := persistmodel.MessageSubscription{
+		Provider: "rss_feed", Title: "multi assignment feed", SourceRef: "https://example.test/multi.xml",
+		Enabled: true, FilterID: filterOne.ID, Config: datatypes.JSON([]byte(`{}`)), CreatedAt: now, UpdatedAt: now,
+	}
+	if err := db.Create(&subscription).Error; err != nil {
+		t.Fatal(err)
+	}
+	enabledOne := persistmodel.MessageSubscriptionAssignment{SubscriptionID: subscription.ID, FilterID: filterOne.ID, ResearchTeamID: teamOne.ID, Enabled: true, CreatedAt: now, UpdatedAt: now}
+	enabledTwo := persistmodel.MessageSubscriptionAssignment{SubscriptionID: subscription.ID, FilterID: filterTwo.ID, ResearchTeamID: teamTwo.ID, Enabled: true, CreatedAt: now, UpdatedAt: now}
+	disabled := persistmodel.MessageSubscriptionAssignment{SubscriptionID: subscription.ID, FilterID: filterOne.ID, ResearchTeamID: teamTwo.ID, Enabled: true, CreatedAt: now, UpdatedAt: now}
+	for _, assignment := range []*persistmodel.MessageSubscriptionAssignment{&enabledOne, &enabledTwo, &disabled} {
+		if err := db.Create(assignment).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := db.Model(&persistmodel.MessageSubscriptionAssignment{}).Where("id = ?", disabled.ID).Update("enabled", false).Error; err != nil {
+		t.Fatal(err)
+	}
+	decision := domainkernel.NewsObserve
+	message := persistmodel.IngestedMessage{
+		SubscriptionID: subscription.ID, Provider: subscription.Provider, SourceMessageID: "multi-assignment-message",
+		MessageTime: now, Text: "legacy summary message", Raw: datatypes.JSON([]byte(`{}`)), FilterID: &filterOne.ID,
+		FilterDecision: &decision, FilterStatus: "filtered", RelatedSymbols: datatypes.JSON([]byte(`["600000"]`)), FilteredAt: &now,
+		CreatedAt: now, UpdatedAt: now,
+	}
+	if err := db.Create(&message).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := AutoMigrate(db); err != nil {
+		t.Fatal(err)
+	}
+	if err := AutoMigrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	var rows []persistmodel.IngestedMessageFilterResult
+	if err := db.Where("message_id = ?", message.ID).Order("filter_id, research_team_id").Find(&rows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("expected exactly two enabled assignment results after idempotent migration, got %+v", rows)
+	}
+	got := map[string]persistmodel.IngestedMessageFilterResult{}
+	for _, row := range rows {
+		key := strconv.FormatUint(uint64(row.FilterID), 10) + ":" + strconv.FormatUint(uint64(row.ResearchTeamID), 10)
+		got[key] = row
+	}
+	for _, key := range []string{
+		strconv.FormatUint(uint64(filterOne.ID), 10) + ":" + strconv.FormatUint(uint64(teamOne.ID), 10),
+		strconv.FormatUint(uint64(filterTwo.ID), 10) + ":" + strconv.FormatUint(uint64(teamTwo.ID), 10),
+	} {
+		if _, ok := got[key]; !ok {
+			t.Fatalf("expected migrated result for assignment %s, got %+v", key, rows)
+		}
+	}
+	disabledKey := strconv.FormatUint(uint64(filterOne.ID), 10) + ":" + strconv.FormatUint(uint64(teamTwo.ID), 10)
+	if _, ok := got[disabledKey]; ok {
+		t.Fatalf("disabled assignment %s should not be backfilled, got %+v", disabledKey, rows)
 	}
 }
 
@@ -346,7 +503,8 @@ func TestGORMTableSurfaceMatchesPersistenceModels(t *testing.T) {
 		"auth_sessions",
 		"daily_bars",
 		"market_symbols",
-		"message_subscription_research_teams",
+		"ingested_message_filter_results",
+		"message_subscription_assignments",
 		"message_subscription_filters",
 		"message_subscriptions",
 		"meeting_events",
@@ -605,6 +763,23 @@ type previousVersionAdminUser struct {
 
 func (previousVersionAdminUser) TableName() string { return "admin_users" }
 
+type previousVersionMessageSubscriptionFilter struct {
+	ID             uint    `gorm:"primaryKey"`
+	Name           string  `gorm:"size:160"`
+	Description    string  `gorm:"type:text"`
+	PromptTemplate string  `gorm:"type:text"`
+	ProviderID     *uint   `gorm:"index"`
+	Model          *string `gorm:"size:255"`
+	Enabled        bool    `gorm:"default:true;index"`
+	IsDefault      bool    `gorm:"default:false;index"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (previousVersionMessageSubscriptionFilter) TableName() string {
+	return "message_subscription_filters"
+}
+
 type previousVersionMessageSubscription struct {
 	ID                  uint   `gorm:"primaryKey"`
 	Provider            string `gorm:"size:64;index;uniqueIndex:uq_message_subscription_provider_ref"`
@@ -624,6 +799,16 @@ type previousVersionMessageSubscription struct {
 }
 
 func (previousVersionMessageSubscription) TableName() string { return "message_subscriptions" }
+
+type previousVersionMessageSubscriptionResearchTeam struct {
+	MessageSubscriptionID uint `gorm:"primaryKey"`
+	ResearchTeamID        uint `gorm:"primaryKey;index"`
+	CreatedAt             time.Time
+}
+
+func (previousVersionMessageSubscriptionResearchTeam) TableName() string {
+	return "message_subscription_research_teams"
+}
 
 type previousVersionIngestedMessage struct {
 	ID              uint                       `gorm:"primaryKey"`

@@ -4156,6 +4156,7 @@ export interface components {
                 filterId?: number;
                 filterName?: string;
                 teamIds?: number[];
+                assignments?: components["schemas"]["MessageSubscriptionAssignment"][];
                 backfillLimit?: number;
                 pollIntervalSeconds?: number;
                 /** Format: date-time */
@@ -4178,6 +4179,18 @@ export interface components {
                 updatedAt?: string;
             };
         };
+        MessageSubscriptionAssignment: {
+            id?: number;
+            subscriptionId?: number;
+            filterId?: number;
+            filterName?: string;
+            researchTeamId?: number;
+            enabled?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
         MessageSubscriptionUpsertDocument: {
             data: {
                 /** @enum {string} */
@@ -4192,6 +4205,7 @@ export interface components {
                     enabled?: boolean;
                     filterId?: number;
                     teamIds?: number[];
+                    assignments?: components["schemas"]["MessageSubscriptionAssignment"][];
                     backfillLimit?: number;
                     pollIntervalSeconds?: number;
                     config?: {
@@ -4422,6 +4436,7 @@ export interface components {
             /** @enum {string} */
             filterStatus?: "unfiltered" | "filtering" | "filtered" | "failed";
             relatedSymbols?: string[];
+            filterResults?: components["schemas"]["IngestedMessageFilterResult"][];
             relatedPredictionMarkets?: {
                 [key: string]: unknown;
             }[];
@@ -4434,6 +4449,26 @@ export interface components {
             feedbackComment?: string | null;
             /** Format: date-time */
             feedbackAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        IngestedMessageFilterResult: {
+            id?: number;
+            messageId?: number;
+            subscriptionId?: number;
+            assignmentId?: number | null;
+            filterId?: number;
+            filterName?: string;
+            researchTeamId?: number;
+            filterDecision?: string | null;
+            filterReason?: string | null;
+            /** @enum {string} */
+            filterStatus?: "unfiltered" | "filtering" | "filtered" | "failed";
+            relatedSymbols?: string[];
+            /** Format: date-time */
+            filteredAt?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */

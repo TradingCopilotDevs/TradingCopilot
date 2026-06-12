@@ -174,6 +174,14 @@
             <span>{{ message.filterReason || '-' }}</span>
           </div>
           <div class="mobile-card__meta-row">
+            <span class="mobile-card__meta-label">分配</span>
+            <span class="filter-result-list">
+              <span v-for="result in message.filterResults || []" :key="`${result.filterId}:${result.researchTeamId}`">
+                {{ filterResultLabel(result) }}
+              </span>
+            </span>
+          </div>
+          <div class="mobile-card__meta-row">
             <span class="mobile-card__meta-label">反馈</span>
             <el-tag :type="feedbackType(message.feedbackLabel)" effect="plain">{{ feedbackLabel(message.feedbackLabel) }}</el-tag>
           </div>
@@ -209,6 +217,16 @@
       <el-table-column label="过滤" width="120">
         <template #default="{ row }">
           <el-tag :type="decisionType(row)">{{ decisionLabel(row) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="分配结果" min-width="260">
+        <template #default="{ row }">
+          <div class="filter-result-list">
+            <el-tag v-for="result in row.filterResults || []" :key="`${result.filterId}:${result.researchTeamId}`" size="small" :type="filterResultType(result)" effect="plain">
+              {{ filterResultLabel(result) }}
+            </el-tag>
+            <span v-if="!row.filterResults?.length" class="muted">-</span>
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="filterReason" label="原因" min-width="220" show-overflow-tooltip />
@@ -338,6 +356,28 @@ function decisionLabel(message: IngestedMessage) {
     observe: '\u89c2\u5bdf',
     meeting: '\u89e6\u53d1\u4f1a\u8bae'
   } as Record<string, string>)[String(message.filterDecision || '')] || '\u672a\u8fc7\u6ee4'
+}
+
+function filterResultType(result: NonNullable<IngestedMessage['filterResults']>[number]) {
+  if (result.filterStatus === 'filtering') return 'warning'
+  if (result.filterStatus === 'failed') return 'danger'
+  if (result.filterStatus === 'unfiltered') return 'info'
+  if (result.filterDecision === 'meeting') return 'danger'
+  if (result.filterDecision === 'observe') return 'warning'
+  return 'info'
+}
+
+function filterResultLabel(result: NonNullable<IngestedMessage['filterResults']>[number]) {
+  const decision = ({
+    ignore: '忽略',
+    observe: '观察',
+    meeting: '会议'
+  } as Record<string, string>)[String(result.filterDecision || '')] || decisionLabel({ filterStatus: result.filterStatus, filterDecision: result.filterDecision } as IngestedMessage)
+  return `${result.filterName || `#${result.filterId}`} → ${teamName(result.researchTeamId)}：${decision}`
+}
+
+function teamName(teamId: number) {
+  return teams.value.find((team) => team.id === teamId)?.name || `#${teamId}`
 }
 
 function feedbackLabel(value: string | null | undefined) {
@@ -697,6 +737,13 @@ useAutoRefresh({
   color: var(--el-text-color-secondary);
   font-size: 13px;
   font-weight: 600;
+}
+
+.filter-result-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
 }
 
 @media (max-width: 960px) {

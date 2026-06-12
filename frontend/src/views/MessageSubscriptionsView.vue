@@ -106,8 +106,7 @@
           </div>
         </div>
         <div class="mobile-card__meta">
-          <div class="mobile-card__meta-row"><span class="mobile-card__meta-label">过滤器</span><span>{{ source.filterName || '-' }}</span></div>
-          <div class="mobile-card__meta-row"><span class="mobile-card__meta-label">团队</span><span><el-tag v-for="teamId in source.teamIds || []" :key="teamId" size="small" class="tag-gap">{{ teamName(teamId) }}</el-tag></span></div>
+          <div class="mobile-card__meta-row"><span class="mobile-card__meta-label">分配</span><span>{{ assignmentSummary(source) }}</span></div>
           <div class="mobile-card__meta-row"><span class="mobile-card__meta-label">轮询</span><span>{{ intervalLabel(source.pollIntervalSeconds) }}</span></div>
           <div class="mobile-card__meta-row"><span class="mobile-card__meta-label">下次</span><span>{{ formatDateTimeUtc8(source.nextCollectAt) || '-' }}</span></div>
           <div v-if="source.lastCollectError" class="mobile-card__meta-row"><span class="mobile-card__meta-label">错误</span><span class="source-error">{{ source.lastCollectError }}</span></div>
@@ -139,9 +138,13 @@
         </el-table-column>
         <el-table-column label="过滤/团队" min-width="240">
           <template #default="{ row }">
-            <div>{{ row.filterName || '-' }}</div>
-            <div>
-              <el-tag v-for="teamId in row.teamIds || []" :key="teamId" size="small" class="tag-gap">{{ teamName(teamId) }}</el-tag>
+            <div class="assignment-list">
+              <div v-for="assignment in subscriptionAssignments(row)" :key="`${assignment.filterId}:${assignment.researchTeamId}`">
+                <el-tag size="small" effect="plain">{{ assignment.filterName || filterName(assignment.filterId) }}</el-tag>
+                <span class="assignment-arrow">→</span>
+                <el-tag size="small" class="tag-gap">{{ teamName(assignment.researchTeamId) }}</el-tag>
+              </div>
+              <span v-if="!subscriptionAssignments(row).length" class="muted">-</span>
             </div>
           </template>
         </el-table-column>
@@ -259,15 +262,19 @@
       <el-form-item label="名称">
         <el-input v-model="subscriptionForm.title" placeholder="可留空，测试或采集后自动补全" />
       </el-form-item>
-      <el-form-item label="过滤器">
-        <el-select v-model="subscriptionForm.filterId" placeholder="选择过滤器" style="width: 100%">
-          <el-option v-for="filter in enabledFilters" :key="filter.id" :label="filter.isDefault ? `${filter.name}（默认）` : filter.name" :value="filter.id" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="投研团队">
-        <el-select v-model="subscriptionForm.teamIds" multiple filterable placeholder="选择团队" style="width: 100%">
-          <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
-        </el-select>
+      <el-form-item label="分配">
+        <div class="assignment-editor">
+          <div v-for="(assignment, index) in subscriptionForm.assignments" :key="index" class="assignment-row">
+            <el-select v-model="assignment.filterId" placeholder="过滤器" filterable>
+              <el-option v-for="filter in enabledFilters" :key="filter.id" :label="filter.isDefault ? `${filter.name}（默认）` : filter.name" :value="filter.id" />
+            </el-select>
+            <el-select v-model="assignment.researchTeamId" placeholder="投研团队" filterable>
+              <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
+            </el-select>
+            <el-button :icon="Delete" circle plain type="danger" @click="removeAssignment(index)" />
+          </div>
+          <el-button :icon="Plus" plain @click="addAssignment()">新增分配</el-button>
+        </div>
       </el-form-item>
       <el-form-item label="回填条数"><el-input-number v-model="subscriptionForm.backfillLimit" :min="0" :max="5000" /></el-form-item>
       <el-form-item label="轮询间隔"><el-input-number v-model="subscriptionForm.pollIntervalSeconds" :min="30" :max="86400" /><span class="form-suffix">秒</span></el-form-item>
@@ -345,7 +352,7 @@
 import { Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { api, apiErrorText, jsonapiResource, unwrapJsonApiCollection, unwrapJsonApiResource, type MessageSubscription, type MessageSubscriptionDiagnostic, type MessageSubscriptionFilter } from '../api'
+import { api, apiErrorText, jsonapiResource, unwrapJsonApiCollection, unwrapJsonApiResource, type MessageSubscription, type MessageSubscriptionAssignment, type MessageSubscriptionDiagnostic, type MessageSubscriptionFilter } from '../api'
 import { useAutoRefresh } from '../composables/useAutoRefresh'
 import { useAsyncAction } from '../composables/useAsyncAction'
 import { useResponsive } from '../composables/useResponsive'
@@ -382,6 +389,7 @@ const subscriptionForm = reactive({
   sourceRef: '',
   filterId: null as number | null,
   teamIds: [] as number[],
+  assignments: [] as Array<{ filterId: number | null; researchTeamId: number | null }>,
   backfillLimit: 20,
   pollIntervalSeconds: 30,
   enabled: true,
@@ -530,8 +538,28 @@ function providerName(providerId?: number | null) {
   return providers.value.find((provider) => provider.id === providerId)?.name
 }
 
+function filterName(filterId?: number | null) {
+  return filters.value.find((filter) => filter.id === filterId)?.name || (filterId ? `#${filterId}` : '-')
+}
+
 function teamName(teamId: number) {
   return teams.value.find((team) => team.id === teamId)?.name || `#${teamId}`
+}
+
+function subscriptionAssignments(source: MessageSubscription): MessageSubscriptionAssignment[] {
+  if (Array.isArray(source.assignments) && source.assignments.length) return source.assignments
+  const filterId = Number(source.filterId || defaultFilterId.value || 0)
+  return (source.teamIds || []).filter(Boolean).map((teamId) => ({
+    filterId,
+    filterName: source.filterName || filterName(filterId),
+    researchTeamId: teamId
+  }))
+}
+
+function assignmentSummary(source: MessageSubscription) {
+  const rows = subscriptionAssignments(source)
+  if (!rows.length) return '-'
+  return rows.map((item) => `${item.filterName || filterName(item.filterId)} → ${teamName(item.researchTeamId)}`).join('；')
 }
 
 function intervalLabel(seconds?: number) {
@@ -586,6 +614,10 @@ async function refreshRuntimeState() {
 
 function openSubscription(row?: MessageSubscription) {
   const provider = (row?.provider as SourceProvider | undefined) ?? 'telegram_channel'
+  const assignments = row ? subscriptionAssignments(row) : []
+  if (!assignments.length) {
+    assignments.push({ filterId: defaultFilterId.value ?? enabledFilters.value[0]?.id ?? 0, researchTeamId: teams.value[0]?.id ?? 0 })
+  }
   Object.assign(subscriptionForm, {
     id: row?.id ?? null,
     provider,
@@ -593,6 +625,7 @@ function openSubscription(row?: MessageSubscription) {
     sourceRef: row?.sourceRef ?? '',
     filterId: row?.filterId ?? defaultFilterId.value ?? enabledFilters.value[0]?.id ?? null,
     teamIds: [...(row?.teamIds ?? [])],
+    assignments: assignments.map((item) => ({ filterId: item.filterId || null, researchTeamId: item.researchTeamId || null })),
     backfillLimit: row?.backfillLimit ?? 20,
     pollIntervalSeconds: row?.pollIntervalSeconds ?? (provider === 'rss_feed' ? 900 : 30),
     enabled: row?.enabled ?? true,
@@ -602,6 +635,17 @@ function openSubscription(row?: MessageSubscription) {
     hasRssPassword: !!row?.hasRssPassword
   })
   subscriptionDialog.value = true
+}
+
+function addAssignment(filterId?: number | null, researchTeamId?: number | null) {
+  subscriptionForm.assignments.push({
+    filterId: filterId ?? defaultFilterId.value ?? enabledFilters.value[0]?.id ?? null,
+    researchTeamId: researchTeamId ?? teams.value[0]?.id ?? null
+  })
+}
+
+function removeAssignment(index: number) {
+  subscriptionForm.assignments.splice(index, 1)
 }
 
 function openRSSRotation() {
@@ -728,12 +772,13 @@ async function saveSubscription() {
     ElMessage.warning('请填写订阅来源')
     return
   }
-  if (!subscriptionForm.filterId) {
-    ElMessage.warning('请选择过滤器')
+  const assignments = normalizedFormAssignments()
+  if (subscriptionForm.enabled && assignments.length === 0) {
+    ElMessage.warning('启用的来源至少配置一个过滤器-投研团队分配')
     return
   }
-  if (subscriptionForm.enabled && subscriptionForm.teamIds.length === 0) {
-    ElMessage.warning('启用的来源至少绑定一个投研团队')
+  if (subscriptionForm.assignments.some((item) => !item.filterId || !item.researchTeamId)) {
+    ElMessage.warning('分配行需要同时选择过滤器和投研团队')
     return
   }
   if (subscriptionForm.provider === 'rss_feed' && subscriptionForm.rssAuthType === 'basic' && !subscriptionForm.rssUsername.trim()) {
@@ -749,8 +794,9 @@ async function saveSubscription() {
       provider: subscriptionForm.provider,
       title: subscriptionForm.title,
       sourceRef: subscriptionForm.sourceRef,
-      filterId: subscriptionForm.filterId,
-      teamIds: subscriptionForm.teamIds,
+      filterId: assignments[0]?.filterId || subscriptionForm.filterId,
+      teamIds: assignments.map((item) => item.researchTeamId),
+      assignments,
       backfillLimit: subscriptionForm.backfillLimit,
       pollIntervalSeconds: subscriptionForm.pollIntervalSeconds,
       enabled: subscriptionForm.enabled
@@ -770,6 +816,21 @@ async function saveSubscription() {
     subscriptionDialog.value = false
     await Promise.all([loadSubscriptions(), loadDiagnostics()])
   }, { success: '订阅来源已保存，采集任务已启动' })
+}
+
+function normalizedFormAssignments() {
+  const seen = new Set<string>()
+  const out: Array<{ filterId: number; researchTeamId: number }> = []
+  for (const item of subscriptionForm.assignments) {
+    const filterId = Number(item.filterId || 0)
+    const researchTeamId = Number(item.researchTeamId || 0)
+    if (!filterId || !researchTeamId) continue
+    const key = `${filterId}:${researchTeamId}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push({ filterId, researchTeamId })
+  }
+  return out
 }
 
 async function saveFilter() {
@@ -923,3 +984,35 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+.assignment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assignment-arrow {
+  margin: 0 4px;
+  color: var(--el-text-color-secondary);
+}
+
+.assignment-editor {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+}
+
+.assignment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .assignment-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

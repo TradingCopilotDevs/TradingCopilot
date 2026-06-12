@@ -15,8 +15,9 @@ type MessageSubscription struct {
 	Enabled             bool   `gorm:"default:true"`
 	FilterID            uint   `gorm:"index"`
 	Filter              *MessageSubscriptionFilter
-	BackfillLimit       int `gorm:"default:0"`
-	PollIntervalSeconds int `gorm:"default:0"`
+	Assignments         []MessageSubscriptionAssignment `gorm:"foreignKey:SubscriptionID;constraint:OnDelete:CASCADE"`
+	BackfillLimit       int                             `gorm:"default:0"`
+	PollIntervalSeconds int                             `gorm:"default:0"`
 	CollectFrom         time.Time
 	LastCollectedAt     *time.Time
 	NextCollectAt       *time.Time     `gorm:"index"`
@@ -24,10 +25,26 @@ type MessageSubscription struct {
 	Config              datatypes.JSON `gorm:"type:json;default:'{}'"`
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
-	ResearchTeams       []ResearchTeam `gorm:"many2many:message_subscription_research_teams;constraint:OnDelete:RESTRICT"`
 }
 
 func (MessageSubscription) TableName() string { return "message_subscriptions" }
+
+type MessageSubscriptionAssignment struct {
+	ID             uint                 `gorm:"primaryKey"`
+	SubscriptionID uint                 `gorm:"index;uniqueIndex:uq_message_subscription_assignment"`
+	Subscription   *MessageSubscription `gorm:"foreignKey:SubscriptionID;constraint:OnDelete:CASCADE"`
+	FilterID       uint                 `gorm:"index;uniqueIndex:uq_message_subscription_assignment"`
+	Filter         *MessageSubscriptionFilter
+	ResearchTeamID uint          `gorm:"index;uniqueIndex:uq_message_subscription_assignment"`
+	ResearchTeam   *ResearchTeam `gorm:"foreignKey:ResearchTeamID;constraint:OnDelete:RESTRICT"`
+	Enabled        bool          `gorm:"default:true;index"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (MessageSubscriptionAssignment) TableName() string {
+	return "message_subscription_assignments"
+}
 
 type MessageSubscriptionFilter struct {
 	ID             uint   `gorm:"primaryKey"`
@@ -61,14 +78,40 @@ type IngestedMessage struct {
 	FilteredAt      *time.Time
 	FilterID        *uint `gorm:"index"`
 	Filter          *MessageSubscriptionFilter
-	FeedbackLabel   *string `gorm:"size:32;index"`
-	FeedbackComment *string `gorm:"type:text"`
+	FilterResults   []IngestedMessageFilterResult `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
+	FeedbackLabel   *string                       `gorm:"size:32;index"`
+	FeedbackComment *string                       `gorm:"type:text"`
 	FeedbackAt      *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
 
 func (IngestedMessage) TableName() string { return "ingested_messages" }
+
+type IngestedMessageFilterResult struct {
+	ID             uint                 `gorm:"primaryKey"`
+	MessageID      uint                 `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
+	Message        *IngestedMessage     `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
+	SubscriptionID uint                 `gorm:"index"`
+	Subscription   *MessageSubscription `gorm:"foreignKey:SubscriptionID;constraint:OnDelete:CASCADE"`
+	AssignmentID   *uint                `gorm:"index"`
+	Assignment     *MessageSubscriptionAssignment
+	FilterID       uint                       `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
+	Filter         *MessageSubscriptionFilter `gorm:"foreignKey:FilterID"`
+	ResearchTeamID uint                       `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
+	ResearchTeam   *ResearchTeam              `gorm:"foreignKey:ResearchTeamID;constraint:OnDelete:RESTRICT"`
+	FilterDecision *domainkernel.NewsDecision `gorm:"size:32"`
+	FilterReason   *string                    `gorm:"type:text"`
+	FilterStatus   string                     `gorm:"size:32;default:unfiltered;index"`
+	RelatedSymbols datatypes.JSON             `gorm:"type:json;default:'[]'"`
+	FilteredAt     *time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (IngestedMessageFilterResult) TableName() string {
+	return "ingested_message_filter_results"
+}
 
 type PlatformAdapter struct {
 	ID          uint           `gorm:"primaryKey"`

@@ -173,7 +173,9 @@ type Repository interface {
 	FindSubscriptionByProviderAndSourceRef(ctx context.Context, provider string, sourceRef string) (*domainmsg.MessageSubscription, bool, error)
 	SaveSubscription(ctx context.Context, subscription *domainmsg.MessageSubscription) error
 	ReplaceSubscriptionTeams(ctx context.Context, subscriptionID uint, teamIDs []uint) error
+	ReplaceSubscriptionAssignments(ctx context.Context, subscriptionID uint, assignments []domainmsg.MessageSubscriptionAssignment) error
 	ListSubscriptionTeamIDs(ctx context.Context, subscriptionID uint) ([]uint, error)
+	ListSubscriptionAssignments(ctx context.Context, subscriptionID uint) ([]domainmsg.MessageSubscriptionAssignment, error)
 	ResearchTeamAssetClasses(ctx context.Context, teamIDs []uint) (map[uint]string, error)
 	ResearchTeamReady(ctx context.Context, teamID uint) (bool, string, error)
 	ListSubscriptionsForCollect(ctx context.Context, subscriptionID *uint) ([]domainmsg.MessageSubscription, error)
@@ -185,6 +187,9 @@ type Repository interface {
 	FindMessage(ctx context.Context, id uint) (*domainmsg.IngestedMessage, bool, error)
 	FindMessageBySource(ctx context.Context, subscriptionID uint, sourceMessageID string) (*domainmsg.IngestedMessage, bool, error)
 	SaveMessage(ctx context.Context, message *domainmsg.IngestedMessage) error
+	SaveMessageFilterResult(ctx context.Context, result *domainmsg.IngestedMessageFilterResult) error
+	DeleteMessageFilterResults(ctx context.Context, messageID uint) error
+	ListMessageFilterResults(ctx context.Context, messageID uint) ([]domainmsg.IngestedMessageFilterResult, error)
 	DeleteMessage(ctx context.Context, message *domainmsg.IngestedMessage, externalRefs []string) error
 	DeleteMessagesByIDsWithRefs(ctx context.Context, ids []uint, externalRefs []string) error
 	ListMessagesForRefilter(ctx context.Context, ids []uint, onlyUnfiltered bool, limit int) ([]domainmsg.IngestedMessage, error)
@@ -301,6 +306,8 @@ type SubscriptionInput struct {
 	FilterID               uint
 	TeamIDs                []uint
 	TeamIDsSet             bool
+	Assignments            []SubscriptionAssignmentInput
+	AssignmentsSet         bool
 	BackfillLimit          int
 	BackfillLimitSpecified bool
 	PollIntervalSeconds    int
@@ -312,6 +319,11 @@ type SubscriptionInput struct {
 	RSSUsernameSet         bool
 	RSSPassword            string
 	RSSPasswordSet         bool
+}
+
+type SubscriptionAssignmentInput struct {
+	FilterID       uint
+	ResearchTeamID uint
 }
 
 type SubscriptionFilterInput struct {
@@ -1001,12 +1013,61 @@ func (u Usecase) subscriptionShouldUsePredictionFilter(ctx context.Context, team
 	return hasPrediction
 }
 
+func (u Usecase) subscriptionAssignmentsForInput(ctx context.Context, input SubscriptionInput, current *domainmsg.MessageSubscription) ([]domainmsg.MessageSubscriptionAssignment, uint, []uint, error) {
+	var assignments []domainmsg.MessageSubscriptionAssignment
+	if input.AssignmentsSet {
+		for _, item := range input.Assignments {
+			teamID := item.ResearchTeamID
+			filterID := item.FilterID
+			if teamID == 0 {
+				continue
+			}
+			resolvedFilterID, err := u.resolveSubscriptionFilterID(ctx, filterID, []uint{teamID})
+			if err != nil {
+				return nil, 0, nil, err
+			}
+			assignments = append(assignments, domainmsg.MessageSubscriptionAssignment{
+				FilterID:       resolvedFilterID,
+				ResearchTeamID: teamID,
+				Enabled:        true,
+			})
+		}
+	} else {
+		teamIDs := input.TeamIDs
+		filterID := input.FilterID
+		if len(teamIDs) == 0 && current != nil {
+			teamIDs = current.TeamIDs
+		}
+		if filterID == 0 && current != nil {
+			filterID = current.FilterID
+		}
+		resolvedFilterID, err := u.resolveSubscriptionFilterID(ctx, filterID, teamIDs)
+		if err != nil {
+			return nil, 0, nil, err
+		}
+		for _, teamID := range uniqueUintIDs(teamIDs) {
+			assignments = append(assignments, domainmsg.MessageSubscriptionAssignment{
+				FilterID:       resolvedFilterID,
+				ResearchTeamID: teamID,
+				Enabled:        true,
+			})
+		}
+	}
+	assignments = uniqueDomainSubscriptionAssignments(assignments)
+	teamIDs := subscriptionAssignmentTeamIDs(assignments)
+	primaryFilterID := uint(0)
+	if len(assignments) > 0 {
+		primaryFilterID = assignments[0].FilterID
+	}
+	return assignments, primaryFilterID, teamIDs, nil
+}
+
 func (u Usecase) CreateSubscription(ctx context.Context, input SubscriptionInput) (*SubscriptionMutation, error) {
 	provider, err := normalizeSubscriptionProvider(input.Provider)
 	if err != nil {
 		return nil, err
 	}
-	filterID, err := u.resolveSubscriptionFilterID(ctx, input.FilterID, input.TeamIDs)
+	assignments, filterID, teamIDs, err := u.subscriptionAssignmentsForInput(ctx, input, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1024,7 +1085,8 @@ func (u Usecase) CreateSubscription(ctx context.Context, input SubscriptionInput
 		SourceRef:           sourceRef,
 		Enabled:             input.Enabled,
 		FilterID:            filterID,
-		TeamIDs:             uniqueUintIDs(input.TeamIDs),
+		TeamIDs:             teamIDs,
+		Assignments:         assignments,
 		BackfillLimit:       input.BackfillLimit,
 		PollIntervalSeconds: input.PollIntervalSeconds,
 		Config:              config,
@@ -1038,8 +1100,8 @@ func (u Usecase) CreateSubscription(ctx context.Context, input SubscriptionInput
 	if row.Title == "" {
 		row.Title = defaultSubscriptionTitle(provider, row.SourceRef)
 	}
-	if row.Enabled && len(row.TeamIDs) == 0 {
-		return nil, errors.New("enabled message subscription requires at least one research team")
+	if row.Enabled && len(row.Assignments) == 0 {
+		return nil, errors.New("enabled message subscription requires at least one filter-research team assignment")
 	}
 	previousBackfillLimit := 0
 	previousSourceRef := ""
@@ -1049,15 +1111,19 @@ func (u Usecase) CreateSubscription(ctx context.Context, input SubscriptionInput
 			return err
 		}
 		if !found || existing == nil {
-			teamIDs := append([]uint(nil), row.TeamIDs...)
+			assignments := cloneSubscriptionAssignments(row.Assignments)
 			if err := repo.CreateSubscription(ctx, &row); err != nil {
 				return err
 			}
 			if err := u.applyRSSAuthMutation(ctx, repo, &row, input, nil); err != nil {
 				return err
 			}
-			row.TeamIDs = teamIDs
-			return repo.ReplaceSubscriptionTeams(ctx, row.ID, teamIDs)
+			for i := range assignments {
+				assignments[i].SubscriptionID = row.ID
+			}
+			row.Assignments = assignments
+			row.TeamIDs = subscriptionAssignmentTeamIDs(assignments)
+			return repo.ReplaceSubscriptionAssignments(ctx, row.ID, assignments)
 		}
 		previous := *existing
 		config, err := u.subscriptionConfigForMutation(provider, input, &previous, input.Config != nil)
@@ -1075,22 +1141,28 @@ func (u Usecase) CreateSubscription(ctx context.Context, input SubscriptionInput
 		}
 		existing.SourceRef = sourceRef
 		existing.Enabled = input.Enabled
-		existing.TeamIDs = row.TeamIDs
+		existing.FilterID = filterID
+		existing.TeamIDs = teamIDs
+		existing.Assignments = assignments
 		existing.BackfillLimit = row.BackfillLimit
 		existing.PollIntervalSeconds = row.PollIntervalSeconds
 		existing.Config = config
 		if !existing.CollectFrom.IsZero() {
 			existing.CollectFrom = time.Time{}
 		}
-		teamIDs := append([]uint(nil), existing.TeamIDs...)
+		assignments := cloneSubscriptionAssignments(existing.Assignments)
 		if err := repo.SaveSubscription(ctx, existing); err != nil {
 			return err
 		}
 		if err := u.applyRSSAuthMutation(ctx, repo, existing, input, &previous); err != nil {
 			return err
 		}
-		existing.TeamIDs = teamIDs
-		if err := repo.ReplaceSubscriptionTeams(ctx, existing.ID, teamIDs); err != nil {
+		for i := range assignments {
+			assignments[i].SubscriptionID = existing.ID
+		}
+		existing.Assignments = assignments
+		existing.TeamIDs = subscriptionAssignmentTeamIDs(assignments)
+		if err := repo.ReplaceSubscriptionAssignments(ctx, existing.ID, assignments); err != nil {
 			return err
 		}
 		row = *existing
@@ -1139,22 +1211,22 @@ func (u Usecase) UpdateSubscription(ctx context.Context, id uint, input Subscrip
 	if fields["enabled"] {
 		row.Enabled = input.Enabled
 	}
-	if fields["filterId"] {
-		filterID, err := u.resolveSubscriptionFilterID(ctx, input.FilterID, firstNonEmptyUintSlice(input.TeamIDs, row.TeamIDs))
+	assignmentsChanged := fields["assignments"] || fields["filterId"] || fields["teamIds"]
+	if assignmentsChanged {
+		assignmentInput := input
+		if !fields["assignments"] && !fields["teamIds"] {
+			assignmentInput.TeamIDs = row.TeamIDs
+		}
+		if !fields["filterId"] {
+			assignmentInput.FilterID = row.FilterID
+		}
+		assignments, filterID, teamIDs, err := u.subscriptionAssignmentsForInput(ctx, assignmentInput, row)
 		if err != nil {
 			return nil, true, err
 		}
 		row.FilterID = filterID
-	}
-	if fields["teamIds"] {
-		row.TeamIDs = uniqueUintIDs(input.TeamIDs)
-		if !fields["filterId"] && input.FilterID == 0 {
-			if filterID, err := u.resolveSubscriptionFilterID(ctx, 0, row.TeamIDs); err == nil {
-				row.FilterID = filterID
-			} else {
-				return nil, true, err
-			}
-		}
+		row.TeamIDs = teamIDs
+		row.Assignments = assignments
 	}
 	if fields["backfillLimit"] {
 		row.BackfillLimit = input.BackfillLimit
@@ -1176,19 +1248,23 @@ func (u Usecase) UpdateSubscription(ctx context.Context, id uint, input Subscrip
 		row.Config = config
 	}
 	if row.Enabled && len(row.TeamIDs) == 0 {
-		return nil, true, errors.New("enabled message subscription requires at least one research team")
+		return nil, true, errors.New("enabled message subscription requires at least one filter-research team assignment")
 	}
 	if err := u.withTx(ctx, func(repo Repository) error {
-		teamIDs := append([]uint(nil), row.TeamIDs...)
+		assignments := cloneSubscriptionAssignments(row.Assignments)
 		if err := repo.SaveSubscription(ctx, row); err != nil {
 			return err
 		}
 		if err := u.applyRSSAuthMutation(ctx, repo, row, input, &previous); err != nil {
 			return err
 		}
-		if fields["teamIds"] {
-			row.TeamIDs = teamIDs
-			return repo.ReplaceSubscriptionTeams(ctx, row.ID, teamIDs)
+		if assignmentsChanged {
+			for i := range assignments {
+				assignments[i].SubscriptionID = row.ID
+			}
+			row.Assignments = assignments
+			row.TeamIDs = subscriptionAssignmentTeamIDs(assignments)
+			return repo.ReplaceSubscriptionAssignments(ctx, row.ID, assignments)
 		}
 		return nil
 	}); err != nil {
@@ -1225,6 +1301,7 @@ func (u Usecase) DeleteSubscription(ctx context.Context, id uint) error {
 		refs := make([]string, 0, len(messages)*len(teamIDs))
 		for _, message := range messages {
 			refs = append(refs, messageExternalRefsForTeams(message, teamIDs)...)
+			refs = append(refs, messageExternalRefsForResults(message, message.FilterResults)...)
 		}
 		if err := repo.DeleteSubscriptionGraph(ctx, id, refs); err != nil {
 			return err
@@ -1770,6 +1847,9 @@ func (u Usecase) CreateMessage(ctx context.Context, input MessageInput) (*Messag
 		if err := repo.CreateMessage(ctx, &row); err != nil {
 			return err
 		}
+		if err := u.ensureManualFilterResults(ctx, repo, &row); err != nil {
+			return err
+		}
 		meetings, err := u.ensureMeetingsForMessage(ctx, repo, &row, "message_subscription_manual")
 		if err != nil {
 			return err
@@ -1797,6 +1877,9 @@ func (u Usecase) UpdateMessage(ctx context.Context, id uint, input MessageInput)
 	var created []*domainmeeting.Meeting
 	if err := u.withTx(ctx, func(repo Repository) error {
 		if err := repo.SaveMessage(ctx, row); err != nil {
+			return err
+		}
+		if err := u.ensureManualFilterResults(ctx, repo, row); err != nil {
 			return err
 		}
 		meetings, err := u.ensureMeetingsForMessage(ctx, repo, row, "message_subscription_manual")
@@ -2135,7 +2218,9 @@ func (u Usecase) DeleteMessage(ctx context.Context, id uint) (bool, error) {
 		if err != nil {
 			return err
 		}
-		return repo.DeleteMessage(ctx, row, messageExternalRefsForTeams(*row, teamIDs))
+		refs := messageExternalRefsForTeams(*row, teamIDs)
+		refs = append(refs, messageExternalRefsForResults(*row, row.FilterResults)...)
+		return repo.DeleteMessage(ctx, row, refs)
 	}); err != nil {
 		return true, err
 	}
@@ -2181,6 +2266,12 @@ func (u Usecase) QueueRefilterMessages(ctx context.Context, input RefilterInput)
 		rows[i].FilterStatus = domainmsg.FilterStatusUnfiltered
 		rows[i].FilterDecision = nil
 		rows[i].FilteredAt = nil
+		rows[i].FilterReason = nil
+		rows[i].FilterID = nil
+		rows[i].RelatedSymbols = u.service.JSON(nil)
+		if err := u.repo.DeleteMessageFilterResults(ctx, rows[i].ID); err != nil {
+			return RefilterResult{}, err
+		}
 		if err := u.repo.SaveMessage(ctx, &rows[i]); err != nil {
 			return RefilterResult{}, err
 		}
@@ -2221,8 +2312,14 @@ func (u Usecase) QueueFilterMessage(ctx context.Context, id uint) (*MessageMutat
 	row.FilterStatus = domainmsg.FilterStatusUnfiltered
 	row.FilterDecision = nil
 	row.FilteredAt = nil
+	row.FilterReason = nil
+	row.FilterID = nil
+	row.RelatedSymbols = u.service.JSON(nil)
 	now := time.Now()
 	row.UpdatedAt = now
+	if err := u.repo.DeleteMessageFilterResults(ctx, row.ID); err != nil {
+		return nil, true, err
+	}
 	if err := u.repo.SaveMessage(ctx, row); err != nil {
 		return nil, true, err
 	}
@@ -2416,6 +2513,42 @@ func filterStatusFromManualInput(row domainmsg.IngestedMessage) string {
 		return domainmsg.FilterStatusFiltered
 	}
 	return domainmsg.FilterStatusUnfiltered
+}
+
+func (u Usecase) ensureManualFilterResults(ctx context.Context, repo Repository, row *domainmsg.IngestedMessage) error {
+	assignments, err := u.messageFilterAssignments(ctx, repo, row.SubscriptionID)
+	if err != nil {
+		return err
+	}
+	if err := repo.DeleteMessageFilterResults(ctx, row.ID); err != nil {
+		return err
+	}
+	now := time.Now()
+	results := make([]domainmsg.IngestedMessageFilterResult, 0, len(assignments))
+	for _, assignment := range assignments {
+		result := domainmsg.IngestedMessageFilterResult{
+			MessageID:      row.ID,
+			SubscriptionID: row.SubscriptionID,
+			AssignmentID:   cleanUintPtr(assignment.ID),
+			FilterID:       assignment.FilterID,
+			ResearchTeamID: assignment.ResearchTeamID,
+			FilterDecision: row.FilterDecision,
+			FilterReason:   row.FilterReason,
+			FilterStatus:   filterStatusFromManualInput(*row),
+			RelatedSymbols: row.RelatedSymbols,
+			FilteredAt:     &now,
+		}
+		if result.RelatedSymbols == nil {
+			result.RelatedSymbols = u.service.JSON(nil)
+		}
+		if err := repo.SaveMessageFilterResult(ctx, &result); err != nil {
+			return err
+		}
+		results = append(results, result)
+	}
+	row.FilterResults = results
+	u.applyMessageFilterSummary(row, results)
+	return repo.SaveMessage(ctx, row)
 }
 
 func (u Usecase) UpdateSubscriptionTitle(ctx context.Context, id uint, title string) error {
@@ -2622,6 +2755,7 @@ func (u Usecase) reconcileBackfillItems(ctx context.Context, subscription *domai
 			if (rawBool(message.Raw, "backfill_managed") || wasOldBackfill) && !isDesired {
 				ids = append(ids, message.ID)
 				refs = append(refs, messageExternalRefsForTeams(message, teamIDs)...)
+				refs = append(refs, messageExternalRefsForResults(message, message.FilterResults)...)
 			}
 		}
 		if len(ids) == 0 {
@@ -2673,57 +2807,236 @@ func (u Usecase) ingestFetchedMessage(ctx context.Context, repo Repository, subs
 }
 
 func (u Usecase) applyFilter(ctx context.Context, repo Repository, row *domainmsg.IngestedMessage) error {
-	filter, provider, cfgErr := u.filterRuntimeConfig(ctx, repo, row.SubscriptionID)
-	var result FilterResult
-	var err error
-	if cfgErr != nil {
-		err = cfgErr
-	} else {
-		result, err = u.service.ApplyFilter(ctx, *row, u.security, filter, provider, u.ProxyConfig(ctx))
+	assignments, err := u.messageFilterAssignments(ctx, repo, row.SubscriptionID)
+	if err != nil {
+		return err
+	}
+	if len(assignments) == 0 {
+		return errors.New("message subscription has no enabled filter-research team assignments")
 	}
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		return ctxErr
 	}
-	if err != nil {
-		row.FilterDecision = nil
-		reason := fmt.Sprintf("message filter call failed: %v", err)
-		row.FilterReason = &reason
-		row.RelatedSymbols = u.service.JSON(nil)
-		row.FilterStatus = domainmsg.FilterStatusFailed
-	} else {
-		row.FilterDecision = result.Decision
-		row.FilterReason = result.Reason
-		row.RelatedSymbols = result.RelatedSymbols
-		row.FilterStatus = domainmsg.FilterStatusFiltered
-		if err := u.applySourceTrustPolicy(ctx, repo, row); err != nil {
+	if err := repo.DeleteMessageFilterResults(ctx, row.ID); err != nil {
+		return err
+	}
+	var firstFilterErr error
+	results := make([]domainmsg.IngestedMessageFilterResult, 0, len(assignments))
+	for _, assignment := range assignments {
+		result, err := u.applyFilterAssignment(ctx, repo, row, assignment)
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return err
 		}
+		if err != nil && firstFilterErr == nil {
+			firstFilterErr = err
+		}
+		results = append(results, result)
 	}
-	filterID := result.FilterID
-	if filterID == 0 && filter.ID != 0 {
-		filterID = filter.ID
-	}
-	if filterID != 0 {
-		row.FilterID = &filterID
-	}
+	row.FilterResults = results
+	u.applyMessageFilterSummary(row, results)
 	now := time.Now()
-	row.FilteredAt = &now
 	row.UpdatedAt = now
-	if saveErr := repo.SaveMessage(ctx, row); saveErr != nil {
-		return saveErr
-	}
-	if err != nil {
-		return filterCallFailedError{err: err}
+	if err := repo.SaveMessage(ctx, row); err != nil {
+		return err
 	}
 	if u.predictionMatcher != nil && row.FilterDecision != nil && *row.FilterDecision != domainkernel.NewsIgnore {
 		messageID := row.ID
 		_, _ = u.predictionMatcher.MatchNews(ctx, &messageID, row.Text)
 	}
+	if firstFilterErr != nil {
+		return filterCallFailedError{err: firstFilterErr}
+	}
 	return nil
 }
 
+func (u Usecase) messageFilterAssignments(ctx context.Context, repo Repository, subscriptionID uint) ([]domainmsg.MessageSubscriptionAssignment, error) {
+	subscription, found, err := repo.FindSubscriptionForMessage(ctx, subscriptionID)
+	if err != nil {
+		return nil, err
+	}
+	if !found || subscription == nil {
+		return nil, errors.New("message subscription not found")
+	}
+	assignments := subscription.Assignments
+	if len(assignments) == 0 {
+		assignments, err = repo.ListSubscriptionAssignments(ctx, subscriptionID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return uniqueDomainSubscriptionAssignments(assignments), nil
+}
+
+func (u Usecase) applyFilterAssignment(ctx context.Context, repo Repository, row *domainmsg.IngestedMessage, assignment domainmsg.MessageSubscriptionAssignment) (domainmsg.IngestedMessageFilterResult, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return domainmsg.IngestedMessageFilterResult{}, ctxErr
+	}
+	filter, provider, cfgErr := u.filterRuntimeConfig(ctx, repo, assignment.FilterID)
+	filterID := assignment.FilterID
+	if filter.ID != 0 {
+		filterID = filter.ID
+	}
+	result := domainmsg.IngestedMessageFilterResult{
+		MessageID:      row.ID,
+		SubscriptionID: row.SubscriptionID,
+		AssignmentID:   cleanUintPtr(assignment.ID),
+		FilterID:       filterID,
+		ResearchTeamID: assignment.ResearchTeamID,
+		FilterStatus:   domainmsg.FilterStatusFiltering,
+		RelatedSymbols: u.service.JSON(nil),
+	}
+	var filterResult FilterResult
+	var err error
+	if cfgErr != nil {
+		err = cfgErr
+	} else {
+		filterResult, err = u.service.ApplyFilter(ctx, *row, u.security, filter, provider, u.ProxyConfig(ctx))
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return result, ctxErr
+	}
+	now := time.Now()
+	result.FilteredAt = &now
+	result.UpdatedAt = now
+	if err != nil {
+		result.FilterDecision = nil
+		reason := fmt.Sprintf("message filter call failed: %v", err)
+		result.FilterReason = &reason
+		result.FilterStatus = domainmsg.FilterStatusFailed
+	} else {
+		result.FilterDecision = filterResult.Decision
+		result.FilterReason = filterResult.Reason
+		result.RelatedSymbols = filterResult.RelatedSymbols
+		result.FilterStatus = domainmsg.FilterStatusFiltered
+		if result.RelatedSymbols == nil {
+			result.RelatedSymbols = u.service.JSON(nil)
+		}
+		if filterResult.FilterID != 0 {
+			result.FilterID = filterResult.FilterID
+		}
+		if err := u.applySourceTrustPolicyToResult(ctx, repo, row, &result); err != nil {
+			return result, err
+		}
+	}
+	if err := repo.SaveMessageFilterResult(ctx, &result); err != nil {
+		return result, err
+	}
+	return result, err
+}
+
+func (u Usecase) applyMessageFilterSummary(row *domainmsg.IngestedMessage, results []domainmsg.IngestedMessageFilterResult) {
+	if row == nil {
+		return
+	}
+	if len(results) == 0 {
+		row.FilterDecision = nil
+		row.FilterReason = nil
+		row.FilterStatus = domainmsg.FilterStatusUnfiltered
+		row.RelatedSymbols = u.service.JSON(nil)
+		row.FilteredAt = nil
+		row.FilterID = nil
+		return
+	}
+	var decision *domainkernel.NewsDecision
+	reasons := []string{}
+	symbols := []string{}
+	var latestFilteredAt *time.Time
+	var firstFilterID *uint
+	successCount := 0
+	filteringCount := 0
+	failedCount := 0
+	for _, result := range results {
+		if firstFilterID == nil && result.FilterID != 0 {
+			id := result.FilterID
+			firstFilterID = &id
+		}
+		switch result.FilterStatus {
+		case domainmsg.FilterStatusFiltering:
+			filteringCount++
+		case domainmsg.FilterStatusFailed:
+			failedCount++
+		case domainmsg.FilterStatusFiltered:
+			successCount++
+		}
+		if result.FilteredAt != nil && (latestFilteredAt == nil || result.FilteredAt.After(*latestFilteredAt)) {
+			value := *result.FilteredAt
+			latestFilteredAt = &value
+		}
+		if result.FilterReason != nil && strings.TrimSpace(*result.FilterReason) != "" {
+			reasons = append(reasons, fmt.Sprintf("team#%d/filter#%d: %s", result.ResearchTeamID, result.FilterID, strings.TrimSpace(*result.FilterReason)))
+		}
+		symbols = append(symbols, relatedSymbolsFromJSON(result.RelatedSymbols)...)
+		if result.FilterDecision == nil {
+			continue
+		}
+		value := *result.FilterDecision
+		if decision == nil || newsDecisionRank(value) > newsDecisionRank(*decision) {
+			decision = &value
+		}
+	}
+	row.FilterDecision = decision
+	row.FilterReason = cleanStringPtrFromValue(strings.Join(reasons, "\n"))
+	row.RelatedSymbols = u.service.JSON(uniqueStrings(symbols))
+	row.FilteredAt = latestFilteredAt
+	row.FilterID = firstFilterID
+	switch {
+	case filteringCount > 0:
+		row.FilterStatus = domainmsg.FilterStatusFiltering
+	case successCount > 0:
+		row.FilterStatus = domainmsg.FilterStatusFiltered
+	case failedCount > 0:
+		row.FilterStatus = domainmsg.FilterStatusFailed
+	default:
+		row.FilterStatus = domainmsg.FilterStatusUnfiltered
+	}
+}
+
+func newsDecisionRank(value domainkernel.NewsDecision) int {
+	switch value {
+	case domainkernel.NewsMeeting:
+		return 3
+	case domainkernel.NewsObserve:
+		return 2
+	case domainkernel.NewsIgnore:
+		return 1
+	default:
+		return 0
+	}
+}
+
 func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, row *domainmsg.IngestedMessage, triggerSource string) ([]*domainmeeting.Meeting, error) {
-	if row.FilterDecision == nil || *row.FilterDecision != domainkernel.NewsMeeting {
+	results := row.FilterResults
+	if len(results) == 0 {
+		var err error
+		results, err = repo.ListMessageFilterResults(ctx, row.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(results) == 0 && row.FilterDecision != nil && *row.FilterDecision == domainkernel.NewsMeeting {
+		subscription, found, err := repo.FindSubscriptionForMessage(ctx, row.SubscriptionID)
+		if err != nil {
+			return nil, err
+		}
+		if !found || subscription == nil {
+			return nil, errors.New("message subscription not found")
+		}
+		for _, assignment := range subscription.Assignments {
+			results = append(results, domainmsg.IngestedMessageFilterResult{
+				MessageID: row.ID, SubscriptionID: row.SubscriptionID, AssignmentID: cleanUintPtr(assignment.ID),
+				FilterID: assignment.FilterID, ResearchTeamID: assignment.ResearchTeamID,
+				FilterDecision: row.FilterDecision, FilterReason: row.FilterReason, FilterStatus: row.FilterStatus,
+				RelatedSymbols: row.RelatedSymbols, FilteredAt: row.FilteredAt,
+			})
+		}
+	}
+	meetingResults := make([]domainmsg.IngestedMessageFilterResult, 0, len(results))
+	for _, result := range results {
+		if result.FilterDecision != nil && *result.FilterDecision == domainkernel.NewsMeeting {
+			meetingResults = append(meetingResults, result)
+		}
+	}
+	if len(meetingResults) == 0 {
 		return nil, nil
 	}
 	subscription, found, err := repo.FindSubscriptionForMessage(ctx, row.SubscriptionID)
@@ -2733,33 +3046,29 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 	if !found || subscription == nil {
 		return nil, errors.New("message subscription not found")
 	}
-	symbols := relatedSymbolsFromJSON(row.RelatedSymbols)
-	if len(symbols) == 0 {
-		symbols = u.service.ExtractRelatedSymbols(row.Text)
-	}
-	symbolPart := "message-event"
-	if len(symbols) > 0 {
-		limit := len(symbols)
-		if limit > 3 {
-			limit = 3
-		}
-		symbolPart = strings.Join(symbols[:limit], ", ")
-	}
 	predictionMatches := u.predictionMatchesForMessage(ctx, row.ID)
 	predictionMarketIDs := linkedPredictionMarketIDs(predictionMatches)
-	if len(predictionMarketIDs) > 0 && symbolPart == "message-event" {
-		symbolPart = fmt.Sprintf("prediction markets %s", joinUintIDs(predictionMarketIDs, 3))
-	}
-	teamIDs := uniqueUintIDs(subscription.TeamIDs)
-	if len(teamIDs) == 0 {
-		var err error
-		teamIDs, err = repo.ListSubscriptionTeamIDs(ctx, subscription.ID)
-		if err != nil {
-			return nil, err
-		}
-	}
 	created := []*domainmeeting.Meeting{}
-	for _, teamID := range teamIDs {
+	for _, result := range meetingResults {
+		teamID := result.ResearchTeamID
+		symbols := relatedSymbolsFromJSON(result.RelatedSymbols)
+		if len(symbols) == 0 {
+			symbols = relatedSymbolsFromJSON(row.RelatedSymbols)
+		}
+		if len(symbols) == 0 {
+			symbols = u.service.ExtractRelatedSymbols(row.Text)
+		}
+		symbolPart := "message-event"
+		if len(symbols) > 0 {
+			limit := len(symbols)
+			if limit > 3 {
+				limit = 3
+			}
+			symbolPart = strings.Join(symbols[:limit], ", ")
+		}
+		if len(predictionMarketIDs) > 0 && symbolPart == "message-event" {
+			symbolPart = fmt.Sprintf("prediction markets %s", joinUintIDs(predictionMarketIDs, 3))
+		}
 		ready, reason, err := repo.ResearchTeamReady(ctx, teamID)
 		if err != nil {
 			return nil, err
@@ -2767,7 +3076,7 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 		if !ready {
 			return nil, errors.New(reason)
 		}
-		externalRef := messageExternalRefForTeam(*row, teamID)
+		externalRef := messageExternalRefForResult(*row, result)
 		if existing, ok, err := repo.FindMeetingReferenceByExternalRef(ctx, "ingested_message", externalRef); err != nil {
 			return nil, err
 		} else if ok && existing != nil {
@@ -2783,14 +3092,14 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 		if err := repo.CreateMeeting(ctx, &meeting); err != nil {
 			return nil, err
 		}
-		content := fmt.Sprintf("Subscription %s triggered a meeting.\nFilter reason: %s\nRelated symbols: %s\nRelated prediction markets: %s\n\n%s", subscription.Title, stringValue(row.FilterReason), strings.Join(symbols, ", "), joinUintIDs(predictionMarketIDs, 10), row.Text)
+		content := fmt.Sprintf("Subscription %s triggered a meeting.\nFilter #%d / Team #%d\nFilter reason: %s\nRelated symbols: %s\nRelated prediction markets: %s\n\n%s", subscription.Title, result.FilterID, teamID, stringValue(result.FilterReason), strings.Join(symbols, ", "), joinUintIDs(predictionMarketIDs, 10), row.Text)
 		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: "Meeting submitted for execution.", Payload: u.service.JSON(map[string]any{"status": "queued"})}); err != nil {
 			return nil, err
 		}
-		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: content, Payload: u.service.JSON(map[string]any{"status": "message_subscription_triggered", "ingested_message_id": row.ID, "subscription_id": subscription.ID, "research_team_id": teamID, "decision": *row.FilterDecision, "related_symbols": symbols, "prediction_market_ids": predictionMarketIDs, "prediction_market_matches": predictionMatchPayload(predictionMatches)})}); err != nil {
+		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: content, Payload: u.service.JSON(map[string]any{"status": "message_subscription_triggered", "ingested_message_id": row.ID, "message_filter_result_id": result.ID, "subscription_id": subscription.ID, "filter_id": result.FilterID, "research_team_id": teamID, "decision": *result.FilterDecision, "related_symbols": symbols, "prediction_market_ids": predictionMarketIDs, "prediction_market_matches": predictionMatchPayload(predictionMatches)})}); err != nil {
 			return nil, err
 		}
-		note := fmt.Sprintf("%s / team#%d / message#%s", subscription.Title, teamID, row.SourceMessageID)
+		note := fmt.Sprintf("%s / filter#%d / team#%d / message#%s", subscription.Title, result.FilterID, teamID, row.SourceMessageID)
 		topic := fmt.Sprintf("Ingested message %s / #%s", subscription.Title, row.SourceMessageID)
 		summary := row.Text
 		if len(summary) > 2000 {
@@ -2906,7 +3215,28 @@ func (u Usecase) subscriptionDiagnostic(ctx context.Context, row domainmsg.Messa
 }
 
 func (u Usecase) subscriptionFilterCheck(ctx context.Context, row domainmsg.MessageSubscription) SubscriptionDiagnosticCheck {
-	filterID := row.FilterID
+	filterIDs := make([]uint, 0, len(row.Assignments))
+	for _, assignment := range uniqueDomainSubscriptionAssignments(row.Assignments) {
+		filterIDs = append(filterIDs, assignment.FilterID)
+	}
+	filterIDs = uniqueUintIDs(filterIDs)
+	if len(filterIDs) == 0 {
+		return SubscriptionDiagnosticCheck{Key: "filter", Status: "blocked", Title: "Message filter", Detail: "No message subscription filter is bound.", Action: "Bind an enabled filter.", Route: "/message-subscriptions"}
+	}
+	for _, filterID := range filterIDs {
+		check := u.subscriptionFilterIDCheck(ctx, filterID)
+		if check.Status == "blocked" || check.Status == "warning" {
+			check.Detail = fmt.Sprintf("filter #%d: %s", filterID, check.Detail)
+			return check
+		}
+	}
+	if len(filterIDs) == 1 {
+		return SubscriptionDiagnosticCheck{Key: "filter", Status: "ok", Title: "Message filter", Detail: "Filter and AI provider are ready."}
+	}
+	return SubscriptionDiagnosticCheck{Key: "filter", Status: "ok", Title: "Message filter", Detail: fmt.Sprintf("%d assignment filters and AI providers are ready.", len(filterIDs))}
+}
+
+func (u Usecase) subscriptionFilterIDCheck(ctx context.Context, filterID uint) SubscriptionDiagnosticCheck {
 	if filterID == 0 {
 		return SubscriptionDiagnosticCheck{Key: "filter", Status: "blocked", Title: "Message filter", Detail: "No message subscription filter is bound.", Action: "Bind an enabled filter.", Route: "/message-subscriptions"}
 	}
@@ -3229,6 +3559,34 @@ func (u Usecase) applySourceTrustPolicy(ctx context.Context, repo Repository, ro
 		row.FilterReason = &merged
 	} else {
 		row.FilterReason = &note
+	}
+	return nil
+}
+
+func (u Usecase) applySourceTrustPolicyToResult(ctx context.Context, repo Repository, row *domainmsg.IngestedMessage, result *domainmsg.IngestedMessageFilterResult) error {
+	if row == nil || result == nil || result.FilterDecision == nil {
+		return nil
+	}
+	policy := u.sourceTrustPolicy(ctx, repo)
+	if !policy.Enabled {
+		return nil
+	}
+	item, ok, err := u.sourceTrustItemForMessage(ctx, repo, row)
+	if err != nil || !ok {
+		return err
+	}
+	nextDecision, action, reason := sourceTrustDownrankDecision(item, policy, *result.FilterDecision)
+	if nextDecision == nil {
+		return nil
+	}
+	original := *result.FilterDecision
+	result.FilterDecision = nextDecision
+	note := fmt.Sprintf("Source trust auto-downrank applied: %s; action=%s, originalDecision=%s, finalDecision=%s.", reason, action, original, *result.FilterDecision)
+	if strings.TrimSpace(stringValue(result.FilterReason)) != "" {
+		merged := strings.TrimSpace(*result.FilterReason) + " " + note
+		result.FilterReason = &merged
+	} else {
+		result.FilterReason = &note
 	}
 	return nil
 }
@@ -4373,15 +4731,11 @@ func (u Usecase) ProxyConfig(ctx context.Context) ProxyConfig {
 	return cfg
 }
 
-func (u Usecase) filterRuntimeConfig(ctx context.Context, repo Repository, subscriptionID uint) (domainmsg.MessageSubscriptionFilter, domainai.Provider, error) {
-	subscription, found, err := repo.FindSubscriptionForMessage(ctx, subscriptionID)
-	if err != nil {
-		return domainmsg.MessageSubscriptionFilter{}, domainai.Provider{}, err
+func (u Usecase) filterRuntimeConfig(ctx context.Context, repo Repository, filterID uint) (domainmsg.MessageSubscriptionFilter, domainai.Provider, error) {
+	if filterID == 0 {
+		return domainmsg.MessageSubscriptionFilter{}, domainai.Provider{}, errors.New("message subscription filter is required")
 	}
-	if !found || subscription == nil {
-		return domainmsg.MessageSubscriptionFilter{}, domainai.Provider{}, errors.New("message subscription not found")
-	}
-	filter, found, err := repo.FindSubscriptionFilter(ctx, subscription.FilterID)
+	filter, found, err := repo.FindSubscriptionFilter(ctx, filterID)
 	if err != nil {
 		return domainmsg.MessageSubscriptionFilter{}, domainai.Provider{}, err
 	}
@@ -4585,6 +4939,10 @@ func messageExternalRefForTeam(message domainmsg.IngestedMessage, teamID uint) s
 	return fmt.Sprintf("ingested_message:%d:team:%d", message.ID, teamID)
 }
 
+func messageExternalRefForResult(message domainmsg.IngestedMessage, result domainmsg.IngestedMessageFilterResult) string {
+	return fmt.Sprintf("ingested_message:%d:filter:%d:team:%d", message.ID, result.FilterID, result.ResearchTeamID)
+}
+
 func messageExternalRefsForTeams(message domainmsg.IngestedMessage, teamIDs []uint) []string {
 	teamIDs = uniqueUintIDs(teamIDs)
 	refs := make([]string, 0, len(teamIDs))
@@ -4592,6 +4950,18 @@ func messageExternalRefsForTeams(message domainmsg.IngestedMessage, teamIDs []ui
 		refs = append(refs, messageExternalRefForTeam(message, teamID))
 	}
 	return refs
+}
+
+func messageExternalRefsForResults(message domainmsg.IngestedMessage, results []domainmsg.IngestedMessageFilterResult) []string {
+	refs := make([]string, 0, len(results)*2)
+	for _, result := range results {
+		if result.ResearchTeamID == 0 {
+			continue
+		}
+		refs = append(refs, messageExternalRefForResult(message, result))
+		refs = append(refs, messageExternalRefForTeam(message, result.ResearchTeamID))
+	}
+	return uniqueStrings(refs)
 }
 
 func sortFetchedMessagesAsc(messages []FetchedMessage) []FetchedMessage {
@@ -4701,6 +5071,21 @@ func cleanStringPtr(value *string) *string {
 	return &text
 }
 
+func cleanStringPtrFromValue(value string) *string {
+	text := strings.TrimSpace(value)
+	if text == "" {
+		return nil
+	}
+	return &text
+}
+
+func cleanUintPtr(value uint) *uint {
+	if value == 0 {
+		return nil
+	}
+	return &value
+}
+
 func errOrNil(found bool, err error) error {
 	if err != nil {
 		return err
@@ -4729,6 +5114,41 @@ func uniqueUintIDs(values []uint) []uint {
 		out = append(out, value)
 	}
 	return out
+}
+
+func uniqueDomainSubscriptionAssignments(values []domainmsg.MessageSubscriptionAssignment) []domainmsg.MessageSubscriptionAssignment {
+	seen := map[string]bool{}
+	out := make([]domainmsg.MessageSubscriptionAssignment, 0, len(values))
+	for _, value := range values {
+		if !value.Enabled || value.FilterID == 0 || value.ResearchTeamID == 0 {
+			continue
+		}
+		key := strconv.FormatUint(uint64(value.FilterID), 10) + ":" + strconv.FormatUint(uint64(value.ResearchTeamID), 10)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		value.Enabled = true
+		out = append(out, value)
+	}
+	return out
+}
+
+func cloneSubscriptionAssignments(values []domainmsg.MessageSubscriptionAssignment) []domainmsg.MessageSubscriptionAssignment {
+	out := make([]domainmsg.MessageSubscriptionAssignment, len(values))
+	copy(out, values)
+	return out
+}
+
+func subscriptionAssignmentTeamIDs(values []domainmsg.MessageSubscriptionAssignment) []uint {
+	ids := make([]uint, 0, len(values))
+	for _, value := range values {
+		if !value.Enabled {
+			continue
+		}
+		ids = append(ids, value.ResearchTeamID)
+	}
+	return uniqueUintIDs(ids)
 }
 
 func firstNonEmptyUintSlice(values ...[]uint) []uint {
