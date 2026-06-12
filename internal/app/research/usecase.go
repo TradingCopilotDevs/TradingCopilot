@@ -12,6 +12,13 @@ import (
 const (
 	DefaultTeamName        = "默认投研团队"
 	DefaultTeamDescription = "系统初始化创建的默认投研会议团队。"
+
+	AssetClassAShare           = "a_share"
+	AssetClassPredictionMarket = "prediction_market"
+	AssetClassMixed            = "mixed"
+
+	DefaultPredictionTeamName        = "默认预测市场投研团队"
+	DefaultPredictionTeamDescription = "系统初始化创建的 Polymarket 预测市场投研会议团队。"
 )
 
 var (
@@ -60,6 +67,7 @@ type TeamInput struct {
 	Name                string
 	Description         string
 	PaperAccountID      uint
+	AssetClass          string
 	Active              bool
 	CopyRolesFromTeamID *uint
 }
@@ -101,6 +109,7 @@ func (u Usecase) EnsureDefaultTeam(ctx context.Context, paperAccountID uint) (*d
 			Name:           DefaultTeamName,
 			Description:    DefaultTeamDescription,
 			PaperAccountID: paperAccountID,
+			AssetClass:     AssetClassAShare,
 			Active:         true,
 		}
 		if err := repo.CreateTeam(ctx, &team); err != nil {
@@ -120,22 +129,73 @@ func (u Usecase) EnsureDefaultTeam(ctx context.Context, paperAccountID uint) (*d
 	return row, created, nil
 }
 
+func (u Usecase) EnsureDefaultPredictionTeam(ctx context.Context) (*domainresearch.Team, bool, error) {
+	var row *domainresearch.Team
+	created := false
+	if err := u.withTx(ctx, func(repo Repository) error {
+		teams, err := repo.ListTeams(ctx)
+		if err != nil {
+			return err
+		}
+		for _, team := range teams {
+			if team.AssetClass == AssetClassPredictionMarket || team.Name == DefaultPredictionTeamName {
+				existing := team
+				row = &existing
+				return nil
+			}
+		}
+		team := domainresearch.Team{
+			Name:        DefaultPredictionTeamName,
+			Description: DefaultPredictionTeamDescription,
+			AssetClass:  AssetClassPredictionMarket,
+			Active:      true,
+		}
+		if err := repo.CreateTeam(ctx, &team); err != nil {
+			return err
+		}
+		for _, seed := range PredictionMarketDefaultRoles {
+			if err := createDefaultRole(ctx, repo, team.ID, seed); err != nil {
+				return err
+			}
+		}
+		row = &team
+		created = true
+		return nil
+	}); err != nil {
+		return nil, false, err
+	}
+	return row, created, nil
+}
+
 func (u Usecase) CreateTeam(ctx context.Context, input TeamInput) (*domainresearch.Team, error) {
 	row := domainresearch.Team{
 		Name:           strings.TrimSpace(input.Name),
 		Description:    strings.TrimSpace(input.Description),
 		PaperAccountID: input.PaperAccountID,
+		AssetClass:     normalizeAssetClass(input.AssetClass),
 		Active:         input.Active,
 	}
 	if row.Name == "" {
 		return nil, ErrTeamNameRequired
 	}
-	if row.PaperAccountID == 0 {
+	if requiresPaperAccount(row.AssetClass) && row.PaperAccountID == 0 {
 		return nil, ErrPaperAccountRequired
 	}
 	if err := u.withTx(ctx, func(repo Repository) error {
-		if err := validatePaperAccountAvailable(ctx, repo, row.PaperAccountID, 0); err != nil {
-			return err
+		if requiresPaperAccount(row.AssetClass) {
+			if err := validatePaperAccountAvailable(ctx, repo, row.PaperAccountID, 0); err != nil {
+				return err
+			}
+		} else if row.PaperAccountID != 0 {
+			if err := validatePaperAccountAvailable(ctx, repo, row.PaperAccountID, 0); err != nil {
+				return err
+			}
+		}
+		if !validAssetClass(row.AssetClass) {
+			return errors.New("asset class must be a_share, prediction_market, or mixed")
+		}
+		if row.AssetClass == AssetClassPredictionMarket {
+			row.PaperAccountID = 0
 		}
 		if err := repo.CreateTeam(ctx, &row); err != nil {
 			return err
@@ -177,10 +237,36 @@ func (u Usecase) UpdateTeam(ctx context.Context, id uint, input TeamInput, field
 			row.Description = strings.TrimSpace(input.Description)
 		}
 		if fields["paperAccountId"] {
-			if err := validatePaperAccountAvailable(ctx, repo, input.PaperAccountID, id); err != nil {
-				return err
+			if requiresPaperAccount(firstNonEmpty(input.AssetClass, row.AssetClass)) || input.PaperAccountID != 0 {
+				if err := validatePaperAccountAvailable(ctx, repo, input.PaperAccountID, id); err != nil {
+					return err
+				}
 			}
 			row.PaperAccountID = input.PaperAccountID
+		}
+		if fields["assetClass"] {
+			row.AssetClass = normalizeAssetClass(input.AssetClass)
+			if !validAssetClass(row.AssetClass) {
+				return errors.New("asset class must be a_share, prediction_market, or mixed")
+			}
+			if row.AssetClass == AssetClassPredictionMarket {
+				row.PaperAccountID = 0
+			}
+			if requiresPaperAccount(row.AssetClass) && row.PaperAccountID == 0 {
+				return ErrPaperAccountRequired
+			}
+			if row.PaperAccountID != 0 {
+				if err := validatePaperAccountAvailable(ctx, repo, row.PaperAccountID, id); err != nil {
+					return err
+				}
+			}
+		} else if requiresPaperAccount(row.AssetClass) && row.PaperAccountID == 0 {
+			return ErrPaperAccountRequired
+		}
+		if fields["paperAccountId"] && row.PaperAccountID != 0 {
+			if err := validatePaperAccountAvailable(ctx, repo, row.PaperAccountID, id); err != nil {
+				return err
+			}
 		}
 		if fields["active"] {
 			row.Active = input.Active
@@ -267,7 +353,8 @@ func (u Usecase) DeleteRole(ctx context.Context, teamID uint, key string) error 
 func (u Usecase) ApplyDefaultRoles(ctx context.Context, teamID uint) (int, error) {
 	updated := 0
 	if err := u.withTx(ctx, func(repo Repository) error {
-		if _, found, err := repo.FindTeam(ctx, teamID); err != nil || !found {
+		team, found, err := repo.FindTeam(ctx, teamID)
+		if err != nil || !found {
 			if err != nil {
 				return err
 			}
@@ -276,7 +363,11 @@ func (u Usecase) ApplyDefaultRoles(ctx context.Context, teamID uint) (int, error
 		if err := repo.DeleteRoles(ctx, teamID); err != nil {
 			return err
 		}
-		for _, seed := range appai.DefaultRoles {
+		seeds := appai.DefaultRoles
+		if team != nil && team.AssetClass == AssetClassPredictionMarket {
+			seeds = PredictionMarketDefaultRoles
+		}
+		for _, seed := range seeds {
 			if err := createDefaultRole(ctx, repo, teamID, seed); err != nil {
 				return err
 			}
@@ -287,6 +378,32 @@ func (u Usecase) ApplyDefaultRoles(ctx context.Context, teamID uint) (int, error
 		return 0, err
 	}
 	return updated, nil
+}
+
+func normalizeAssetClass(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" {
+		return AssetClassAShare
+	}
+	return value
+}
+
+func validAssetClass(value string) bool {
+	switch normalizeAssetClass(value) {
+	case AssetClassAShare, AssetClassPredictionMarket, AssetClassMixed:
+		return true
+	default:
+		return false
+	}
+}
+
+func requiresPaperAccount(assetClass string) bool {
+	switch normalizeAssetClass(assetClass) {
+	case AssetClassPredictionMarket:
+		return false
+	default:
+		return true
+	}
 }
 
 func createDefaultRole(ctx context.Context, repo Repository, teamID uint, seed appai.RoleSeed) error {

@@ -740,6 +740,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/prediction-markets/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPredictionMarketsSearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/prediction-markets/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPredictionMarketsSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/prediction-events/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPredictionEvent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/prediction-markets/{marketId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPredictionMarket"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/prediction-matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPredictionMatches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/prediction-matches/{matchId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPredictionMatchReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/prediction-watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPredictionWatchlist"];
+        put?: never;
+        post: operations["postPredictionWatchlist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/market/tasks": {
         parameters: {
             query?: never;
@@ -3164,7 +3276,9 @@ export interface components {
         ResearchTeamAttributes: {
             name: string;
             description?: string;
-            paperAccountId: number;
+            paperAccountId: number | null;
+            /** @enum {string} */
+            assetClass: "a_share" | "prediction_market" | "mixed";
             active: boolean;
             copyRolesFromTeamId?: number | null;
             /** Format: date-time */
@@ -3323,6 +3437,80 @@ export interface components {
                 amount: unknown;
                 raw?: unknown;
                 provider: string;
+            };
+        };
+        PredictionEventResource: {
+            /** @enum {string} */
+            type: "prediction-events";
+            id: string;
+            attributes: {
+                [key: string]: unknown;
+            };
+        };
+        PredictionMarketResource: {
+            /** @enum {string} */
+            type: "prediction-markets";
+            id: string;
+            attributes: components["schemas"]["PredictionMarketAttributes"];
+        };
+        PredictionMarketAttributes: {
+            eventId?: number | null;
+            /** @enum {string} */
+            provider?: "polymarket";
+            externalMarketId?: string;
+            conditionId?: string;
+            question?: string;
+            slug?: string;
+            outcomes?: string[];
+            outcomePrices?: unknown[];
+            clobTokenIds?: string[];
+            enableOrderBook?: boolean;
+            bestBid?: unknown;
+            bestAsk?: unknown;
+            lastTradePrice?: unknown;
+            spread?: unknown;
+            active?: boolean;
+            closed?: boolean;
+            restricted?: boolean;
+            volume?: unknown;
+            liquidity?: unknown;
+            openInterest?: unknown;
+            raw?: unknown;
+        };
+        PredictionMarketQuoteResource: {
+            /** @enum {string} */
+            type: "prediction-market-quotes";
+            id: string;
+            attributes: components["schemas"]["PredictionMarketQuoteAttributes"];
+        };
+        PredictionMarketQuoteAttributes: {
+            marketId?: number;
+            /** @enum {string} */
+            provider?: "polymarket";
+            bestBid?: unknown;
+            bestAsk?: unknown;
+            lastTradePrice?: unknown;
+            spread?: unknown;
+            liquidity?: unknown;
+            volume?: unknown;
+            raw?: unknown;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PredictionMarketMatchResource: {
+            /** @enum {string} */
+            type: "prediction-market-matches";
+            id: string;
+            attributes: {
+                [key: string]: unknown;
+            };
+        };
+        PredictionWatchlistResource: {
+            /** @enum {string} */
+            type: "prediction-watchlist-items";
+            id: string;
+            attributes: {
+                [key: string]: unknown;
             };
         };
         MarketSeriesPointCollectionDocument: {
@@ -3771,6 +3959,7 @@ export interface components {
                     researchTeamId: number;
                     topic: string;
                     triggerSource?: string;
+                    predictionMarketIds?: number[];
                     context?: {
                         [key: string]: unknown;
                     };
@@ -4233,6 +4422,10 @@ export interface components {
             /** @enum {string} */
             filterStatus?: "unfiltered" | "filtering" | "filtered" | "failed";
             relatedSymbols?: string[];
+            relatedPredictionMarkets?: {
+                [key: string]: unknown;
+            }[];
+            predictionMarketMatchStatus?: string | null;
             /** Format: date-time */
             filteredAt?: string | null;
             filterId?: number | null;
@@ -6071,12 +6264,14 @@ export interface components {
     };
     parameters: {
         SearchQuery: string;
+        Limit: number;
         Refresh: boolean;
         Range: string;
         Status: string;
         TriggerSource: string;
         Tag: string;
         MeetingIdQuery: string;
+        MessageIdQuery: string;
         ResearchTeamId: string;
         ChannelIdQuery: string;
         SubscriptionIdQuery: string;
@@ -6123,7 +6318,10 @@ export interface components {
         Key: string;
         MeetingId: string;
         MessageId: string;
+        EventId: string;
         FilterId: string;
+        MarketId: string;
+        MatchId: string;
         OrderId: string;
         PlanId: string;
         ProviderId: string;
@@ -6345,6 +6543,11 @@ export interface components {
         PaperBacktestRunRequest: {
             content: {
                 "application/vnd.api+json": components["schemas"]["PaperBacktestRunDocument"];
+            };
+        };
+        JsonApiDocumentRequest: {
+            content: {
+                "application/vnd.api+json": components["schemas"]["JsonApiDocument"];
             };
         };
     };
@@ -7163,6 +7366,131 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["MarketSymbolSyncDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getPredictionMarketsSearch: {
+        parameters: {
+            query?: {
+                q?: components["parameters"]["SearchQuery"];
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
+            502: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    postPredictionMarketsSync: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
+            502: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getPredictionEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getPredictionMarket: {
+        parameters: {
+            query?: {
+                refresh?: components["parameters"]["Refresh"];
+            };
+            header?: never;
+            path: {
+                marketId: components["parameters"]["MarketId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getPredictionMatches: {
+        parameters: {
+            query?: {
+                messageId?: components["parameters"]["MessageIdQuery"];
+                status?: components["parameters"]["Status"];
+                "page[limit]"?: components["parameters"]["PageLimit"];
+                "page[cursor]"?: components["parameters"]["PageCursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
+        };
+    };
+    postPredictionMatchReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                matchId: components["parameters"]["MatchId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["JsonApiDocumentRequest"];
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
+            404: components["responses"]["JsonApiErrorDocument"];
+        };
+    };
+    getPredictionWatchlist: {
+        parameters: {
+            query?: {
+                researchTeamId?: components["parameters"]["ResearchTeamId"];
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
+        };
+    };
+    postPredictionWatchlist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["JsonApiDocumentRequest"];
+        responses: {
+            200: components["responses"]["JsonApiDocument"];
             400: components["responses"]["JsonApiErrorDocument"];
         };
     };

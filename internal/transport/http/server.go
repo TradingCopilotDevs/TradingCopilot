@@ -14,6 +14,7 @@ import (
 	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
 	appops "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ops"
 	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
+	appprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/app/prediction"
 	appresearch "github.com/TradingCopilotDevs/TradingCopilot/internal/app/research"
 	appsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/app/settings"
 	appwake "github.com/TradingCopilotDevs/TradingCopilot/internal/app/wake"
@@ -25,19 +26,20 @@ import (
 )
 
 type Dependencies struct {
-	Settings  Settings
-	Auth      appauth.Usecase
-	AI        appai.Usecase
-	Dashboard appdashboard.Usecase
-	Logs      applogging.Usecase
-	Market    appmarket.Usecase
-	Meeting   appmeeting.Usecase
-	Messaging appmessaging.Usecase
-	Paper     apppaper.Usecase
-	Research  appresearch.Usecase
-	AppConfig appsettings.Usecase
-	Wake      appwake.Usecase
-	Backup    appops.BackupArchiveStore
+	Settings   Settings
+	Auth       appauth.Usecase
+	AI         appai.Usecase
+	Dashboard  appdashboard.Usecase
+	Logs       applogging.Usecase
+	Market     appmarket.Usecase
+	Meeting    appmeeting.Usecase
+	Messaging  appmessaging.Usecase
+	Paper      apppaper.Usecase
+	Prediction appprediction.Usecase
+	Research   appresearch.Usecase
+	AppConfig  appsettings.Usecase
+	Wake       appwake.Usecase
+	Backup     appops.BackupArchiveStore
 }
 
 type Settings struct {
@@ -69,36 +71,38 @@ type Settings struct {
 }
 
 type Server struct {
-	settings         Settings
-	auth             appauth.Usecase
-	aiUsecase        appai.Usecase
-	dashboardUsecase appdashboard.Usecase
-	loggingUsecase   applogging.Usecase
-	marketUsecase    appmarket.Usecase
-	meetingUsecase   appmeeting.Usecase
-	messagingUsecase appmessaging.Usecase
-	paperUsecase     apppaper.Usecase
-	researchUsecase  appresearch.Usecase
-	settingsUsecase  appsettings.Usecase
-	wakeUsecase      appwake.Usecase
-	backupStore      appops.BackupArchiveStore
+	settings          Settings
+	auth              appauth.Usecase
+	aiUsecase         appai.Usecase
+	dashboardUsecase  appdashboard.Usecase
+	loggingUsecase    applogging.Usecase
+	marketUsecase     appmarket.Usecase
+	meetingUsecase    appmeeting.Usecase
+	messagingUsecase  appmessaging.Usecase
+	paperUsecase      apppaper.Usecase
+	predictionUsecase appprediction.Usecase
+	researchUsecase   appresearch.Usecase
+	settingsUsecase   appsettings.Usecase
+	wakeUsecase       appwake.Usecase
+	backupStore       appops.BackupArchiveStore
 }
 
 func New(deps Dependencies) *Server {
 	return &Server{
-		settings:         deps.Settings,
-		auth:             deps.Auth,
-		aiUsecase:        deps.AI,
-		dashboardUsecase: deps.Dashboard,
-		loggingUsecase:   deps.Logs,
-		marketUsecase:    deps.Market,
-		meetingUsecase:   deps.Meeting,
-		messagingUsecase: deps.Messaging,
-		paperUsecase:     deps.Paper,
-		researchUsecase:  deps.Research,
-		settingsUsecase:  deps.AppConfig,
-		wakeUsecase:      deps.Wake,
-		backupStore:      deps.Backup,
+		settings:          deps.Settings,
+		auth:              deps.Auth,
+		aiUsecase:         deps.AI,
+		dashboardUsecase:  deps.Dashboard,
+		loggingUsecase:    deps.Logs,
+		marketUsecase:     deps.Market,
+		meetingUsecase:    deps.Meeting,
+		messagingUsecase:  deps.Messaging,
+		paperUsecase:      deps.Paper,
+		predictionUsecase: deps.Prediction,
+		researchUsecase:   deps.Research,
+		settingsUsecase:   deps.AppConfig,
+		wakeUsecase:       deps.Wake,
+		backupStore:       deps.Backup,
 	}
 }
 

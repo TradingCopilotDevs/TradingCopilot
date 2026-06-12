@@ -22,6 +22,8 @@ var (
 	jsonFence    = regexp.MustCompile("(?s)```(?:json)?\\s*(\\{.*?\\})\\s*```")
 )
 
+const newsFilterJSONSchema = `{"decision":"ignore|observe|meeting","reason":"...","related_symbols":["..."],"related_prediction_markets":["optional prediction market query/slug/question"],"match_confidence":0.0,"match_reason":"optional prediction-market match rationale"}`
+
 type FilterResult struct {
 	Decision       domainkernel.NewsDecision
 	Reason         string
@@ -80,10 +82,11 @@ func FilterMessageWithRole(ctx context.Context, message domaintelegram.Message, 
 		{
 			"role": "system",
 			"content": fmt.Sprintf(
-				"You are %s.\nResponsibility: %s\nInstruction: %s\n\nReturn JSON only: {\"decision\":\"ignore|observe|meeting\",\"reason\":\"...\",\"related_symbols\":[\"...\"]}\nUse semantic judgment only. Do not use keyword heuristics.",
+				"You are %s.\nResponsibility: %s\nInstruction: %s\n\nReturn JSON only using this base schema, preserving any stricter schema requested in the instruction: %s\nUse semantic judgment only. Do not use keyword heuristics.",
 				role.Name,
 				role.Responsibility,
 				role.PromptTemplate,
+				newsFilterJSONSchema,
 			),
 		},
 		{
@@ -114,7 +117,7 @@ func FilterMessageWithRole(ctx context.Context, message domaintelegram.Message, 
 			}
 			messages = append(messages, map[string]string{
 				"role":    "user",
-				"content": "Your previous response was not valid JSON for the news filter. Return JSON only: {\"decision\":\"ignore|observe|meeting\",\"reason\":\"...\",\"related_symbols\":[\"...\"]}\nPrevious response:\n" + truncateForPrompt(preview, 2000),
+				"content": "Your previous response was not valid JSON for the news filter. Return JSON only using this base schema, preserving prediction-market fields when the instruction asks for them: " + newsFilterJSONSchema + "\nPrevious response:\n" + truncateForPrompt(preview, 2000),
 			})
 		}
 		content, err := aiClient.ChatWithContext(ctx, messages, model)

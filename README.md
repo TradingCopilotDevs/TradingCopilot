@@ -191,6 +191,7 @@ internal/transport/  HTTP API 与前端静态资源服务
 
 - `doc/api-contract.md`：HTTP API 与 JSON:API 契约说明
 - `doc/database-contract.md`：数据库表与持久化约束
+- `doc/prediction-market-prd.md`：预测市场（Polymarket v1）需求与验收说明
 - `doc/integration-harness.md`：集成测试环境说明
 - `doc/upgrade-migration.md`：自托管升级、迁移、回滚和验收说明
 - `doc/test-matrix.md`：测试矩阵

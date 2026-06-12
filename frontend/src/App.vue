@@ -110,7 +110,8 @@ const menuSections = [
       { path: '/paper', label: '模拟盘', icon: Wallet },
       { path: '/wake', label: '唤醒计划', icon: Timer },
       { path: '/research-team', label: '投研团队', icon: OfficeBuilding },
-      { path: '/market', label: '行情与自选', icon: TrendCharts }
+      { path: '/market', label: '行情与自选', icon: TrendCharts },
+      { path: '/prediction-markets', label: '预测市场', icon: TrendCharts }
     ]
   },
   {

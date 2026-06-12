@@ -29,13 +29,54 @@ func (s *Server) providerHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	diagnostics := mapValue(dashboard, "dependencyDiagnostics")
+	predictionHealth := s.predictionProviderHealth(r.Context())
 	jsonapi.WriteData(w, http.StatusOK, jsonapi.NewResource("provider-health-reports", "current", map[string]any{
-		"generatedAt": time.Now(),
-		"ai":          mapValue(diagnostics, "ai"),
-		"meeting":     mapValue(diagnostics, "meeting"),
-		"market":      mapValue(diagnostics, "market"),
-		"messaging":   mapValue(diagnostics, "messaging"),
+		"generatedAt":      time.Now(),
+		"ai":               mapValue(diagnostics, "ai"),
+		"meeting":          mapValue(diagnostics, "meeting"),
+		"market":           mapValue(diagnostics, "market"),
+		"messaging":        mapValue(diagnostics, "messaging"),
+		"predictionMarket": predictionHealth,
 	}))
+}
+
+func (s *Server) predictionProviderHealth(ctx context.Context) map[string]any {
+	health := map[string]any{
+		"provider":             "polymarket",
+		"gammaBaseUrl":         "https://gamma-api.polymarket.com",
+		"clobBaseUrl":          "https://clob.polymarket.com",
+		"marketWebSocketUrl":   "wss://ws-subscriptions-clob.polymarket.com/ws/market",
+		"proxyModule":          "market",
+		"realtimeMode":         "meeting_websocket_snapshot_with_rest_fallback",
+		"webSocketRunnerState": "enabled_on_linked_prediction_meetings",
+	}
+	if !s.predictionUsecase.Configured() {
+		health["status"] = "skipped"
+		health["lastError"] = "prediction usecase is not configured"
+		return health
+	}
+	probe := s.predictionUsecase.ProviderHealth(ctx)
+	for key, value := range probe {
+		health[key] = value
+	}
+	result, err := s.predictionUsecase.Search(ctx, "", 1)
+	if err != nil {
+		health["status"] = "warning"
+		health["lastError"] = err.Error()
+		return health
+	}
+	health["status"] = "ok"
+	for _, key := range []string{"gammaConnectivity", "clobConnectivity", "wsConnectivity"} {
+		if strings.TrimSpace(fmt.Sprint(probe[key])) == "error" {
+			health["status"] = "warning"
+			break
+		}
+	}
+	health["storedMarketSampleCount"] = len(result.Rows)
+	if len(result.Rows) > 0 {
+		health["lastStoredMarketSyncTime"] = result.Rows[0].UpdatedAt
+	}
+	return health
 }
 
 func (s *Server) opsJobs(w http.ResponseWriter, r *http.Request) {

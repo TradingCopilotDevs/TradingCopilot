@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	appprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/app/prediction"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
@@ -116,6 +117,65 @@ func (s *Server) buildSetupReadiness(ctx context.Context) (map[string]any, error
 		Detail:    "会议运行需要团队、模拟盘账户绑定，以及至少一组启用的投研角色。",
 		ActionKey: "ensure-default-team",
 		Route:     "/research-team",
+	})
+
+	predictionTeamCount := 0
+	for _, team := range teams {
+		if strings.TrimSpace(team.AssetClass) == "prediction_market" {
+			predictionTeamCount++
+		}
+	}
+	filters, filterErr := s.messagingUsecase.ListSubscriptionFilters(ctx)
+	predictionFilterReady := false
+	for _, filter := range filters {
+		if filter.Name == "默认预测市场消息过滤器" {
+			predictionFilterReady = true
+			break
+		}
+	}
+	var predictionLocalSample appprediction.MarketSearchResult
+	var predictionLocalErr error
+	var predictionMatches []appprediction.MatchRow
+	var predictionMatchErr error
+	predictionHealth := map[string]any{}
+	if s.predictionUsecase.Configured() {
+		predictionLocalSample, predictionLocalErr = s.predictionUsecase.Search(ctx, "", 1)
+		predictionMatches, predictionMatchErr = s.predictionUsecase.ListMatches(ctx, appprediction.MatchFilter{Limit: 100})
+		predictionHealth = s.predictionProviderHealth(ctx)
+	}
+	predictionDefaultsReady := teamErr == nil && filterErr == nil && predictionTeamCount > 0 && predictionFilterReady
+	predictionReady := predictionDefaultsReady && s.predictionUsecase.Configured()
+	predictionStatus := statusFromReady(predictionDefaultsReady, firstError(teamErr, filterErr))
+	if !s.predictionUsecase.Configured() {
+		predictionStatus = "missing"
+	}
+	if strings.TrimSpace(fmt.Sprint(predictionHealth["status"])) == "warning" && predictionStatus == "ready" {
+		predictionStatus = "warning"
+	}
+	if (predictionLocalErr != nil || predictionMatchErr != nil) && predictionStatus == "ready" {
+		predictionStatus = "warning"
+	}
+	steps = append(steps, setupStep{
+		Key:      "predictionMarket",
+		Title:    "预测市场",
+		Category: "research",
+		Ready:    predictionReady,
+		Status:   predictionStatus,
+		Summary: fmt.Sprintf(
+			"%d 个预测团队，预测过滤器 %s，本地市场样本 %d，连通性 %s",
+			predictionTeamCount,
+			yesNo(predictionFilterReady),
+			len(predictionLocalSample.Rows),
+			predictionConnectivitySummary(predictionHealth),
+		),
+		Detail: fmt.Sprintf(
+			"Polymarket 公共行情、市场发现、新闻匹配和会议证据接入使用行情/预测市场代理配置；v1 不启用预测市场模拟盘。连通性：%s；代理模块：%s；最近匹配健康度：%s。",
+			predictionConnectivitySummary(predictionHealth),
+			firstNonEmptyString(strings.TrimSpace(fmt.Sprint(predictionHealth["proxyModule"])), "market"),
+			predictionMatchHealthSummary(predictionMatches, predictionMatchErr),
+		),
+		ActionKey: "ensure-prediction-market-defaults",
+		Route:     "/prediction-markets",
 	})
 
 	paperSetup, paperErr := s.paperUsecase.SetupStatus(ctx)
@@ -253,6 +313,8 @@ func (s *Server) executeSetupAction(ctx context.Context, key string) (setupActio
 			output["filterName"] = filter.Name
 		}
 		return actionResult(key, "ok", "已检查默认消息过滤器", "", output), nil
+	case "ensure-prediction-market-defaults":
+		return s.ensurePredictionMarketDefaults(ctx)
 	case "sync-market-symbols":
 		provider, synced, err := s.marketUsecase.SyncSymbols(ctx)
 		if err != nil {
@@ -268,6 +330,41 @@ func (s *Server) executeSetupAction(ctx context.Context, key string) (setupActio
 	default:
 		return setupActionResult{}, fmt.Errorf("unsupported setup action: %s", key)
 	}
+}
+
+func (s *Server) ensurePredictionMarketDefaults(ctx context.Context) (setupActionResult, error) {
+	team, created, err := s.researchUsecase.EnsureDefaultPredictionTeam(ctx)
+	if err != nil {
+		return setupActionResult{}, err
+	}
+	roleCount := 0
+	if team != nil {
+		roles, err := s.researchUsecase.ListRoles(ctx, team.ID)
+		if err != nil {
+			return setupActionResult{}, err
+		}
+		roleCount = len(roles)
+		if roleCount == 0 {
+			roleCount, err = s.researchUsecase.ApplyDefaultRoles(ctx, team.ID)
+			if err != nil {
+				return setupActionResult{}, err
+			}
+		}
+	}
+	filter, err := s.messagingUsecase.EnsureDefaultPredictionSubscriptionFilter(ctx)
+	if err != nil {
+		return setupActionResult{}, err
+	}
+	output := map[string]any{"createdTeam": created, "roleCount": roleCount}
+	if team != nil {
+		output["teamId"] = team.ID
+		output["teamName"] = team.Name
+	}
+	if filter != nil {
+		output["filterId"] = filter.ID
+		output["filterName"] = filter.Name
+	}
+	return actionResult("ensure-prediction-market-defaults", "ok", "已检查预测市场默认团队和过滤器", "", output), nil
 }
 
 func (s *Server) syncAllProviderModels(ctx context.Context) (setupActionResult, error) {
@@ -397,6 +494,48 @@ func statusFromReady(ready bool, err error) string {
 		return "ready"
 	}
 	return "missing"
+}
+
+func predictionMatchHealthSummary(rows []appprediction.MatchRow, err error) string {
+	if err != nil {
+		return "匹配样本不可用：" + err.Error()
+	}
+	if len(rows) == 0 {
+		return "暂无最近匹配样本"
+	}
+	counts := map[string]int{}
+	for _, row := range rows {
+		status := strings.TrimSpace(row.Match.Status)
+		if status == "" {
+			status = "unknown"
+		}
+		counts[status]++
+	}
+	parts := []string{}
+	for _, status := range []string{"linked", "confirmed", "review_required", "candidate", "rejected", "unknown"} {
+		if count := counts[status]; count > 0 {
+			parts = append(parts, fmt.Sprintf("%s=%d", status, count))
+		}
+	}
+	return fmt.Sprintf("近 %d 条：%s", len(rows), strings.Join(parts, ", "))
+}
+
+func predictionConnectivitySummary(health map[string]any) string {
+	if len(health) == 0 {
+		return "未配置"
+	}
+	parts := []string{}
+	for _, key := range []string{"gammaConnectivity", "clobConnectivity", "wsConnectivity"} {
+		value := strings.TrimSpace(fmt.Sprint(health[key]))
+		if value == "" || value == "<nil>" {
+			value = "not_checked"
+		}
+		parts = append(parts, fmt.Sprintf("%s=%s", strings.TrimSuffix(key, "Connectivity"), value))
+	}
+	if status := strings.TrimSpace(fmt.Sprint(health["status"])); status != "" && status != "<nil>" {
+		parts = append(parts, "status="+status)
+	}
+	return strings.Join(parts, ", ")
 }
 
 func adminSummary(required bool, err error) string {

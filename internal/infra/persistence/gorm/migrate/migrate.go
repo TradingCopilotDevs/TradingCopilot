@@ -18,6 +18,9 @@ func AutoMigrate(db *gorm.DB) error {
 	if err := normalizeIngestedMessageFilterStatus(db); err != nil {
 		return err
 	}
+	if err := normalizeResearchTeamAssetClass(db); err != nil {
+		return err
+	}
 	if err := cancelInvalidActiveWakePlans(db); err != nil {
 		return err
 	}
@@ -64,5 +67,16 @@ func clearEmptyMessageSubscriptionCollectFrom(db *gorm.DB) error {
 				FROM ingested_messages
 				WHERE ingested_messages.subscription_id = message_subscriptions.id
 			)
-	`, zero, zero).Error
+		`, zero, zero).Error
+}
+
+func normalizeResearchTeamAssetClass(db *gorm.DB) error {
+	if !db.Migrator().HasColumn(&model.ResearchTeam{}, "AssetClass") {
+		return nil
+	}
+	return db.Exec(`
+		UPDATE research_teams
+		SET asset_class = 'a_share'
+		WHERE asset_class IS NULL OR asset_class = ''
+	`).Error
 }

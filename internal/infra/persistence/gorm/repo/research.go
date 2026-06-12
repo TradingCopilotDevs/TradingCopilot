@@ -41,6 +41,9 @@ func (r ResearchRepository) FindTeam(ctx context.Context, id uint) (*domainresea
 }
 
 func (r ResearchRepository) FindTeamByPaperAccount(ctx context.Context, paperAccountID uint) (*domainresearch.Team, bool, error) {
+	if paperAccountID == 0 {
+		return nil, false, nil
+	}
 	var row persistmodel.ResearchTeam
 	err := r.db.WithContext(ctx).Where("paper_account_id = ?", paperAccountID).First(&row).Error
 	if err == nil {
@@ -186,11 +189,20 @@ func researchTeamsToDomain(rows []persistmodel.ResearchTeam) []domainresearch.Te
 }
 
 func researchTeamFromModel(row persistmodel.ResearchTeam) domainresearch.Team {
+	paperAccountID := uint(0)
+	if row.PaperAccountID != nil {
+		paperAccountID = *row.PaperAccountID
+	}
+	assetClass := row.AssetClass
+	if assetClass == "" {
+		assetClass = "a_share"
+	}
 	return domainresearch.Team{
 		ID:             row.ID,
 		Name:           row.Name,
 		Description:    row.Description,
-		PaperAccountID: row.PaperAccountID,
+		PaperAccountID: paperAccountID,
+		AssetClass:     assetClass,
 		Active:         row.Active,
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,
@@ -198,11 +210,21 @@ func researchTeamFromModel(row persistmodel.ResearchTeam) domainresearch.Team {
 }
 
 func researchTeamToModel(row domainresearch.Team) persistmodel.ResearchTeam {
+	var paperAccountID *uint
+	if row.PaperAccountID != 0 {
+		value := row.PaperAccountID
+		paperAccountID = &value
+	}
+	assetClass := row.AssetClass
+	if assetClass == "" {
+		assetClass = "a_share"
+	}
 	return persistmodel.ResearchTeam{
 		ID:             row.ID,
 		Name:           row.Name,
 		Description:    row.Description,
-		PaperAccountID: row.PaperAccountID,
+		PaperAccountID: paperAccountID,
+		AssetClass:     assetClass,
 		Active:         row.Active,
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,

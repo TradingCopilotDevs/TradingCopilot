@@ -78,10 +78,15 @@ func (r Runner) SeedDefaults() (err error) {
 		return err
 	}
 	accountID := defaultResearchTeamAccountID(accounts)
-	if accountID == 0 {
-		return nil
+	if accountID != 0 {
+		if _, _, err = researchUsecase(r).EnsureDefaultTeam(context.Background(), accountID); err != nil {
+			return err
+		}
 	}
-	_, _, err = researchUsecase(r).EnsureDefaultTeam(context.Background(), accountID)
+	if _, _, err = researchUsecase(r).EnsureDefaultPredictionTeam(context.Background()); err != nil {
+		return err
+	}
+	_, err = messagingUsecase(r).EnsureDefaultPredictionSubscriptionFilter(context.Background())
 	return err
 }
 

@@ -88,6 +88,7 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 		&previousVersionMessageSubscription{},
 		&previousVersionIngestedMessage{},
 		&previousVersionPaperAccount{},
+		&previousVersionResearchTeam{},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -153,12 +154,22 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 	if err := db.Create(&account).Error; err != nil {
 		t.Fatal(err)
 	}
+	team := previousVersionResearchTeam{
+		Name:           "legacy research team",
+		PaperAccountID: account.ID,
+		Active:         true,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	if err := db.Create(&team).Error; err != nil {
+		t.Fatal(err)
+	}
 
 	if err := AutoMigrate(db); err != nil {
 		t.Fatal(err)
 	}
 
-	for _, table := range []string{"auth_sessions", "audit_events", "paper_corporate_actions"} {
+	for _, table := range []string{"auth_sessions", "audit_events", "paper_corporate_actions", "prediction_events", "prediction_markets", "prediction_market_quotes", "prediction_market_matches", "prediction_watchlist_items"} {
 		if !db.Migrator().HasTable(table) {
 			t.Fatalf("expected upgraded schema to contain %s", table)
 		}
@@ -172,6 +183,9 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 		if !db.Migrator().HasColumn(&persistmodel.IngestedMessage{}, column) {
 			t.Fatalf("expected upgraded ingested_messages to contain %s", column)
 		}
+	}
+	if !db.Migrator().HasColumn(&persistmodel.ResearchTeam{}, "AssetClass") {
+		t.Fatal("expected upgraded research_teams to contain asset_class")
 	}
 
 	var upgradedAdmin persistmodel.AdminUser
@@ -203,6 +217,13 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 	}
 	if upgradedMessage.Text != message.Text || upgradedMessage.FilterStatus != "failed" {
 		t.Fatalf("legacy message was not preserved and normalized: %+v", upgradedMessage)
+	}
+	var upgradedTeam persistmodel.ResearchTeam
+	if err := db.First(&upgradedTeam, "name = ?", team.Name).Error; err != nil {
+		t.Fatal(err)
+	}
+	if upgradedTeam.AssetClass != "a_share" {
+		t.Fatalf("legacy research team asset_class should be normalized to a_share, got %+v", upgradedTeam)
 	}
 
 	action := persistmodel.PaperCorporateAction{
@@ -338,6 +359,11 @@ func TestGORMTableSurfaceMatchesPersistenceModels(t *testing.T) {
 		"paper_fills",
 		"paper_orders",
 		"paper_positions",
+		"prediction_events",
+		"prediction_market_matches",
+		"prediction_market_quotes",
+		"prediction_markets",
+		"prediction_watchlist_items",
 		"prompt_templates",
 		"platform_adapters",
 		"realtime_quotes",
@@ -631,6 +657,18 @@ type previousVersionPaperAccount struct {
 }
 
 func (previousVersionPaperAccount) TableName() string { return "paper_accounts" }
+
+type previousVersionResearchTeam struct {
+	ID             uint `gorm:"primaryKey"`
+	Name           string
+	Description    string
+	PaperAccountID uint `gorm:"uniqueIndex"`
+	Active         bool `gorm:"default:true"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (previousVersionResearchTeam) TableName() string { return "research_teams" }
 
 func diffStrings(left []string, right []string) []string {
 	rightSet := make(map[string]bool, len(right))

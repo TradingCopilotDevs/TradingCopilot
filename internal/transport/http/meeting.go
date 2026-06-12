@@ -274,10 +274,11 @@ func (s *Server) streamEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 type meetingStartPayload struct {
-	ResearchTeamID uint
-	Topic          string
-	TriggerSource  string
-	Context        map[string]any
+	ResearchTeamID      uint
+	Topic               string
+	TriggerSource       string
+	Context             map[string]any
+	PredictionMarketIDs []uint
 }
 
 func decodeMeetingStartPayload(w http.ResponseWriter, r *http.Request) (meetingStartPayload, bool) {
@@ -293,6 +294,9 @@ func decodeMeetingStartPayload(w http.ResponseWriter, r *http.Request) (meetingS
 		if context, ok := value.(map[string]any); ok {
 			payload.Context = context
 		}
+	}
+	if values, exists := uintSliceAttr(attrs, "predictionMarketIds"); exists {
+		payload.PredictionMarketIDs = values
 	}
 	return payload, true
 }

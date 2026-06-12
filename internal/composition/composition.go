@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	appai "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ai"
 	appauth "github.com/TradingCopilotDevs/TradingCopilot/internal/app/auth"
@@ -14,6 +15,7 @@ import (
 	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
 	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
 	apppaper "github.com/TradingCopilotDevs/TradingCopilot/internal/app/paper"
+	appprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/app/prediction"
 	appresearch "github.com/TradingCopilotDevs/TradingCopilot/internal/app/research"
 	appruntime "github.com/TradingCopilotDevs/TradingCopilot/internal/app/runtime"
 	appsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/app/settings"
@@ -34,6 +36,7 @@ import (
 	gormrepo "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/repo"
 	infraruntime "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/runtime"
 	gormuow "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/uow"
+	infraprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/prediction"
 	infraqueue "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/queue"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/security"
 	httptransport "github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http"
@@ -116,6 +119,13 @@ func newRuntime(settings config.Settings) (infraruntime.Runner, error) {
 }
 
 func httpDependencies(settings config.Settings, db *gorm.DB, sec security.Service, messageQueue appmessaging.TaskQueue) httptransport.Dependencies {
+	predictionUsecase := appprediction.NewUsecase(
+		gormrepo.NewPredictionRepository(db),
+		infraprediction.NewClient(runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleMarket, 20*time.Second)),
+	)
+	messagingUsecase := appmessaging.NewUsecase(gormrepo.NewMessagingRepository(db), inframessaging.NewService(settings), sec, gormuow.NewMessagingUnitOfWork(db, settings)).
+		WithTaskQueue(messageQueue).
+		WithPredictionMatcher(predictionUsecase)
 	return httptransport.Dependencies{
 		Settings:  httpSettings(settings),
 		Auth:      appauth.NewUsecase(gormrepo.NewAuthRepository(db), sec, gormuow.NewAuthUnitOfWork(db)),
@@ -128,12 +138,13 @@ func httpDependencies(settings config.Settings, db *gorm.DB, sec security.Servic
 		}, gormuow.NewMeetingUnitOfWork(db)).WithMeetingEnqueuerContext(func(ctx context.Context, meetingID uint) error {
 			return infraqueue.EnqueueRunMeetingContext(ctx, settings, meetingID)
 		}),
-		Messaging: appmessaging.NewUsecase(gormrepo.NewMessagingRepository(db), inframessaging.NewService(settings), sec, gormuow.NewMessagingUnitOfWork(db, settings)).WithTaskQueue(messageQueue),
-		Paper:     apppaper.NewUsecase(gormrepo.NewPaperRepository(db), infrapaper.NewService(db), gormuow.NewPaperUnitOfWork(db)),
-		Research:  appresearch.NewUsecase(gormrepo.NewResearchRepository(db), gormuow.NewResearchUnitOfWork(db)),
-		AppConfig: appsettings.NewUsecase(gormrepo.NewSettingsRepository(db), sec, appSettings(settings), gormuow.NewSettingsUnitOfWork(db), config.WriteEnvOverrides).WithProxyTester(infraproxy.NewTester(db, settings, sec)),
-		Wake:      appwake.NewUsecase(gormrepo.NewWakeRepository(db), inframarketdata.NewService(settings, gormmarketdata.NewStore(db, settings, sec)), gormuow.NewWakeUnitOfWork(db, settings)),
-		Backup:    infrabackup.StoreForSettings(settings),
+		Messaging:  messagingUsecase,
+		Paper:      apppaper.NewUsecase(gormrepo.NewPaperRepository(db), infrapaper.NewService(db), gormuow.NewPaperUnitOfWork(db)),
+		Prediction: predictionUsecase,
+		Research:   appresearch.NewUsecase(gormrepo.NewResearchRepository(db), gormuow.NewResearchUnitOfWork(db)),
+		AppConfig:  appsettings.NewUsecase(gormrepo.NewSettingsRepository(db), sec, appSettings(settings), gormuow.NewSettingsUnitOfWork(db), config.WriteEnvOverrides).WithProxyTester(infraproxy.NewTester(db, settings, sec)),
+		Wake:       appwake.NewUsecase(gormrepo.NewWakeRepository(db), inframarketdata.NewService(settings, gormmarketdata.NewStore(db, settings, sec)), gormuow.NewWakeUnitOfWork(db, settings)),
+		Backup:     infrabackup.StoreForSettings(settings),
 	}
 }
 
@@ -153,7 +164,13 @@ func messageTaskQueue(settings config.Settings) appmessaging.TaskQueue {
 }
 
 func messageTaskHandlers(settings config.Settings, db *gorm.DB, sec security.Service, queue appmessaging.TaskQueue) infraqueue.MessageTaskHandlers {
-	messagingUsecase := appmessaging.NewUsecase(gormrepo.NewMessagingRepository(db), inframessaging.NewService(settings), sec, gormuow.NewMessagingUnitOfWork(db, settings)).WithTaskQueue(queue)
+	predictionUsecase := appprediction.NewUsecase(
+		gormrepo.NewPredictionRepository(db),
+		infraprediction.NewClient(runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleMarket, 20*time.Second)),
+	)
+	messagingUsecase := appmessaging.NewUsecase(gormrepo.NewMessagingRepository(db), inframessaging.NewService(settings), sec, gormuow.NewMessagingUnitOfWork(db, settings)).
+		WithTaskQueue(queue).
+		WithPredictionMatcher(predictionUsecase)
 	meetingUsecase := appmeeting.NewUsecase(gormrepo.NewMeetingRepository(db), inframeeting.NewService(db), appmeeting.Settings{
 		MeetingDispatchMode: settings.MeetingDispatchMode,
 	}, gormuow.NewMeetingUnitOfWork(db)).WithMeetingEnqueuerContext(func(ctx context.Context, meetingID uint) error {

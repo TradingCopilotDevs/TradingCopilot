@@ -29,7 +29,7 @@ func runManagedRoleTurn(ctx context.Context, db *gorm.DB, meeting domainmeeting.
 	}
 
 	roleContext, relatedSymbols := buildManagedRoleContext(db, meeting, role, stage, roundNumber, priorDiscussion, assignedQuestions)
-	systemPrompt := managedRoleSystemPrompt(role, stage)
+	systemPrompt := managedRoleSystemPrompt(role, stage, isPredictionMarketMeeting(db, &meeting))
 	toolContextBlocks := []string{}
 	var finalData map[string]any
 	var finalPromptSnapshot map[string]any

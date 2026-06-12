@@ -3583,6 +3583,27 @@ func (e ProxyTestResourceType) Valid() bool {
 	}
 }
 
+// Defines values for ResearchTeamAttributesAssetClass.
+const (
+	AShare           ResearchTeamAttributesAssetClass = "a_share"
+	Mixed            ResearchTeamAttributesAssetClass = "mixed"
+	PredictionMarket ResearchTeamAttributesAssetClass = "prediction_market"
+)
+
+// Valid indicates whether the value is a known member of the ResearchTeamAttributesAssetClass enum.
+func (e ResearchTeamAttributesAssetClass) Valid() bool {
+	switch e {
+	case AShare:
+		return true
+	case Mixed:
+		return true
+	case PredictionMarket:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResearchTeamResourceType.
 const (
 	ResearchTeamResourceTypeResearchTeams ResearchTeamResourceType = "research-teams"
@@ -4847,24 +4868,26 @@ type HealthResourceType string
 
 // IngestedMessageAttributes defines model for IngestedMessageAttributes.
 type IngestedMessageAttributes struct {
-	CreatedAt         *time.Time                              `json:"createdAt,omitempty"`
-	FeedbackAt        *time.Time                              `json:"feedbackAt,omitempty"`
-	FeedbackComment   *string                                 `json:"feedbackComment,omitempty"`
-	FeedbackLabel     *IngestedMessageAttributesFeedbackLabel `json:"feedbackLabel,omitempty"`
-	FilterDecision    *string                                 `json:"filterDecision,omitempty"`
-	FilterId          *int                                    `json:"filterId,omitempty"`
-	FilterReason      *string                                 `json:"filterReason,omitempty"`
-	FilterStatus      *IngestedMessageAttributesFilterStatus  `json:"filterStatus,omitempty"`
-	FilteredAt        *time.Time                              `json:"filteredAt,omitempty"`
-	MessageTime       *time.Time                              `json:"messageTime,omitempty"`
-	Provider          *string                                 `json:"provider,omitempty"`
-	RelatedSymbols    *[]string                               `json:"relatedSymbols,omitempty"`
-	SourceMessageId   *string                                 `json:"sourceMessageId,omitempty"`
-	SourceRef         *string                                 `json:"sourceRef,omitempty"`
-	SubscriptionId    *int                                    `json:"subscriptionId,omitempty"`
-	SubscriptionTitle *string                                 `json:"subscriptionTitle,omitempty"`
-	Text              *string                                 `json:"text,omitempty"`
-	UpdatedAt         *time.Time                              `json:"updatedAt,omitempty"`
+	CreatedAt                   *time.Time                              `json:"createdAt,omitempty"`
+	FeedbackAt                  *time.Time                              `json:"feedbackAt,omitempty"`
+	FeedbackComment             *string                                 `json:"feedbackComment,omitempty"`
+	FeedbackLabel               *IngestedMessageAttributesFeedbackLabel `json:"feedbackLabel,omitempty"`
+	FilterDecision              *string                                 `json:"filterDecision,omitempty"`
+	FilterId                    *int                                    `json:"filterId,omitempty"`
+	FilterReason                *string                                 `json:"filterReason,omitempty"`
+	FilterStatus                *IngestedMessageAttributesFilterStatus  `json:"filterStatus,omitempty"`
+	FilteredAt                  *time.Time                              `json:"filteredAt,omitempty"`
+	MessageTime                 *time.Time                              `json:"messageTime,omitempty"`
+	PredictionMarketMatchStatus *string                                 `json:"predictionMarketMatchStatus,omitempty"`
+	Provider                    *string                                 `json:"provider,omitempty"`
+	RelatedPredictionMarkets    *[]map[string]interface{}               `json:"relatedPredictionMarkets,omitempty"`
+	RelatedSymbols              *[]string                               `json:"relatedSymbols,omitempty"`
+	SourceMessageId             *string                                 `json:"sourceMessageId,omitempty"`
+	SourceRef                   *string                                 `json:"sourceRef,omitempty"`
+	SubscriptionId              *int                                    `json:"subscriptionId,omitempty"`
+	SubscriptionTitle           *string                                 `json:"subscriptionTitle,omitempty"`
+	Text                        *string                                 `json:"text,omitempty"`
+	UpdatedAt                   *time.Time                              `json:"updatedAt,omitempty"`
 }
 
 // IngestedMessageAttributesFeedbackLabel defines model for IngestedMessageAttributes.FeedbackLabel.
@@ -4992,6 +5015,23 @@ type IngestedMessageUpsertDocument struct {
 
 // IngestedMessageUpsertDocumentDataType defines model for IngestedMessageUpsertDocument.Data.Type.
 type IngestedMessageUpsertDocumentDataType string
+
+// JsonApiDocument defines model for JsonApiDocument.
+type JsonApiDocument struct {
+	Data     *JsonApiDocument_Data   `json:"data,omitempty"`
+	Errors   *[]ErrorObject          `json:"errors,omitempty"`
+	Included *[]Resource             `json:"included,omitempty"`
+	Links    *Links                  `json:"links,omitempty"`
+	Meta     *map[string]interface{} `json:"meta,omitempty"`
+}
+
+// JsonApiDocumentData1 defines model for .
+type JsonApiDocumentData1 = []Resource
+
+// JsonApiDocument_Data defines model for JsonApiDocument.Data.
+type JsonApiDocument_Data struct {
+	union json.RawMessage
+}
 
 // JsonApiErrorDocument defines model for JsonApiErrorDocument.
 type JsonApiErrorDocument struct {
@@ -5579,10 +5619,11 @@ type MeetingResourceType string
 type MeetingStartDocument struct {
 	Data struct {
 		Attributes struct {
-			Context        *map[string]interface{} `json:"context,omitempty"`
-			ResearchTeamId int                     `json:"researchTeamId"`
-			Topic          string                  `json:"topic"`
-			TriggerSource  *string                 `json:"triggerSource,omitempty"`
+			Context             *map[string]interface{} `json:"context,omitempty"`
+			PredictionMarketIds *[]int                  `json:"predictionMarketIds,omitempty"`
+			ResearchTeamId      int                     `json:"researchTeamId"`
+			Topic               string                  `json:"topic"`
+			TriggerSource       *string                 `json:"triggerSource,omitempty"`
 		} `json:"attributes"`
 		Type MeetingStartDocumentDataType `json:"type"`
 	} `json:"data"`
@@ -7816,14 +7857,18 @@ type Relationship_Data struct {
 
 // ResearchTeamAttributes defines model for ResearchTeamAttributes.
 type ResearchTeamAttributes struct {
-	Active              bool       `json:"active"`
-	CopyRolesFromTeamId *int       `json:"copyRolesFromTeamId,omitempty"`
-	CreatedAt           *time.Time `json:"createdAt,omitempty"`
-	Description         *string    `json:"description,omitempty"`
-	Name                string     `json:"name"`
-	PaperAccountId      int        `json:"paperAccountId"`
-	UpdatedAt           *time.Time `json:"updatedAt,omitempty"`
+	Active              bool                             `json:"active"`
+	AssetClass          ResearchTeamAttributesAssetClass `json:"assetClass"`
+	CopyRolesFromTeamId *int                             `json:"copyRolesFromTeamId,omitempty"`
+	CreatedAt           *time.Time                       `json:"createdAt,omitempty"`
+	Description         *string                          `json:"description,omitempty"`
+	Name                string                           `json:"name"`
+	PaperAccountId      *int                             `json:"paperAccountId"`
+	UpdatedAt           *time.Time                       `json:"updatedAt,omitempty"`
 }
+
+// ResearchTeamAttributesAssetClass defines model for ResearchTeamAttributes.AssetClass.
+type ResearchTeamAttributesAssetClass string
 
 // ResearchTeamCollectionDocument defines model for ResearchTeamCollectionDocument.
 type ResearchTeamCollectionDocument struct {
@@ -7910,6 +7955,16 @@ type ResearchTeamUpsertDocument struct {
 
 // ResearchTeamUpsertDocumentDataType defines model for ResearchTeamUpsertDocument.Data.Type.
 type ResearchTeamUpsertDocumentDataType string
+
+// Resource defines model for Resource.
+type Resource struct {
+	Attributes    *map[string]interface{}  `json:"attributes,omitempty"`
+	Id            *string                  `json:"id,omitempty"`
+	Links         *Links                   `json:"links,omitempty"`
+	Meta          *map[string]interface{}  `json:"meta,omitempty"`
+	Relationships *map[string]Relationship `json:"relationships,omitempty"`
+	Type          string                   `json:"type"`
+}
 
 // ResourceIdentifier defines model for ResourceIdentifier.
 type ResourceIdentifier struct {
@@ -8184,6 +8239,9 @@ type Code = string
 // ConfigId defines model for ConfigId.
 type ConfigId = string
 
+// EventId defines model for EventId.
+type EventId = string
+
 // ExportVersion defines model for ExportVersion.
 type ExportVersion = string
 
@@ -8207,6 +8265,9 @@ type ItemId = string
 
 // Key defines model for Key.
 type Key = string
+
+// Limit defines model for Limit.
+type Limit = int
 
 // LogEvent defines model for LogEvent.
 type LogEvent = string
@@ -8247,6 +8308,12 @@ type LogStatus = string
 // LogTo defines model for LogTo.
 type LogTo = time.Time
 
+// MarketId defines model for MarketId.
+type MarketId = string
+
+// MatchId defines model for MatchId.
+type MatchId = string
+
 // MeetingId defines model for MeetingId.
 type MeetingId = string
 
@@ -8255,6 +8322,9 @@ type MeetingIdQuery = string
 
 // MessageId defines model for MessageId.
 type MessageId = string
+
+// MessageIdQuery defines model for MessageIdQuery.
+type MessageIdQuery = string
 
 // OnlyUnfiltered defines model for OnlyUnfiltered.
 type OnlyUnfiltered = bool
@@ -8378,6 +8448,9 @@ type IngestedMessageRefilterRequest = IngestedMessageRefilterDocument
 
 // IngestedMessageUpsertRequest defines model for IngestedMessageUpsertRequest.
 type IngestedMessageUpsertRequest = IngestedMessageUpsertDocument
+
+// JsonApiDocumentRequest defines model for JsonApiDocumentRequest.
+type JsonApiDocumentRequest = JsonApiDocument
 
 // MarketSymbolUpsertRequest defines model for MarketSymbolUpsertRequest.
 type MarketSymbolUpsertRequest = MarketSymbolUpsertDocument
@@ -8771,6 +8844,37 @@ type GetPaperRiskConfigsParams struct {
 	PageCursor *PageCursor `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
 }
 
+// GetPredictionMarketsSearchParams defines parameters for GetPredictionMarketsSearch.
+type GetPredictionMarketsSearchParams struct {
+	Q          *SearchQuery `form:"q,omitempty" json:"q,omitempty"`
+	PageLimit  *PageLimit   `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor *PageCursor  `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// PostPredictionMarketsSyncParams defines parameters for PostPredictionMarketsSync.
+type PostPredictionMarketsSyncParams struct {
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetPredictionMarketParams defines parameters for GetPredictionMarket.
+type GetPredictionMarketParams struct {
+	Refresh *Refresh `form:"refresh,omitempty" json:"refresh,omitempty"`
+}
+
+// GetPredictionMatchesParams defines parameters for GetPredictionMatches.
+type GetPredictionMatchesParams struct {
+	MessageId  *MessageIdQuery `form:"messageId,omitempty" json:"messageId,omitempty"`
+	Status     *Status         `form:"status,omitempty" json:"status,omitempty"`
+	PageLimit  *PageLimit      `form:"page[limit],omitempty" json:"page[limit],omitempty"`
+	PageCursor *PageCursor     `form:"page[cursor],omitempty" json:"page[cursor],omitempty"`
+}
+
+// GetPredictionWatchlistParams defines parameters for GetPredictionWatchlist.
+type GetPredictionWatchlistParams struct {
+	ResearchTeamId *ResearchTeamId `form:"researchTeamId,omitempty" json:"researchTeamId,omitempty"`
+	Limit          *Limit          `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // GetSettingsAppSettingsParams defines parameters for GetSettingsAppSettings.
 type GetSettingsAppSettingsParams struct {
 	PageLimit  *PageLimit  `form:"page[limit],omitempty" json:"page[limit],omitempty"`
@@ -8944,6 +9048,12 @@ type PostPlatformAdaptersApplicationVndAPIPlusJSONRequestBody = PlatformAdapterU
 
 // PutPlatformAdapterApplicationVndAPIPlusJSONRequestBody defines body for PutPlatformAdapter for application/vnd.api+json ContentType.
 type PutPlatformAdapterApplicationVndAPIPlusJSONRequestBody = PlatformAdapterUpsertDocument
+
+// PostPredictionMatchReviewApplicationVndAPIPlusJSONRequestBody defines body for PostPredictionMatchReview for application/vnd.api+json ContentType.
+type PostPredictionMatchReviewApplicationVndAPIPlusJSONRequestBody = JsonApiDocument
+
+// PostPredictionWatchlistApplicationVndAPIPlusJSONRequestBody defines body for PostPredictionWatchlist for application/vnd.api+json ContentType.
+type PostPredictionWatchlistApplicationVndAPIPlusJSONRequestBody = JsonApiDocument
 
 // PostResearchTeamsApplicationVndAPIPlusJSONRequestBody defines body for PostResearchTeams for application/vnd.api+json ContentType.
 type PostResearchTeamsApplicationVndAPIPlusJSONRequestBody = ResearchTeamUpsertDocument
@@ -14174,6 +14284,68 @@ func (a OpsRecentErrorEntry) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// AsResource returns the union data inside the JsonApiDocument_Data as a Resource
+func (t JsonApiDocument_Data) AsResource() (Resource, error) {
+	var body Resource
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromResource overwrites any union data inside the JsonApiDocument_Data as the provided Resource
+func (t *JsonApiDocument_Data) FromResource(v Resource) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeResource performs a merge with any union data inside the JsonApiDocument_Data, using the provided Resource
+func (t *JsonApiDocument_Data) MergeResource(v Resource) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsJsonApiDocumentData1 returns the union data inside the JsonApiDocument_Data as a JsonApiDocumentData1
+func (t JsonApiDocument_Data) AsJsonApiDocumentData1() (JsonApiDocumentData1, error) {
+	var body JsonApiDocumentData1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromJsonApiDocumentData1 overwrites any union data inside the JsonApiDocument_Data as the provided JsonApiDocumentData1
+func (t *JsonApiDocument_Data) FromJsonApiDocumentData1(v JsonApiDocumentData1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeJsonApiDocumentData1 performs a merge with any union data inside the JsonApiDocument_Data, using the provided JsonApiDocumentData1
+func (t *JsonApiDocument_Data) MergeJsonApiDocumentData1(v JsonApiDocumentData1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t JsonApiDocument_Data) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *JsonApiDocument_Data) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsOpsBackupRestoreDryRunAttributesManifestVersion0 returns the union data inside the OpsBackupRestoreDryRunAttributes_ManifestVersion as a OpsBackupRestoreDryRunAttributesManifestVersion0
 func (t OpsBackupRestoreDryRunAttributes_ManifestVersion) AsOpsBackupRestoreDryRunAttributesManifestVersion0() (OpsBackupRestoreDryRunAttributesManifestVersion0, error) {
 	var body OpsBackupRestoreDryRunAttributesManifestVersion0
@@ -14678,6 +14850,30 @@ type ServerInterface interface {
 
 	// (POST /platform-adapters/{adapterId}/test)
 	PostPlatformAdapterTest(w http.ResponseWriter, r *http.Request, adapterId AdapterId)
+
+	// (GET /prediction-events/{eventId})
+	GetPredictionEvent(w http.ResponseWriter, r *http.Request, eventId EventId)
+
+	// (GET /prediction-markets/search)
+	GetPredictionMarketsSearch(w http.ResponseWriter, r *http.Request, params GetPredictionMarketsSearchParams)
+
+	// (POST /prediction-markets/sync)
+	PostPredictionMarketsSync(w http.ResponseWriter, r *http.Request, params PostPredictionMarketsSyncParams)
+
+	// (GET /prediction-markets/{marketId})
+	GetPredictionMarket(w http.ResponseWriter, r *http.Request, marketId MarketId, params GetPredictionMarketParams)
+
+	// (GET /prediction-matches)
+	GetPredictionMatches(w http.ResponseWriter, r *http.Request, params GetPredictionMatchesParams)
+
+	// (POST /prediction-matches/{matchId}/review)
+	PostPredictionMatchReview(w http.ResponseWriter, r *http.Request, matchId MatchId)
+
+	// (GET /prediction-watchlist)
+	GetPredictionWatchlist(w http.ResponseWriter, r *http.Request, params GetPredictionWatchlistParams)
+
+	// (POST /prediction-watchlist)
+	PostPredictionWatchlist(w http.ResponseWriter, r *http.Request)
 
 	// (GET /research-teams)
 	GetResearchTeams(w http.ResponseWriter, r *http.Request)
@@ -15392,6 +15588,46 @@ func (_ Unimplemented) PutPlatformAdapter(w http.ResponseWriter, r *http.Request
 
 // (POST /platform-adapters/{adapterId}/test)
 func (_ Unimplemented) PostPlatformAdapterTest(w http.ResponseWriter, r *http.Request, adapterId AdapterId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /prediction-events/{eventId})
+func (_ Unimplemented) GetPredictionEvent(w http.ResponseWriter, r *http.Request, eventId EventId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /prediction-markets/search)
+func (_ Unimplemented) GetPredictionMarketsSearch(w http.ResponseWriter, r *http.Request, params GetPredictionMarketsSearchParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /prediction-markets/sync)
+func (_ Unimplemented) PostPredictionMarketsSync(w http.ResponseWriter, r *http.Request, params PostPredictionMarketsSyncParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /prediction-markets/{marketId})
+func (_ Unimplemented) GetPredictionMarket(w http.ResponseWriter, r *http.Request, marketId MarketId, params GetPredictionMarketParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /prediction-matches)
+func (_ Unimplemented) GetPredictionMatches(w http.ResponseWriter, r *http.Request, params GetPredictionMatchesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /prediction-matches/{matchId}/review)
+func (_ Unimplemented) PostPredictionMatchReview(w http.ResponseWriter, r *http.Request, matchId MatchId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /prediction-watchlist)
+func (_ Unimplemented) GetPredictionWatchlist(w http.ResponseWriter, r *http.Request, params GetPredictionWatchlistParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /prediction-watchlist)
+func (_ Unimplemented) PostPredictionWatchlist(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -20525,6 +20761,372 @@ func (siw *ServerInterfaceWrapper) PostPlatformAdapterTest(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// GetPredictionEvent operation middleware
+func (siw *ServerInterfaceWrapper) GetPredictionEvent(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "eventId" -------------
+	var eventId EventId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "eventId", chi.URLParam(r, "eventId"), &eventId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "eventId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPredictionEvent(w, r, eventId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPredictionMarketsSearch operation middleware
+func (siw *ServerInterfaceWrapper) GetPredictionMarketsSearch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPredictionMarketsSearchParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPredictionMarketsSearch(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPredictionMarketsSync operation middleware
+func (siw *ServerInterfaceWrapper) PostPredictionMarketsSync(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostPredictionMarketsSyncParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPredictionMarketsSync(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPredictionMarket operation middleware
+func (siw *ServerInterfaceWrapper) GetPredictionMarket(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "marketId" -------------
+	var marketId MarketId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "marketId", chi.URLParam(r, "marketId"), &marketId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "marketId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPredictionMarketParams
+
+	// ------------- Optional query parameter "refresh" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "refresh", r.URL.Query(), &params.Refresh, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "refresh"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "refresh", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPredictionMarket(w, r, marketId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPredictionMatches operation middleware
+func (siw *ServerInterfaceWrapper) GetPredictionMatches(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPredictionMatchesParams
+
+	// ------------- Optional query parameter "messageId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "messageId", r.URL.Query(), &params.MessageId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "messageId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "messageId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[limit]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[limit]", r.URL.Query(), &params.PageLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[limit]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[limit]", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page[cursor]" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page[cursor]", r.URL.Query(), &params.PageCursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page[cursor]"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page[cursor]", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPredictionMatches(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPredictionMatchReview operation middleware
+func (siw *ServerInterfaceWrapper) PostPredictionMatchReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "matchId" -------------
+	var matchId MatchId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "matchId", chi.URLParam(r, "matchId"), &matchId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "matchId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPredictionMatchReview(w, r, matchId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPredictionWatchlist operation middleware
+func (siw *ServerInterfaceWrapper) GetPredictionWatchlist(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPredictionWatchlistParams
+
+	// ------------- Optional query parameter "researchTeamId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "researchTeamId", r.URL.Query(), &params.ResearchTeamId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "researchTeamId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "researchTeamId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPredictionWatchlist(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPredictionWatchlist operation middleware
+func (siw *ServerInterfaceWrapper) PostPredictionWatchlist(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPredictionWatchlist(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetResearchTeams operation middleware
 func (siw *ServerInterfaceWrapper) GetResearchTeams(w http.ResponseWriter, r *http.Request) {
 
@@ -21953,6 +22555,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/platform-adapters/{adapterId}/test", wrapper.PostPlatformAdapterTest)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/prediction-events/{eventId}", wrapper.GetPredictionEvent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/prediction-markets/search", wrapper.GetPredictionMarketsSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/prediction-markets/sync", wrapper.PostPredictionMarketsSync)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/prediction-markets/{marketId}", wrapper.GetPredictionMarket)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/prediction-matches", wrapper.GetPredictionMatches)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/prediction-matches/{matchId}/review", wrapper.PostPredictionMatchReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/prediction-watchlist", wrapper.GetPredictionWatchlist)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/prediction-watchlist", wrapper.PostPredictionWatchlist)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/research-teams", wrapper.GetResearchTeams)

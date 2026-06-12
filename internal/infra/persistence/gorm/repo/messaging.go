@@ -218,6 +218,21 @@ func (r MessagingRepository) ListSubscriptionTeamIDs(ctx context.Context, subscr
 	return ids, nil
 }
 
+func (r MessagingRepository) ResearchTeamAssetClasses(ctx context.Context, teamIDs []uint) (map[uint]string, error) {
+	out := map[uint]string{}
+	if len(teamIDs) == 0 {
+		return out, nil
+	}
+	var rows []persistmodel.ResearchTeam
+	if err := r.db.WithContext(ctx).Select("id", "asset_class").Where("id IN ?", teamIDs).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		out[row.ID] = row.AssetClass
+	}
+	return out, nil
+}
+
 func (r MessagingRepository) ResearchTeamReady(ctx context.Context, teamID uint) (bool, string, error) {
 	return NewMeetingRepository(r.db).ResearchTeamReady(ctx, teamID)
 }

@@ -8,6 +8,7 @@ import (
 	appmessaging "github.com/TradingCopilotDevs/TradingCopilot/internal/app/messaging"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
+	domainprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/prediction"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/transport/http/jsonapi"
 )
 
@@ -931,11 +932,13 @@ func platformAdapterTestResource(result map[string]any) jsonapi.Resource {
 func ingestedMessageResource(row appmessaging.MessageRow) jsonapi.Resource {
 	message := row.Message
 	subscription := row.Subscription
+	predictionMatches := ingestedMessagePredictionMatches(row.PredictionMatches)
 	resource := jsonapi.NewResource("ingested-messages", strconv.FormatUint(uint64(message.ID), 10), map[string]any{
 		"subscriptionId": message.SubscriptionID, "subscriptionTitle": subscription.Title, "sourceRef": subscription.SourceRef,
 		"provider": message.Provider, "sourceMessageId": message.SourceMessageID, "messageTime": message.MessageTime,
 		"text": message.Text, "filterDecision": message.FilterDecision, "filterReason": message.FilterReason,
 		"filterStatus": message.FilterStatus, "relatedSymbols": rawJSONValue(message.RelatedSymbols), "filteredAt": message.FilteredAt,
+		"relatedPredictionMarkets": predictionMatches, "predictionMarketMatchStatus": ingestedMessagePredictionMatchStatus(row.PredictionMatches),
 		"filterId": message.FilterID, "feedbackLabel": message.FeedbackLabel, "feedbackComment": message.FeedbackComment, "feedbackAt": message.FeedbackAt,
 		"createdAt": message.CreatedAt, "updatedAt": message.UpdatedAt,
 	})
@@ -943,6 +946,33 @@ func ingestedMessageResource(row appmessaging.MessageRow) jsonapi.Resource {
 		"subscription": {Data: map[string]string{"type": "message-subscriptions", "id": strconv.FormatUint(uint64(message.SubscriptionID), 10)}},
 	}
 	return resource
+}
+
+func ingestedMessagePredictionMatches(matches []domainprediction.Match) []map[string]any {
+	out := make([]map[string]any, 0, len(matches))
+	for _, match := range matches {
+		out = append(out, map[string]any{
+			"id": match.ID, "marketId": match.MarketID, "score": match.Score, "status": match.Status,
+			"query": match.Query, "reason": match.Reason, "createdAt": match.CreatedAt, "updatedAt": match.UpdatedAt,
+		})
+	}
+	return out
+}
+
+func ingestedMessagePredictionMatchStatus(matches []domainprediction.Match) any {
+	if len(matches) == 0 {
+		return nil
+	}
+	rank := map[string]int{"confirmed": 5, "linked": 4, "review_required": 3, "candidate": 2, "rejected": 1}
+	status := "candidate"
+	score := rank[status]
+	for _, match := range matches {
+		if rank[match.Status] > score {
+			status = match.Status
+			score = rank[match.Status]
+		}
+	}
+	return status
 }
 
 func ingestedMessagesPublic(rows []appmessaging.MessageRow) []jsonapi.Resource {

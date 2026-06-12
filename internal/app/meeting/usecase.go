@@ -124,10 +124,11 @@ type EventListResult struct {
 }
 
 type StartInput struct {
-	ResearchTeamID uint
-	Topic          string
-	TriggerSource  string
-	Context        map[string]any
+	ResearchTeamID      uint
+	Topic               string
+	TriggerSource       string
+	Context             map[string]any
+	PredictionMarketIDs []uint
 }
 
 type UpdateInput struct {
@@ -225,6 +226,13 @@ func (u Usecase) Start(ctx context.Context, input StartInput) (*domainmeeting.Me
 		}
 		if err := repo.AppendEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: "Meeting submitted for execution.", Payload: u.service.JSON(map[string]any{"status": "queued"})}); err != nil {
 			return err
+		}
+		if len(input.PredictionMarketIDs) > 0 {
+			if input.Context == nil {
+				input.Context = map[string]any{}
+			}
+			input.Context["prediction_market_ids"] = input.PredictionMarketIDs
+			input.Context["predictionMarketIds"] = input.PredictionMarketIDs
 		}
 		if input.Context != nil {
 			return repo.AppendEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: "Meeting input context attached.", Payload: u.service.JSON(map[string]any{"status": "meeting_context", "context": input.Context})})

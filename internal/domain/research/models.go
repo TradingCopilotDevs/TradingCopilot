@@ -11,6 +11,7 @@ type Team struct {
 	Name           string
 	Description    string
 	PaperAccountID uint
+	AssetClass     string
 	Active         bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

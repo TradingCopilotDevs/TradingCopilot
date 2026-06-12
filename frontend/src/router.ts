@@ -10,6 +10,7 @@ const SettingsView = () => import('./views/SettingsView.vue')
 const ModelProvidersView = () => import('./views/ModelProvidersView.vue')
 const ResearchTeamView = () => import('./views/ResearchTeamView.vue')
 const MarketView = () => import('./views/MarketView.vue')
+const PredictionMarketsView = () => import('./views/PredictionMarketsView.vue')
 const MessageSubscriptionsView = () => import('./views/MessageSubscriptionsView.vue')
 const PlatformAdaptersView = () => import('./views/PlatformAdaptersView.vue')
 const IngestedMessagesView = () => import('./views/IngestedMessagesView.vue')
@@ -31,6 +32,7 @@ export const router = createRouter({
     { path: '/model-providers', component: ModelProvidersView },
     { path: '/research-team', component: ResearchTeamView },
     { path: '/market', component: MarketView },
+    { path: '/prediction-markets', component: PredictionMarketsView },
     { path: '/telegram', redirect: '/message-subscriptions' },
     { path: '/message-subscriptions', component: MessageSubscriptionsView },
     { path: '/platform-adapters', component: PlatformAdaptersView },

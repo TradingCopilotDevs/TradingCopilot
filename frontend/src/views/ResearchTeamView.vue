@@ -27,6 +27,10 @@
         </div>
         <div class="mobile-card__meta">
           <div class="mobile-card__meta-row">
+            <span class="mobile-card__meta-label">资产类型</span>
+            <span>{{ assetClassLabel(team.assetClass) }}</span>
+          </div>
+          <div class="mobile-card__meta-row">
             <span class="mobile-card__meta-label">模拟盘</span>
             <span>{{ accountName(team.paperAccountId) }}</span>
           </div>
@@ -61,6 +65,9 @@
       </el-table-column>
       <el-table-column prop="name" label="名称" min-width="180" />
       <el-table-column prop="description" label="说明" min-width="220" />
+      <el-table-column label="资产类型" width="140">
+        <template #default="{ row }">{{ assetClassLabel(row.assetClass) }}</template>
+      </el-table-column>
       <el-table-column label="模拟盘账户" width="180">
         <template #default="{ row }">{{ accountName(row.paperAccountId) }}</template>
       </el-table-column>
@@ -147,7 +154,14 @@
     <el-form :model="teamForm" :label-width="isMobile ? 'auto' : '120px'" :label-position="isMobile ? 'top' : 'right'">
       <el-form-item label="名称"><el-input v-model="teamForm.name" /></el-form-item>
       <el-form-item label="说明"><el-input v-model="teamForm.description" type="textarea" :rows="3" /></el-form-item>
-      <el-form-item label="模拟盘账户">
+      <el-form-item label="资产类型">
+        <el-select v-model="teamForm.assetClass" style="width: 100%">
+          <el-option label="A 股" value="a_share" />
+          <el-option label="预测市场" value="prediction_market" />
+          <el-option label="混合" value="mixed" />
+        </el-select>
+      </el-form-item>
+      <el-form-item v-if="teamForm.assetClass !== 'prediction_market'" label="模拟盘账户">
         <el-select v-model="teamForm.paperAccountId" filterable style="width: 100%">
           <el-option v-for="account in selectableAccounts" :key="account.id" :label="account.name" :value="account.id" />
         </el-select>
@@ -228,7 +242,7 @@ const rolesLoading = ref(false)
 const { isMobile, isTablet } = useResponsive()
 const { running, runAction } = useAsyncAction()
 
-const teamForm = reactive<any>({ id: null, name: '', description: '', paperAccountId: null, copyRolesFromTeamId: null, active: true })
+const teamForm = reactive<any>({ id: null, name: '', description: '', paperAccountId: null, assetClass: 'a_share', copyRolesFromTeamId: null, active: true })
 const roleForm = reactive<any>({ originalKey: '', key: '', name: '', responsibility: '', promptTemplate: '', providerId: null, model: '', toolNames: [], skillNames: [], enabled: true, sortOrder: 100 })
 
 const selectableAccounts = computed(() => accounts.value.filter((account) => !account.researchTeamId || account.id === teamForm.paperAccountId))
@@ -236,7 +250,12 @@ const teamDialogWidth = computed(() => (isMobile.value ? '100%' : isTablet.value
 const roleDialogWidth = computed(() => (isMobile.value ? '100%' : isTablet.value ? '92vw' : '900px'))
 
 function accountName(id: number) {
+  if (!id) return '-'
   return accounts.value.find((account) => account.id === id)?.name || `#${id}`
+}
+
+function assetClassLabel(value?: string) {
+  return ({ a_share: 'A 股', prediction_market: '预测市场', mixed: '混合' } as Record<string, string>)[value || 'a_share'] || 'A 股'
 }
 
 function providerName(id?: number | null) {
@@ -295,13 +314,17 @@ async function loadRoles() {
 }
 
 function openTeam(team?: any) {
-  Object.assign(teamForm, team ? { ...team, copyRolesFromTeamId: null } : { id: null, name: '', description: '', paperAccountId: null, copyRolesFromTeamId: null, active: true })
+  Object.assign(teamForm, team ? { ...team, assetClass: team.assetClass || 'a_share', copyRolesFromTeamId: null } : { id: null, name: '', description: '', paperAccountId: null, assetClass: 'a_share', copyRolesFromTeamId: null, active: true })
   teamDialog.value = true
 }
 
 async function saveTeam() {
   await runAction('saveTeam', async () => {
-    const attrs = { ...teamForm, paperAccountId: Number(teamForm.paperAccountId), copyRolesFromTeamId: teamForm.copyRolesFromTeamId || null }
+    const attrs = {
+      ...teamForm,
+      paperAccountId: teamForm.assetClass === 'prediction_market' ? null : Number(teamForm.paperAccountId || 0),
+      copyRolesFromTeamId: teamForm.copyRolesFromTeamId || null
+    }
     if (teamForm.id) await api.put(`/research-teams/${teamForm.id}`, jsonapiResource('research-teams', attrs, String(teamForm.id)))
     else await api.post('/research-teams', jsonapiResource('research-teams', attrs))
     teamDialog.value = false

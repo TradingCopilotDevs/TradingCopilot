@@ -56,6 +56,7 @@ func RunMeetingOnceWithContext(ctx context.Context, db *gorm.DB, meetingID uint)
 	if err := ensureActiveMeetingRun(db, meeting.ID, runID); err != nil {
 		return nil
 	}
+	appendPredictionRealtimeSnapshotEvent(ctx, db, meeting.ID)
 
 	var roleRows []persistmodel.ResearchTeamRole
 	db.Preload("Provider.APIKeySecret").Where("research_team_id = ? AND enabled = ?", meeting.ResearchTeamID, true).Order("sort_order, id").Find(&roleRows)

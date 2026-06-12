@@ -135,6 +135,30 @@ func (s *Server) PostMarketSymbols(w http.ResponseWriter, r *http.Request) { s.c
 func (s *Server) PostMarketSymbolsSync(w http.ResponseWriter, r *http.Request) {
 	s.syncMarketSymbols(w, r)
 }
+func (s *Server) GetPredictionMarketsSearch(w http.ResponseWriter, r *http.Request, _ openapi.GetPredictionMarketsSearchParams) {
+	s.searchPredictionMarkets(w, r)
+}
+func (s *Server) PostPredictionMarketsSync(w http.ResponseWriter, r *http.Request, _ openapi.PostPredictionMarketsSyncParams) {
+	s.syncPredictionMarkets(w, r)
+}
+func (s *Server) GetPredictionEvent(w http.ResponseWriter, r *http.Request, _ openapi.EventId) {
+	s.getPredictionEvent(w, r)
+}
+func (s *Server) GetPredictionMarket(w http.ResponseWriter, r *http.Request, _ openapi.MarketId, _ openapi.GetPredictionMarketParams) {
+	s.getPredictionMarket(w, r)
+}
+func (s *Server) GetPredictionMatches(w http.ResponseWriter, r *http.Request, _ openapi.GetPredictionMatchesParams) {
+	s.listPredictionMatches(w, r)
+}
+func (s *Server) PostPredictionMatchReview(w http.ResponseWriter, r *http.Request, _ openapi.MatchId) {
+	s.reviewPredictionMatch(w, r)
+}
+func (s *Server) GetPredictionWatchlist(w http.ResponseWriter, r *http.Request, _ openapi.GetPredictionWatchlistParams) {
+	s.listPredictionWatchlist(w, r)
+}
+func (s *Server) PostPredictionWatchlist(w http.ResponseWriter, r *http.Request) {
+	s.upsertPredictionWatchlist(w, r)
+}
 func (s *Server) PostMarketTasks(w http.ResponseWriter, r *http.Request) { s.submitMarketTask(w, r) }
 func (s *Server) DeleteMarketSymbol(w http.ResponseWriter, r *http.Request, _ openapi.Code) {
 	s.deleteSymbol(w, r)

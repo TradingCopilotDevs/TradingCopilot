@@ -148,7 +148,8 @@ func TestAIUsageDiagnosticsSummarizesMeetingEventUsage(t *testing.T) {
 	if err := db.Create(&account).Error; err != nil {
 		t.Fatal(err)
 	}
-	team := persistmodel.ResearchTeam{Name: "Default Team", PaperAccountID: account.ID, Active: true}
+	accountID := account.ID
+	team := persistmodel.ResearchTeam{Name: "Default Team", PaperAccountID: &accountID, Active: true}
 	if err := db.Create(&team).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +278,8 @@ func TestMeetingRuntimeDiagnosticsSummarizesDurationsAndEvents(t *testing.T) {
 	if err := db.Create(&account).Error; err != nil {
 		t.Fatal(err)
 	}
-	team := persistmodel.ResearchTeam{Name: "Default Team", PaperAccountID: account.ID, Active: true}
+	accountID := account.ID
+	team := persistmodel.ResearchTeam{Name: "Default Team", PaperAccountID: &accountID, Active: true}
 	if err := db.Create(&team).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -331,7 +333,8 @@ func TestDashboardWakeAlertIdentifiesOverduePlans(t *testing.T) {
 	if err := db.Create(&account).Error; err != nil {
 		t.Fatal(err)
 	}
-	team := persistmodel.ResearchTeam{Name: "Wake Team", PaperAccountID: account.ID, Active: true}
+	accountID := account.ID
+	team := persistmodel.ResearchTeam{Name: "Wake Team", PaperAccountID: &accountID, Active: true}
 	if err := db.Create(&team).Error; err != nil {
 		t.Fatal(err)
 	}

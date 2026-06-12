@@ -10,8 +10,9 @@ type ResearchTeam struct {
 	ID             uint          `gorm:"primaryKey"`
 	Name           string        `gorm:"size:128;uniqueIndex"`
 	Description    string        `gorm:"type:text"`
-	PaperAccountID uint          `gorm:"not null;uniqueIndex"`
+	PaperAccountID *uint         `gorm:"uniqueIndex"`
 	PaperAccount   *PaperAccount `gorm:"foreignKey:PaperAccountID;constraint:OnDelete:RESTRICT"`
+	AssetClass     string        `gorm:"size:32;default:a_share;index"`
 	Active         bool          `gorm:"default:true;index"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

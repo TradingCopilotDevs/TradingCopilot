@@ -97,7 +97,7 @@ func finalizeManagedMeeting(ctx context.Context, db *gorm.DB, meeting *domainmee
 		return errMeetingRunSuperseded
 	}
 	recapMessages := []map[string]string{
-		{"role": "system", "content": moderatorRecapPrompt(moderator)},
+		{"role": "system", "content": moderatorRecapPrompt(db, meeting, moderator)},
 		{"role": "user", "content": buildRecapContext(db, *meeting)},
 	}
 	recapPromptSnapshot := rolePromptSnapshot(moderator, modelName, recapMessages, tokenLabel(moderator.Key, "recap"), managedMeetingPromptVersion)
@@ -236,6 +236,7 @@ func chatRole(ctx context.Context, db *gorm.DB, meetingID uint, role domainai.Ag
 
 func buildManagedRoleContext(db *gorm.DB, meeting domainmeeting.Meeting, role domainai.AgentRole, stage string, roundNumber int, priorDiscussion []map[string]any, assignedQuestions []map[string]string) (string, []string) {
 	triggerText, relatedSymbols := triggerContext(db, meeting.ID)
+	predictionMeeting := isPredictionMarketMeeting(db, &meeting)
 	sections := []string{
 		"Meeting topic: " + meeting.Topic,
 		"Stage: " + stage,
@@ -246,6 +247,9 @@ func buildManagedRoleContext(db *gorm.DB, meeting domainmeeting.Meeting, role do
 	}
 	if len(relatedSymbols) > 0 {
 		sections = append(sections, "Related symbols: "+strings.Join(relatedSymbols, ", "))
+	}
+	if predictionMeeting {
+		sections = append(sections, "Prediction market context:\n"+predictionMarketContext(db, meeting.ID))
 	}
 	if len(assignedQuestions) > 0 {
 		lines := []string{}
@@ -264,11 +268,27 @@ func buildManagedRoleContext(db *gorm.DB, meeting domainmeeting.Meeting, role do
 	}
 	sections = append(sections, "Referenced meetings and messages:\n"+referenceContext(db, meeting.ID))
 	sections = append(sections, "Available tools:\n"+toolDescriptions(stringsFromJSON(role.ToolNames))+"\n\nAvailable skills:\n"+skillDescriptions(stringsFromJSON(role.SkillNames)))
-	sections = append(sections, "System execution constraints:\n- The project targets A-share research and paper trading only.\n- Buy-order sizing should normally use position_pct as a decimal fraction like 0.05 for 5%.\n- Do not use quantity to represent RMB notional; quantity means share count only.\n- For explicit share counts, quantity must be a positive integer; do not output 0 or negative values.\n- A-share stocks trade in 100-share lots, and execution is still constrained by cash, max_order_pct, max_position_pct, board scope, and trading session rules.\n- market.upsert_watchlist, paper.create_order, and wake.create_plan are proposal-only during discussion and are executed only during the moderator recap.\n- Do not invent data that is absent from context or tool results.")
+	if predictionMeeting {
+		sections = append(sections, "System execution constraints:\n- This is a prediction-market research meeting using public Polymarket data only.\n- The goal is to verify event facts, market-question fit, resolution criteria, odds/price evidence, liquidity, and evidence gaps.\n- Do not recommend real trades, wallet/API-key actions, deposits, withdrawals, position sizing, A-share watchlist actions, or paper orders.\n- prediction.* tools provide evidence; cite tool fields and separate facts from assumptions and inferences.\n- Wake plans and follow-up research suggestions are allowed only as observation or verification actions.\n- Do not invent data that is absent from context or tool results.")
+	} else {
+		sections = append(sections, "System execution constraints:\n- The project targets A-share research and paper trading only.\n- Buy-order sizing should normally use position_pct as a decimal fraction like 0.05 for 5%.\n- Do not use quantity to represent RMB notional; quantity means share count only.\n- For explicit share counts, quantity must be a positive integer; do not output 0 or negative values.\n- A-share stocks trade in 100-share lots, and execution is still constrained by cash, max_order_pct, max_position_pct, board scope, and trading session rules.\n- market.upsert_watchlist, paper.create_order, and wake.create_plan are proposal-only during discussion and are executed only during the moderator recap.\n- Do not invent data that is absent from context or tool results.")
+	}
 	return strings.Join(sections, "\n\n"), relatedSymbols
 }
 
-func managedRoleSystemPrompt(role domainai.AgentRole, stage string) string {
+func managedRoleSystemPrompt(role domainai.AgentRole, stage string, predictionMeeting bool) string {
+	if predictionMeeting {
+		return fmt.Sprintf(`You are %s in a prediction-market research meeting.
+Responsibility: %s
+Stage: %s
+Additional instruction: %s
+
+Return JSON only.
+If you need tools, return: {"type":"tool_request","tool_calls":[{"tool":"prediction.search_markets|prediction.market_snapshot|prediction.orderbook|prediction.price_history|prediction.related_matches|meeting.references|meeting.transcript|web.search","arguments":{},"reason":"..."}]}.
+If you can speak, return: {"type":"analysis","content":"markdown text","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"questions":[{"target":"role_key|all","question":"..."}],"mentions":["role_key"],"citations":["@role_key or prediction.* tool/source"],"confidence":"low|medium|high"}.
+Focus on market-question fit, resolution criteria, time window, source reliability, odds/orderbook/price-history evidence, liquidity, and mismatch risk.
+Do not suggest real trading, paper orders, wallet/API-key actions, deposits, withdrawals, or A-share watchlist actions. Facts must be directly supported by context or tool results; assumptions and inferences must not be mixed into facts. Do not produce the final meeting recap.`, role.Name, role.Responsibility, stage, role.PromptTemplate)
+	}
 	return fmt.Sprintf(`You are %s in an A-share multi-agent investment research meeting.
 Responsibility: %s
 Stage: %s
@@ -282,6 +302,10 @@ Facts must be directly supported by context or tool results; assumptions and inf
 
 func moderatorPlanContext(db *gorm.DB, meeting domainmeeting.Meeting, roles []domainai.AgentRole, roleBrief []string, priorDiscussion []map[string]any, pendingQuestions []map[string]string, roundNumber int, kickoff bool) string {
 	triggerText, relatedSymbols := triggerContext(db, meeting.ID)
+	predictionContext := "-"
+	if isPredictionMarketMeeting(db, &meeting) {
+		predictionContext = predictionMarketContext(db, meeting.ID)
+	}
 	recentLines := []string{}
 	start := max(len(priorDiscussion)-12, 0)
 	for _, item := range priorDiscussion[start:] {
@@ -297,11 +321,35 @@ func moderatorPlanContext(db *gorm.DB, meeting domainmeeting.Meeting, roles []do
 	if len(questionLines) == 0 {
 		questionLines = append(questionLines, "No pending questions.")
 	}
-	return fmt.Sprintf("Meeting topic: %s\nRound: %d\nKickoff: %v\nTrigger context:\n%s\n\nRelated symbols: %s\n\nAvailable roles:\n%s\n\nPending questions:\n%s\n\nRecent discussion:\n%s\n\nReferences:\n%s",
-		meeting.Topic, roundNumber, kickoff, firstNonEmptyString(triggerText, "-"), strings.Join(relatedSymbols, ", "), strings.Join(roleBrief, "\n"), strings.Join(questionLines, "\n"), strings.Join(recentLines, "\n"), referenceContext(db, meeting.ID))
+	return fmt.Sprintf("Meeting topic: %s\nRound: %d\nKickoff: %v\nTrigger context:\n%s\n\nRelated symbols: %s\n\nPrediction market context:\n%s\n\nAvailable roles:\n%s\n\nPending questions:\n%s\n\nRecent discussion:\n%s\n\nReferences:\n%s",
+		meeting.Topic, roundNumber, kickoff, firstNonEmptyString(triggerText, "-"), strings.Join(relatedSymbols, ", "), predictionContext, strings.Join(roleBrief, "\n"), strings.Join(questionLines, "\n"), strings.Join(recentLines, "\n"), referenceContext(db, meeting.ID))
 }
 
-func moderatorRecapPrompt(moderator domainai.AgentRole) string {
+func predictionMarketContext(db *gorm.DB, meetingID uint) string {
+	ids := MeetingPredictionMarketIDs(db, meetingID)
+	out := map[string]any{"prediction_market_ids": ids}
+	if len(ids) > 0 {
+		out["snapshots"] = predictionMarketSnapshotsForTool(db, ids, 8)
+	}
+	matches := predictionRelatedMatchesForTool(db, meetingID)
+	if len(matches) > 0 {
+		out["match_evidence"] = matches
+	}
+	return compactJSON([]map[string]any{out}, 2600)
+}
+
+func moderatorRecapPrompt(db *gorm.DB, meeting *domainmeeting.Meeting, moderator domainai.AgentRole) string {
+	if isPredictionMarketMeeting(db, meeting) {
+		return fmt.Sprintf(`You are %s. Produce the final prediction-market meeting recap in JSON only.
+Return schema: {"topic":"final topic","tags":["tag"],"summary":"short summary","conclusion":"observation-only conclusion","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"citations":["@role_key or tool/source"],"watchlist_actions":[],"wake_plans":[{"trigger_type":"time|event","next_check_at":"YYYY-MM-DD HH:MM:SS","reason":"...","trigger_config":{"topic":"optional follow-up topic","keywords":["optional"]}}],"orders":[]}.
+Prediction-market meetings are observation-only in v1: do not create paper orders, real trading actions, A-share watchlist actions, wallet/API-key instructions, or position sizing.
+The conclusion may recommend observe, follow, manual research, evidence collection, or future wake-up plans for the referenced prediction market.
+Facts and inferences must be traceable to the transcript, referenced meetings, prediction.* tool results, or web sources through citations. Put unsupported ideas in assumptions or evidence_gaps, not facts or inferences.
+If a market should stay visible, describe it in conclusion or wake_plans rather than watchlist_actions.
+For event wake_plans, trigger_config must include keywords, regex/pattern, related prediction market ids, decisions, or channel filters.
+For time wake_plans, use next_check_at and a trigger_config topic.
+Always return watchlist_actions as [] and orders as [].`, moderator.Name)
+	}
 	return fmt.Sprintf(`You are %s. Produce the final meeting recap in JSON only.
 Return schema: {"topic":"final topic","tags":["tag"],"summary":"short summary","conclusion":"final actionable conclusion","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"citations":["@role_key or tool/source"],"watchlist_actions":[{"code":"000001","name":"optional","note":"why","active":true}],"wake_plans":[{"trigger_type":"time|indicator|event","next_check_at":"YYYY-MM-DD HH:MM:SS","reason":"...","trigger_config":{"topic":"optional follow-up topic"}}],"orders":[{"account_id":1,"code":"000001","side":"buy|sell","quantity":100,"position_pct":0.05,"suggested_price":12.34,"reason":"..."}]}.
 Facts and inferences must be traceable to the transcript, referenced meetings, or tool results through citations. Put unsupported ideas in assumptions or evidence_gaps, not facts or inferences.

@@ -22,6 +22,7 @@ import (
 )
 
 const webSearchProbeURL = "https://news.google.com/rss/search"
+const polymarketGammaProbeURL = "https://gamma-api.polymarket.com/events?limit=1&active=true"
 
 type Tester struct {
 	db       *gorm.DB
@@ -112,7 +113,16 @@ func (t Tester) testMarket(cfg runtimeproxy.Config) domainsettings.ProxyTestResu
 	if err != nil {
 		return proxyTestResult("error", err.Error(), started)
 	}
-	return proxyTestResult("ok", "Market quote request succeeded.", started)
+	req, _ := http.NewRequest(http.MethodGet, polymarketGammaProbeURL, nil)
+	resp, err := runtimeproxy.HTTPClientForConfig(cfg, runtimeproxy.ModuleMarket, 10*time.Second).Do(req)
+	if err != nil {
+		return proxyTestResult("error", err.Error(), started)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return proxyTestResult("error", fmt.Sprintf("Polymarket Gamma probe returned HTTP %d", resp.StatusCode), started)
+	}
+	return proxyTestResult("ok", "Market quote and Polymarket Gamma probes succeeded.", started)
 }
 
 func (t Tester) testWeb(cfg runtimeproxy.Config) domainsettings.ProxyTestResult {

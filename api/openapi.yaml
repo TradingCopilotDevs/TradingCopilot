@@ -438,6 +438,75 @@ paths:
       responses:
         "200": { $ref: "#/components/responses/MarketSymbolSyncDocument" }
         "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /prediction-markets/search:
+    get:
+      operationId: getPredictionMarketsSearch
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+        "502": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /prediction-markets/sync:
+    post:
+      operationId: postPredictionMarketsSync
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+        "502": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /prediction-events/{eventId}:
+    get:
+      operationId: getPredictionEvent
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /prediction-markets/{marketId}:
+    get:
+      operationId: getPredictionMarket
+      parameters:
+        - $ref: "#/components/parameters/MarketId"
+        - $ref: "#/components/parameters/Refresh"
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /prediction-matches:
+    get:
+      operationId: getPredictionMatches
+      parameters:
+        - $ref: "#/components/parameters/MessageIdQuery"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+  /prediction-matches/{matchId}/review:
+    post:
+      operationId: postPredictionMatchReview
+      parameters:
+        - $ref: "#/components/parameters/MatchId"
+      requestBody: { $ref: "#/components/requestBodies/JsonApiDocumentRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
+        "404": { $ref: "#/components/responses/JsonApiErrorDocument" }
+  /prediction-watchlist:
+    get:
+      operationId: getPredictionWatchlist
+      parameters:
+        - $ref: "#/components/parameters/ResearchTeamId"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+    post:
+      operationId: postPredictionWatchlist
+      requestBody: { $ref: "#/components/requestBodies/JsonApiDocumentRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/JsonApiDocument" }
+        "400": { $ref: "#/components/responses/JsonApiErrorDocument" }
   /market/tasks:
     post:
       operationId: postMarketTasks
@@ -1449,6 +1518,12 @@ components:
         application/vnd.api+json:
           schema:
             $ref: "#/components/schemas/PaperBacktestRunDocument"
+    JsonApiDocumentRequest:
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: "#/components/schemas/JsonApiDocument"
   responses:
     AuthBootstrapStateDocument:
       description: Bootstrap state JSON:API document.
@@ -2049,6 +2124,13 @@ components:
       name: q
       in: query
       schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
     Refresh:
       name: refresh
       in: query
@@ -2071,6 +2153,10 @@ components:
       schema: { type: string }
     MeetingIdQuery:
       name: meetingId
+      in: query
+      schema: { type: string }
+    MessageIdQuery:
+      name: messageId
       in: query
       schema: { type: string }
     ResearchTeamId:
@@ -2225,7 +2311,10 @@ components:
     Key: { name: key, in: path, required: true, schema: { type: string } }
     MeetingId: { name: meetingId, in: path, required: true, schema: { type: string } }
     MessageId: { name: messageId, in: path, required: true, schema: { type: string } }
+    EventId: { name: eventId, in: path, required: true, schema: { type: string } }
     FilterId: { name: filterId, in: path, required: true, schema: { type: string } }
+    MarketId: { name: marketId, in: path, required: true, schema: { type: string } }
+    MatchId: { name: matchId, in: path, required: true, schema: { type: string } }
     OrderId: { name: orderId, in: path, required: true, schema: { type: string } }
     PlanId: { name: planId, in: path, required: true, schema: { type: string } }
     ProviderId: { name: providerId, in: path, required: true, schema: { type: string } }
@@ -4292,11 +4381,16 @@ components:
               $ref: "#/components/schemas/Relationship"
     ResearchTeamAttributes:
       type: object
-      required: [name, paperAccountId, active]
+      required: [name, paperAccountId, active, assetClass]
       properties:
         name: { type: string }
         description: { type: string }
-        paperAccountId: { type: integer }
+        paperAccountId:
+          type: integer
+          nullable: true
+        assetClass:
+          type: string
+          enum: [a_share, prediction_market, mixed]
         active: { type: boolean }
         copyRolesFromTeamId:
           type: integer
@@ -4568,6 +4662,92 @@ components:
             amount: {}
             raw: {}
             provider: { type: string }
+    PredictionEventResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [prediction-events] }
+        id: { type: string }
+        attributes:
+          type: object
+          additionalProperties: true
+    PredictionMarketResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [prediction-markets] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PredictionMarketAttributes"
+    PredictionMarketAttributes:
+      type: object
+      properties:
+        eventId: { type: integer, nullable: true }
+        provider: { type: string, enum: [polymarket] }
+        externalMarketId: { type: string }
+        conditionId: { type: string }
+        question: { type: string }
+        slug: { type: string }
+        outcomes:
+          type: array
+          items: { type: string }
+        outcomePrices:
+          type: array
+          items: {}
+        clobTokenIds:
+          type: array
+          items: { type: string }
+        enableOrderBook: { type: boolean }
+        bestBid: { nullable: true }
+        bestAsk: { nullable: true }
+        lastTradePrice: { nullable: true }
+        spread: { nullable: true }
+        active: { type: boolean }
+        closed: { type: boolean }
+        restricted: { type: boolean }
+        volume: { nullable: true }
+        liquidity: { nullable: true }
+        openInterest: { nullable: true }
+        raw: {}
+    PredictionMarketQuoteResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [prediction-market-quotes] }
+        id: { type: string }
+        attributes:
+          $ref: "#/components/schemas/PredictionMarketQuoteAttributes"
+    PredictionMarketQuoteAttributes:
+      type: object
+      properties:
+        marketId: { type: integer }
+        provider: { type: string, enum: [polymarket] }
+        bestBid: { nullable: true }
+        bestAsk: { nullable: true }
+        lastTradePrice: { nullable: true }
+        spread: { nullable: true }
+        liquidity: { nullable: true }
+        volume: { nullable: true }
+        raw: {}
+        createdAt: { type: string, format: date-time }
+    PredictionMarketMatchResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [prediction-market-matches] }
+        id: { type: string }
+        attributes:
+          type: object
+          additionalProperties: true
+    PredictionWatchlistResource:
+      type: object
+      required: [type, id, attributes]
+      properties:
+        type: { type: string, enum: [prediction-watchlist-items] }
+        id: { type: string }
+        attributes:
+          type: object
+          additionalProperties: true
     MarketSeriesPointCollectionDocument:
       type: object
       required: [data]
@@ -5315,6 +5495,10 @@ components:
                 researchTeamId: { type: integer }
                 topic: { type: string }
                 triggerSource: { type: string }
+                predictionMarketIds:
+                  type: array
+                  items:
+                    type: integer
                 context:
                   type: object
                   additionalProperties: true
@@ -5989,6 +6173,14 @@ components:
           type: array
           items:
             type: string
+        relatedPredictionMarkets:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        predictionMarketMatchStatus:
+          type: string
+          nullable: true
         filteredAt:
           type: string
           format: date-time

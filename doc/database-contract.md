@@ -19,6 +19,11 @@ TradingCopilot 根据 GORM 持久化模型初始化和升级当前逻辑 schema�
 - `daily_bars`
 - `realtime_quotes`
 - `watchlist_items`
+- `prediction_events`
+- `prediction_markets`
+- `prediction_market_quotes`
+- `prediction_market_matches`
+- `prediction_watchlist_items`
 - `message_subscriptions`
 - `message_subscription_research_teams`
 - `message_subscription_filters`
@@ -41,8 +46,8 @@ TradingCopilot 根据 GORM 持久化模型初始化和升级当前逻辑 schema�
 
 ## 升级兼容性
 
-- 本轮新增表：`auth_sessions`、`audit_events` 和 `paper_corporate_actions`。
-- 本轮新增列：`admin_users.display_name`、`admin_users.role`、`admin_users.active`、`admin_users.last_login_at`，以及 `ingested_messages.feedback_label`、`ingested_messages.feedback_comment`、`ingested_messages.feedback_at`。
+- 本轮新增表：`prediction_events`、`prediction_markets`、`prediction_market_quotes`、`prediction_market_matches` 和 `prediction_watchlist_items`。
+- 本轮新增列：`research_teams.asset_class`；`research_teams.paper_account_id` 允许为空，以支持无模拟盘绑定的预测市场团队。
 - 新增列均允许空值或带默认值；既有 `admin_users` 会得到安全默认角色 `admin` 与启用状态，不要求人工回填。
 - 迁移会继续执行既有幂等修正：空 `ingested_messages.filter_status` 归一化、无历史消息订阅的 `collect_from` 清理，以及无效 active 唤醒计划取消。
 - 不做破坏性表删除或列删除；历史 Telegram 表仍保留，以兼容既有数据和迁移期间的旧引用。
@@ -53,6 +58,8 @@ TradingCopilot 根据 GORM 持久化模型初始化和升级当前逻辑 schema�
 - 会议事件类型：`system`, `role_message`, `tool_call`, `tool_result`, `conclusion`, `error`.
 - Telegram 过滤决策：`ignore`, `observe`, `meeting`.
 - 摄取消息过滤决策：`ignore`, `observe`, `meeting`.
+- 研究团队资产类型：`a_share`, `prediction_market`, `mixed`.
+- 预测市场匹配状态：`candidate`, `linked`, `review_required`, `rejected`, `confirmed`.
 - 唤醒触发类型：`time`, `indicator`, `event`.
 - 唤醒计划状态：`active`, `paused`, `fired`, `cancelled`.
 - 订单方向：`buy`, `sell`.
@@ -73,8 +80,10 @@ TradingCopilot 根据 GORM 持久化模型初始化和升级当前逻辑 schema�
 - `ingested_messages` 通过 `feedback_label`、`feedback_comment` 和 `feedback_at` 保存人工反馈；标签只使用 `helpful`、`noise`、`misclassified` 和 `neutral`，用于 provider health 的来源可信评分聚合。
 - `message_subscriptions` 存储与提供方无关的采集状态：`poll_interval_seconds`、`last_collected_at`、`next_collect_at` 和 `last_collect_error`。
 - 消息过滤器不是 AI 角色。每条 `message_subscriptions` 记录绑定一条 `message_subscription_filters` 记录；默认过滤器只为新订阅提供前端或应用默认值。内置默认消息过滤器只在过滤器表为空时创建；启动种子数据不会重写已有过滤器记录。
-- `research_teams` 是会议、自选列表、唤醒计划和消息触发研究的业务边界。每个团队通过 `research_teams.paper_account_id` 只绑定一条 `paper_accounts` 记录；该列上的唯一索引确保一个 paper account 最多只能属于一个团队。
+- `research_teams` 是会议、自选列表、唤醒计划和消息触发研究的业务边界。`asset_class=a_share|mixed` 的团队通过 `research_teams.paper_account_id` 绑定一条 `paper_accounts` 记录；该列上的唯一索引确保一个 paper account 最多只能属于一个团队。`asset_class=prediction_market` 的团队允许 `paper_account_id` 为空，会议运行和消息触发不得因此尝试创建模拟盘订单。
 - `research_team_roles` 存储每个团队的会议角色。会议运行器必须按 `meetings.research_team_id` 加载角色，而不是从全局 `agent_roles` 加载。启动种子数据只会在没有任何研究团队时创建一个默认研究团队及其内置角色。显式的 `roles/apply-defaults` 操作会对选中团队执行破坏性重置：删除当前所有团队角色，并基于内置默认角色种子重建。
+- 预测市场使用独立资产域表，不写入 A 股 `market_symbols`。`prediction_events` 保存 Polymarket event 级元数据，`prediction_markets` 保存 binary market 级问题、outcome、CLOB token、盘口摘要和状态，`prediction_market_quotes` 保存按 token 抓取的快照，`prediction_market_matches` 保存新闻片段、搜索 query、候选市场快照、分数构成、阈值处置和人工复核信息，`prediction_watchlist_items` 保存团队关注的预测市场。唯一约束以 provider + external id 为准，当前 provider 为 `polymarket`。
+- 预测市场 v1 不保存钱包、Polymarket API key、真实订单、预测市场模拟盘订单、仓位、充值或提现信息。预测市场会议引用通过 `meeting_events.payload.prediction_market_ids` 和 `meeting_references.reference_type=prediction_market` 表达；实时盘口/历史价格工具结果仍写入 `meeting_events` 和 `tool_call_logs`。
 - `message_subscription_research_teams` 将每个消息源绑定到一个或多个研究团队。启用状态的订阅必须至少有一个绑定；`meeting` 过滤决策对每个 message/team 组合最多创建一个会议。
 - 模拟交易账户通过可空的 `paper_accounts.risk_config_id` 绑定到风险配置。空值是允许的，表示该账户没有启用中的风险配置；订单执行会拒绝这类账户，而不是静默分配默认配置。
 - 删除模拟交易风险配置前会先清空匹配的 `paper_accounts.risk_config_id` 值，然后再移除配置。

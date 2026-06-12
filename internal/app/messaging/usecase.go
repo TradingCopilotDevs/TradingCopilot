@@ -17,6 +17,7 @@ import (
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
+	domainprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/prediction"
 	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 )
 
@@ -96,12 +97,29 @@ var DefaultFilterSeed = domainmsg.MessageSubscriptionFilter{
 var DefaultFilterToolNames = []string{"telegram.recent_messages"}
 var DefaultFilterSkillNames = []string{"news-impact-filtering"}
 
+var DefaultPredictionFilterSeed = domainmsg.MessageSubscriptionFilter{
+	Name:        "默认预测市场消息过滤器",
+	Description: "判断新到消息是否对应可研究的预测市场事件或对赌盘，并决定忽略、观察还是立即触发会议。",
+	PromptTemplate: `你只负责预测市场消息分诊，不负责完整投研分析。必须只输出JSON：{"decision":"ignore|observe|meeting","reason":"...","related_symbols":[],"related_prediction_markets":["..."],"match_confidence":0.0,"match_reason":"..."}
+
+判定框架：
+1. 先判断消息是否描述了可被 Polymarket 这类预测市场表达的可裁定事件：明确主体、结果、时间窗口、裁定来源或可验证证据。只有情绪、观点、泛泛预测、营销稿或无法裁定的叙述，应输出 ignore。
+2. 再判断消息是否可能改变市场概率：新事实、官方表态、法院/监管/选举/体育赛程/公司事件/宏观数据/链上或加密事件的增量，高于重复报道、二手评论和低可信传闻。
+3. decision=meeting 只用于高时效、高影响、市场映射明确或需要多角色核验结算规则/赔率变化的消息；decision=observe 用于可能相关但市场、时间窗或证据仍需人工确认的消息；decision=ignore 用于低置信、过期、不可裁定或无预测市场映射的消息。
+4. related_prediction_markets 要写可用于 Gamma 搜索的候选表达，例如事件名、market slug、英文/中文问题句、关键实体+结果+时间窗；没有候选就返回空数组。
+5. match_confidence 使用0到1：>=0.75 表示高度可能有关联并可触发会议；0.45到0.75 表示进入人工确认/观察；<0.45 不应关联。match_reason 必须说明主体、结果、时间窗、证据强弱和不确定点。
+6. 不输出任何真实交易、钱包、API key、充值提现、仓位或模拟盘动作建议；预测市场 v1 只能观察、关注、核验和安排后续唤醒。`,
+	Enabled:   true,
+	IsDefault: false,
+}
+
 type Usecase struct {
-	repo     Repository
-	service  Service
-	security SecurityService
-	tx       Transactor
-	queue    TaskQueue
+	repo              Repository
+	service           Service
+	security          SecurityService
+	tx                Transactor
+	queue             TaskQueue
+	predictionMatcher PredictionMatcher
 }
 
 func NewUsecase(repo Repository, service Service, sec SecurityService, tx ...Transactor) Usecase {
@@ -115,6 +133,16 @@ func NewUsecase(repo Repository, service Service, sec SecurityService, tx ...Tra
 func (u Usecase) WithTaskQueue(queue TaskQueue) Usecase {
 	u.queue = queue
 	return u
+}
+
+func (u Usecase) WithPredictionMatcher(matcher PredictionMatcher) Usecase {
+	u.predictionMatcher = matcher
+	return u
+}
+
+type PredictionMatcher interface {
+	MatchNews(ctx context.Context, messageID *uint, text string) ([]domainprediction.Match, error)
+	ListMatchesForMessage(ctx context.Context, messageID uint) ([]domainprediction.Match, error)
 }
 
 type SecurityService interface {
@@ -146,6 +174,7 @@ type Repository interface {
 	SaveSubscription(ctx context.Context, subscription *domainmsg.MessageSubscription) error
 	ReplaceSubscriptionTeams(ctx context.Context, subscriptionID uint, teamIDs []uint) error
 	ListSubscriptionTeamIDs(ctx context.Context, subscriptionID uint) ([]uint, error)
+	ResearchTeamAssetClasses(ctx context.Context, teamIDs []uint) (map[uint]string, error)
 	ResearchTeamReady(ctx context.Context, teamID uint) (bool, string, error)
 	ListSubscriptionsForCollect(ctx context.Context, subscriptionID *uint) ([]domainmsg.MessageSubscription, error)
 	DeleteSubscriptionGraph(ctx context.Context, id uint, externalRefs []string) error
@@ -417,8 +446,9 @@ type MessageList struct {
 }
 
 type MessageRow struct {
-	Message      domainmsg.IngestedMessage
-	Subscription domainmsg.MessageSubscription
+	Message           domainmsg.IngestedMessage
+	Subscription      domainmsg.MessageSubscription
+	PredictionMatches []domainprediction.Match
 }
 
 type MessageInput struct {
@@ -693,6 +723,31 @@ func (u Usecase) EnsureDefaultSubscriptionFilter(ctx context.Context) (*domainms
 	return out, nil
 }
 
+func (u Usecase) EnsureDefaultPredictionSubscriptionFilter(ctx context.Context) (*domainmsg.MessageSubscriptionFilter, error) {
+	var out *domainmsg.MessageSubscriptionFilter
+	if err := u.withTx(ctx, func(repo Repository) error {
+		filters, err := repo.ListSubscriptionFilters(ctx)
+		if err != nil {
+			return err
+		}
+		for i := range filters {
+			if filters[i].Name == DefaultPredictionFilterSeed.Name {
+				out = &filters[i]
+				return nil
+			}
+		}
+		seed := DefaultPredictionFilterSeed
+		if err := repo.CreateSubscriptionFilter(ctx, &seed); err != nil {
+			return err
+		}
+		out = &seed
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (u Usecase) ListSubscriptionFilters(ctx context.Context) ([]domainmsg.MessageSubscriptionFilter, error) {
 	if _, err := u.EnsureDefaultSubscriptionFilter(ctx); err != nil {
 		return nil, err
@@ -892,7 +947,7 @@ func (u Usecase) SubscriptionDiagnostics(ctx context.Context) ([]SubscriptionDia
 	return out, nil
 }
 
-func (u Usecase) resolveSubscriptionFilterID(ctx context.Context, filterID uint) (uint, error) {
+func (u Usecase) resolveSubscriptionFilterID(ctx context.Context, filterID uint, teamIDs []uint) (uint, error) {
 	if filterID > 0 {
 		row, found, err := u.repo.FindSubscriptionFilter(ctx, filterID)
 		if err != nil {
@@ -902,6 +957,16 @@ func (u Usecase) resolveSubscriptionFilterID(ctx context.Context, filterID uint)
 			return 0, ErrSubscriptionFilterNotFound
 		}
 		return filterID, nil
+	}
+	if u.subscriptionShouldUsePredictionFilter(ctx, teamIDs) {
+		row, err := u.EnsureDefaultPredictionSubscriptionFilter(ctx)
+		if err != nil {
+			return 0, err
+		}
+		if row == nil || row.ID == 0 {
+			return 0, errors.New("default prediction market message filter is not configured")
+		}
+		return row.ID, nil
 	}
 	row, err := u.EnsureDefaultSubscriptionFilter(ctx)
 	if err != nil {
@@ -913,12 +978,35 @@ func (u Usecase) resolveSubscriptionFilterID(ctx context.Context, filterID uint)
 	return row.ID, nil
 }
 
+func (u Usecase) subscriptionShouldUsePredictionFilter(ctx context.Context, teamIDs []uint) bool {
+	teamIDs = uniqueUintIDs(teamIDs)
+	if len(teamIDs) == 0 {
+		return false
+	}
+	assetClasses, err := u.repo.ResearchTeamAssetClasses(ctx, teamIDs)
+	if err != nil || len(assetClasses) == 0 {
+		return false
+	}
+	hasPrediction := false
+	for _, teamID := range teamIDs {
+		switch strings.TrimSpace(assetClasses[teamID]) {
+		case "prediction_market":
+			hasPrediction = true
+		case "":
+			return false
+		default:
+			return false
+		}
+	}
+	return hasPrediction
+}
+
 func (u Usecase) CreateSubscription(ctx context.Context, input SubscriptionInput) (*SubscriptionMutation, error) {
 	provider, err := normalizeSubscriptionProvider(input.Provider)
 	if err != nil {
 		return nil, err
 	}
-	filterID, err := u.resolveSubscriptionFilterID(ctx, input.FilterID)
+	filterID, err := u.resolveSubscriptionFilterID(ctx, input.FilterID, input.TeamIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -1052,7 +1140,7 @@ func (u Usecase) UpdateSubscription(ctx context.Context, id uint, input Subscrip
 		row.Enabled = input.Enabled
 	}
 	if fields["filterId"] {
-		filterID, err := u.resolveSubscriptionFilterID(ctx, input.FilterID)
+		filterID, err := u.resolveSubscriptionFilterID(ctx, input.FilterID, firstNonEmptyUintSlice(input.TeamIDs, row.TeamIDs))
 		if err != nil {
 			return nil, true, err
 		}
@@ -1060,6 +1148,13 @@ func (u Usecase) UpdateSubscription(ctx context.Context, id uint, input Subscrip
 	}
 	if fields["teamIds"] {
 		row.TeamIDs = uniqueUintIDs(input.TeamIDs)
+		if !fields["filterId"] && input.FilterID == 0 {
+			if filterID, err := u.resolveSubscriptionFilterID(ctx, 0, row.TeamIDs); err == nil {
+				row.FilterID = filterID
+			} else {
+				return nil, true, err
+			}
+		}
 	}
 	if fields["backfillLimit"] {
 		row.BackfillLimit = input.BackfillLimit
@@ -2620,6 +2715,10 @@ func (u Usecase) applyFilter(ctx context.Context, repo Repository, row *domainms
 	if err != nil {
 		return filterCallFailedError{err: err}
 	}
+	if u.predictionMatcher != nil && row.FilterDecision != nil && *row.FilterDecision != domainkernel.NewsIgnore {
+		messageID := row.ID
+		_, _ = u.predictionMatcher.MatchNews(ctx, &messageID, row.Text)
+	}
 	return nil
 }
 
@@ -2645,6 +2744,11 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 			limit = 3
 		}
 		symbolPart = strings.Join(symbols[:limit], ", ")
+	}
+	predictionMatches := u.predictionMatchesForMessage(ctx, row.ID)
+	predictionMarketIDs := linkedPredictionMarketIDs(predictionMatches)
+	if len(predictionMarketIDs) > 0 && symbolPart == "message-event" {
+		symbolPart = fmt.Sprintf("prediction markets %s", joinUintIDs(predictionMarketIDs, 3))
 	}
 	teamIDs := uniqueUintIDs(subscription.TeamIDs)
 	if len(teamIDs) == 0 {
@@ -2679,11 +2783,11 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 		if err := repo.CreateMeeting(ctx, &meeting); err != nil {
 			return nil, err
 		}
-		content := fmt.Sprintf("Subscription %s triggered a meeting.\nFilter reason: %s\nRelated symbols: %s\n\n%s", subscription.Title, stringValue(row.FilterReason), strings.Join(symbols, ", "), row.Text)
+		content := fmt.Sprintf("Subscription %s triggered a meeting.\nFilter reason: %s\nRelated symbols: %s\nRelated prediction markets: %s\n\n%s", subscription.Title, stringValue(row.FilterReason), strings.Join(symbols, ", "), joinUintIDs(predictionMarketIDs, 10), row.Text)
 		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: "Meeting submitted for execution.", Payload: u.service.JSON(map[string]any{"status": "queued"})}); err != nil {
 			return nil, err
 		}
-		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: content, Payload: u.service.JSON(map[string]any{"status": "message_subscription_triggered", "ingested_message_id": row.ID, "subscription_id": subscription.ID, "research_team_id": teamID, "decision": *row.FilterDecision, "related_symbols": symbols})}); err != nil {
+		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: content, Payload: u.service.JSON(map[string]any{"status": "message_subscription_triggered", "ingested_message_id": row.ID, "subscription_id": subscription.ID, "research_team_id": teamID, "decision": *row.FilterDecision, "related_symbols": symbols, "prediction_market_ids": predictionMarketIDs, "prediction_market_matches": predictionMatchPayload(predictionMatches)})}); err != nil {
 			return nil, err
 		}
 		note := fmt.Sprintf("%s / team#%d / message#%s", subscription.Title, teamID, row.SourceMessageID)
@@ -2695,6 +2799,27 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 		ref := domainmeeting.Reference{SourceMeetingID: meeting.ID, ReferenceType: "ingested_message", Note: &note, TargetTopicSnapshot: topic, TargetSummarySnapshot: &summary, ExternalRef: &externalRef}
 		if err := repo.CreateMeetingReference(ctx, &ref); err != nil {
 			return nil, err
+		}
+		for _, match := range predictionMatches {
+			if !isLinkedPredictionMatch(match) {
+				continue
+			}
+			marketExternalRef := fmt.Sprintf("prediction_market:%d:message:%d:team:%d", match.MarketID, row.ID, teamID)
+			if _, ok, err := repo.FindMeetingReferenceByExternalRef(ctx, "prediction_market", marketExternalRef); err != nil {
+				return nil, err
+			} else if ok {
+				continue
+			}
+			note := fmt.Sprintf("Prediction market match score %s / message#%s", match.Score.String(), row.SourceMessageID)
+			topic := fmt.Sprintf("Prediction market #%d", match.MarketID)
+			summary := match.NewsSnippet
+			if len(summary) > 2000 {
+				summary = summary[:2000]
+			}
+			marketRef := domainmeeting.Reference{SourceMeetingID: meeting.ID, ReferenceType: "prediction_market", Note: &note, TargetTopicSnapshot: topic, TargetSummarySnapshot: &summary, ExternalRef: &marketExternalRef}
+			if err := repo.CreateMeetingReference(ctx, &marketRef); err != nil {
+				return nil, err
+			}
 		}
 		created = append(created, &meeting)
 	}
@@ -3069,14 +3194,15 @@ func (u Usecase) hydrateMessage(ctx context.Context, message domainmsg.IngestedM
 }
 
 func (u Usecase) hydrateMessageWithRepo(ctx context.Context, repo Repository, message domainmsg.IngestedMessage) MessageRow {
+	matches := u.predictionMatchesForMessage(ctx, message.ID)
 	if message.Subscription != nil {
-		return MessageRow{Message: message, Subscription: *message.Subscription}
+		return MessageRow{Message: message, Subscription: *message.Subscription, PredictionMatches: matches}
 	}
 	subscription, _, _ := repo.FindSubscriptionForMessage(ctx, message.SubscriptionID)
 	if subscription == nil {
 		subscription = &domainmsg.MessageSubscription{}
 	}
-	return MessageRow{Message: message, Subscription: *subscription}
+	return MessageRow{Message: message, Subscription: *subscription, PredictionMatches: matches}
 }
 
 func (u Usecase) applySourceTrustPolicy(ctx context.Context, repo Repository, row *domainmsg.IngestedMessage) error {
@@ -4603,6 +4729,70 @@ func uniqueUintIDs(values []uint) []uint {
 		out = append(out, value)
 	}
 	return out
+}
+
+func firstNonEmptyUintSlice(values ...[]uint) []uint {
+	for _, value := range values {
+		if len(value) > 0 {
+			return value
+		}
+	}
+	return nil
+}
+
+func (u Usecase) predictionMatchesForMessage(ctx context.Context, messageID uint) []domainprediction.Match {
+	if u.predictionMatcher == nil || messageID == 0 {
+		return nil
+	}
+	rows, err := u.predictionMatcher.ListMatchesForMessage(ctx, messageID)
+	if err != nil {
+		return nil
+	}
+	return rows
+}
+
+func linkedPredictionMarketIDs(matches []domainprediction.Match) []uint {
+	ids := make([]uint, 0, len(matches))
+	for _, match := range matches {
+		if isLinkedPredictionMatch(match) {
+			ids = append(ids, match.MarketID)
+		}
+	}
+	return uniqueUintIDs(ids)
+}
+
+func isLinkedPredictionMatch(match domainprediction.Match) bool {
+	return match.Status == "linked" || match.Status == "confirmed"
+}
+
+func predictionMatchPayload(matches []domainprediction.Match) []map[string]any {
+	out := make([]map[string]any, 0, len(matches))
+	for _, match := range matches {
+		out = append(out, map[string]any{
+			"id":       match.ID,
+			"marketId": match.MarketID,
+			"score":    match.Score,
+			"status":   match.Status,
+			"query":    match.Query,
+			"reason":   match.Reason,
+		})
+	}
+	return out
+}
+
+func joinUintIDs(values []uint, limit int) string {
+	values = uniqueUintIDs(values)
+	if len(values) == 0 {
+		return ""
+	}
+	if limit > 0 && len(values) > limit {
+		values = values[:limit]
+	}
+	parts := make([]string, 0, len(values))
+	for _, value := range values {
+		parts = append(parts, strconv.FormatUint(uint64(value), 10))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func ListenerLeaseClaimable(setting domainsettings.AppSetting, owner string, now time.Time, ttl time.Duration) bool {

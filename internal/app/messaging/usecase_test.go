@@ -704,6 +704,68 @@ func TestEnsureDefaultSubscriptionFilterDoesNotCreateWhenCustomFilterExists(t *t
 	}
 }
 
+func TestCreateSubscriptionDefaultsToPredictionFilterForPredictionTeam(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.teamAssetClasses[9] = "prediction_market"
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, err := usecase.CreateSubscription(ctx, SubscriptionInput{
+		Provider:  domainmsg.ProviderRSSFeed,
+		SourceRef: "https://example.test/prediction.xml",
+		Enabled:   true,
+		TeamIDs:   []uint{9},
+	})
+	if err != nil {
+		t.Fatalf("CreateSubscription: %v", err)
+	}
+	filter := repo.filters[result.FilterID]
+	if filter.Name != DefaultPredictionFilterSeed.Name || filter.IsDefault {
+		t.Fatalf("expected prediction filter but not global default, got %+v", filter)
+	}
+}
+
+func TestDefaultPredictionFilterPromptHasOperationalDecisionRubric(t *testing.T) {
+	prompt := DefaultPredictionFilterSeed.PromptTemplate
+	for _, required := range []string{
+		"可裁定事件",
+		"Gamma 搜索",
+		"decision=meeting",
+		"decision=observe",
+		"decision=ignore",
+		"match_confidence",
+		">=0.75",
+		"0.45",
+		"真实交易",
+		"模拟盘动作",
+	} {
+		if !strings.Contains(prompt, required) {
+			t.Fatalf("prediction filter prompt should contain %q, got:\n%s", required, prompt)
+		}
+	}
+}
+
+func TestCreateSubscriptionKeepsDefaultFilterForMixedTeams(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.teamAssetClasses[9] = "prediction_market"
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, err := usecase.CreateSubscription(ctx, SubscriptionInput{
+		Provider:  domainmsg.ProviderRSSFeed,
+		SourceRef: "https://example.test/mixed.xml",
+		Enabled:   true,
+		TeamIDs:   []uint{1, 9},
+	})
+	if err != nil {
+		t.Fatalf("CreateSubscription: %v", err)
+	}
+	filter := repo.filters[result.FilterID]
+	if filter.Name != DefaultFilterSeed.Name || !filter.IsDefault {
+		t.Fatalf("expected ordinary default filter for mixed teams, got %+v", filter)
+	}
+}
+
 func TestCreateSubscriptionBackfillsMessagesOlderThanCreateTime(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
@@ -1180,6 +1242,7 @@ type fakeMessagingRepo struct {
 	providers            map[uint]domainai.Provider
 	filters              map[uint]domainmsg.MessageSubscriptionFilter
 	subscriptions        map[uint]domainmsg.MessageSubscription
+	teamAssetClasses     map[uint]string
 	messages             map[uint]domainmsg.IngestedMessage
 	meetings             map[uint]domainmeeting.Meeting
 	nextMeetingID        uint
@@ -1199,6 +1262,7 @@ func newFakeMessagingRepo() *fakeMessagingRepo {
 		providers:          map[uint]domainai.Provider{},
 		filters:            map[uint]domainmsg.MessageSubscriptionFilter{},
 		subscriptions:      map[uint]domainmsg.MessageSubscription{},
+		teamAssetClasses:   map[uint]string{1: "a_share"},
 		messages:           map[uint]domainmsg.IngestedMessage{},
 		meetings:           map[uint]domainmeeting.Meeting{},
 		nextMeetingID:      1,
@@ -1356,6 +1420,15 @@ func (r *fakeMessagingRepo) ListSubscriptionTeamIDs(_ context.Context, subscript
 		return []uint{1}, nil
 	}
 	return append([]uint(nil), row.TeamIDs...), nil
+}
+func (r *fakeMessagingRepo) ResearchTeamAssetClasses(_ context.Context, teamIDs []uint) (map[uint]string, error) {
+	out := map[uint]string{}
+	for _, teamID := range teamIDs {
+		if value, ok := r.teamAssetClasses[teamID]; ok {
+			out[teamID] = value
+		}
+	}
+	return out, nil
 }
 func (r *fakeMessagingRepo) ResearchTeamReady(context.Context, uint) (bool, string, error) {
 	return true, "", nil

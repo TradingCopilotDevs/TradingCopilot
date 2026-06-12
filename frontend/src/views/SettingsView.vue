@@ -219,7 +219,7 @@
       <el-form-item label="启用模块">
         <el-checkbox v-model="proxyForm.enabledAi">AI</el-checkbox>
         <el-checkbox v-model="proxyForm.enabledTelegram">Telegram</el-checkbox>
-        <el-checkbox v-model="proxyForm.enabledMarket">Market</el-checkbox>
+        <el-checkbox v-model="proxyForm.enabledMarket">行情/预测市场</el-checkbox>
         <el-checkbox v-model="proxyForm.enabledWeb">Web Search</el-checkbox>
       </el-form-item>
       <el-form-item label="绕过代理">

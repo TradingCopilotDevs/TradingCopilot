@@ -56,10 +56,16 @@ func ApplyMeetingRecapActions(db *gorm.DB, meeting *domainmeeting.Meeting, recap
 		_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Executable recap actions require manual review because evidence references are weak role-only citations.", recapActionGatePayload(recap, "recap_actions_review_required", reason, "weak_reference_review", "manual_review_required"))
 		return nil
 	}
-	watchlistActions := recapWatchlistActions(recap, recapEvent, meeting)
-	for _, raw := range watchlistActions {
-		if err := applyWatchlistAction(db, meeting, moderatorRoleKey, raw); err != nil {
-			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to update watchlist: "+err.Error(), map[string]any{"status": "watchlist_error"})
+	predictionMarketMeeting := isPredictionMarketMeeting(db, meeting)
+	if predictionMarketMeeting && predictionMarketHasBlockedExecutableActions(recap) {
+		_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Prediction market recap executable trading actions were blocked.", recapActionGatePayload(recap, "prediction_market_actions_blocked", "prediction market meetings cannot create A-share watchlist actions or paper orders", "prediction_market_action_boundary", "blocked"))
+	}
+	if !predictionMarketMeeting {
+		watchlistActions := recapWatchlistActions(recap, recapEvent, meeting)
+		for _, raw := range watchlistActions {
+			if err := applyWatchlistAction(db, meeting, moderatorRoleKey, raw); err != nil {
+				_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to update watchlist: "+err.Error(), map[string]any{"status": "watchlist_error"})
+			}
 		}
 	}
 	for _, raw := range objectList(recap["wake_plans"]) {
@@ -67,12 +73,29 @@ func ApplyMeetingRecapActions(db *gorm.DB, meeting *domainmeeting.Meeting, recap
 			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to create wake plan: "+err.Error(), map[string]any{"status": "wake_plan_error"})
 		}
 	}
-	for _, raw := range objectList(recap["orders"]) {
-		if err := applyPaperOrderAction(db, meeting, recapEvent, moderatorRoleKey, recap, raw); err != nil {
-			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to create paper order: "+err.Error(), map[string]any{"status": "paper_order_error"})
+	if !predictionMarketMeeting {
+		for _, raw := range objectList(recap["orders"]) {
+			if err := applyPaperOrderAction(db, meeting, recapEvent, moderatorRoleKey, recap, raw); err != nil {
+				_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to create paper order: "+err.Error(), map[string]any{"status": "paper_order_error"})
+			}
 		}
 	}
 	return nil
+}
+
+func isPredictionMarketMeeting(db *gorm.DB, meeting *domainmeeting.Meeting) bool {
+	if meeting == nil || meeting.ResearchTeamID == 0 {
+		return false
+	}
+	var team persistmodel.ResearchTeam
+	if err := db.Select("asset_class").First(&team, meeting.ResearchTeamID).Error; err != nil {
+		return false
+	}
+	return strings.TrimSpace(team.AssetClass) == "prediction_market"
+}
+
+func predictionMarketHasBlockedExecutableActions(recap map[string]any) bool {
+	return len(objectList(recap["watchlist_actions"])) > 0 || len(objectList(recap["orders"])) > 0
 }
 
 func applyWatchlistAction(db *gorm.DB, meeting *domainmeeting.Meeting, roleKey string, raw map[string]any) error {

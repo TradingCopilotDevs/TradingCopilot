@@ -2,6 +2,8 @@ package research
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"testing"
 
 	appai "github.com/TradingCopilotDevs/TradingCopilot/internal/app/ai"
@@ -38,6 +40,53 @@ func TestEnsureDefaultTeamCreatesTeamAndRolesOnlyWhenEmpty(t *testing.T) {
 	}
 	if repo.roles[team.ID]["moderator"].Name != "Custom Moderator" {
 		t.Fatal("second ensure must not rewrite existing team roles")
+	}
+}
+
+func TestPredictionMarketDefaultRolesUseOnlyResearchEvidenceTools(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeResearchRepo()
+	usecase := NewUsecase(repo, fakeResearchTx{repo: repo})
+
+	team, created, err := usecase.EnsureDefaultPredictionTeam(ctx)
+	if err != nil {
+		t.Fatalf("EnsureDefaultPredictionTeam: %v", err)
+	}
+	if !created || team == nil || team.AssetClass != AssetClassPredictionMarket || team.PaperAccountID != 0 {
+		t.Fatalf("unexpected prediction team team=%+v created=%v", team, created)
+	}
+	for _, role := range repo.roles[team.ID] {
+		var tools []string
+		if err := json.Unmarshal(role.ToolNames, &tools); err != nil {
+			t.Fatalf("role %s tools: %v", role.Key, err)
+		}
+		for _, tool := range tools {
+			if strings.HasPrefix(tool, "paper.") || strings.HasPrefix(tool, "wake.") {
+				t.Fatalf("prediction role %s should not enable execution tool %s", role.Key, tool)
+			}
+			if tool != "web.search" && !strings.HasPrefix(tool, "meeting.") && !strings.HasPrefix(tool, "prediction.") {
+				t.Fatalf("prediction role %s has unsupported tool %s", role.Key, tool)
+			}
+		}
+		if !strings.Contains(role.PromptTemplate, "证据") {
+			t.Fatalf("prediction role %s prompt should force evidence-aware reasoning: %s", role.Key, role.PromptTemplate)
+		}
+	}
+}
+
+func TestPredictionMarketDefaultRolePromptsCoverResolutionOddsRiskAndActionBoundary(t *testing.T) {
+	allPrompts := []string{}
+	for _, role := range PredictionMarketDefaultRoles {
+		allPrompts = append(allPrompts, role.Prompt)
+		if strings.TrimSpace(role.Responsibility) == "" || strings.TrimSpace(role.Prompt) == "" {
+			t.Fatalf("prediction role %s should have responsibility and prompt", role.Key)
+		}
+	}
+	joined := strings.Join(allPrompts, "\n")
+	for _, required := range []string{"结算", "时间窗", "赔率", "流动性", "证据缺口", "不要输出真实交易", "模拟盘订单"} {
+		if !strings.Contains(joined, required) {
+			t.Fatalf("prediction role prompts should cover %q, got:\n%s", required, joined)
+		}
 	}
 }
 

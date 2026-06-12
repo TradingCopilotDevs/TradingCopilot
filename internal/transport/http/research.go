@@ -119,7 +119,7 @@ func decodeResearchTeamInput(w http.ResponseWriter, r *http.Request) (appresearc
 		return appresearch.TeamInput{}, nil, false
 	}
 	fields := map[string]bool{}
-	for _, name := range []string{"name", "description", "paperAccountId", "active", "copyRolesFromTeamId"} {
+	for _, name := range []string{"name", "description", "paperAccountId", "assetClass", "active", "copyRolesFromTeamId"} {
 		if _, ok := attrValue(attrs, name); ok {
 			fields[name] = true
 		}
@@ -128,6 +128,7 @@ func decodeResearchTeamInput(w http.ResponseWriter, r *http.Request) (appresearc
 		Name:                stringAttr(attrs, "name"),
 		Description:         stringAttr(attrs, "description"),
 		PaperAccountID:      uintAttr(attrs, "paperAccountId"),
+		AssetClass:          stringAttr(attrs, "assetClass"),
 		Active:              boolAttrWithDefault(attrs, true, "active"),
 		CopyRolesFromTeamID: uintPtrAttr(attrs, "copyRolesFromTeamId"),
 	}, fields, true
@@ -156,16 +157,27 @@ func decodeResearchTeamRoleInput(w http.ResponseWriter, r *http.Request) (appres
 }
 
 func researchTeamResource(row domainresearch.Team) jsonapi.Resource {
+	var paperAccountID any
+	if row.PaperAccountID != 0 {
+		paperAccountID = row.PaperAccountID
+	}
+	assetClass := row.AssetClass
+	if assetClass == "" {
+		assetClass = appresearch.AssetClassAShare
+	}
 	resource := jsonapi.NewResource("research-teams", strconv.FormatUint(uint64(row.ID), 10), map[string]any{
 		"name":           row.Name,
 		"description":    row.Description,
-		"paperAccountId": row.PaperAccountID,
+		"paperAccountId": paperAccountID,
+		"assetClass":     assetClass,
 		"active":         row.Active,
 		"createdAt":      row.CreatedAt,
 		"updatedAt":      row.UpdatedAt,
 	})
-	resource.Relationships = map[string]jsonapi.Relationship{
-		"paperAccount": {Data: map[string]string{"type": "paper-accounts", "id": strconv.FormatUint(uint64(row.PaperAccountID), 10)}},
+	if row.PaperAccountID != 0 {
+		resource.Relationships = map[string]jsonapi.Relationship{
+			"paperAccount": {Data: map[string]string{"type": "paper-accounts", "id": strconv.FormatUint(uint64(row.PaperAccountID), 10)}},
+		}
 	}
 	return resource
 }
