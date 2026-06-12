@@ -582,6 +582,10 @@ func TestRiskConfigColumnNames(t *testing.T) {
 	assertGORMTagContains(t, persistmodel.RiskConfig{}, "AllowETFLOF", "column:allow_etf_lof")
 }
 
+func TestIngestedMessageFilterResultAssignmentAllowsHistoricalDetach(t *testing.T) {
+	assertGORMTagContains(t, persistmodel.IngestedMessageFilterResult{}, "Assignment", "OnDelete:SET NULL")
+}
+
 func TestAutoMigratePreservesJSONDefaultPayloadShapes(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
@@ -718,6 +722,14 @@ func TestAutoMigrateCreatesForeignKeyConstraints(t *testing.T) {
 		if !strings.Contains(strings.ToUpper(sql), "FOREIGN KEY") {
 			t.Fatalf("%s expected foreign key constraint in DDL: %s", table, sql)
 		}
+	}
+	var filterResultSQL string
+	if err := db.Raw("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?", "ingested_message_filter_results").Scan(&filterResultSQL).Error; err != nil {
+		t.Fatalf("ingested_message_filter_results DDL lookup failed: %v", err)
+	}
+	normalized := strings.ToUpper(filterResultSQL)
+	if !strings.Contains(normalized, "ASSIGNMENT_ID") || !strings.Contains(normalized, "ON DELETE SET NULL") {
+		t.Fatalf("ingested_message_filter_results assignment foreign key must use ON DELETE SET NULL: %s", filterResultSQL)
 	}
 }
 

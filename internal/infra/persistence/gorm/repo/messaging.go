@@ -237,17 +237,51 @@ func (r MessagingRepository) ReplaceSubscriptionAssignments(ctx context.Context,
 		}
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Delete(&persistmodel.MessageSubscriptionAssignment{}, "subscription_id = ?", subscriptionID).Error; err != nil {
+		var existing []persistmodel.MessageSubscriptionAssignment
+		if err := tx.Where("subscription_id = ?", subscriptionID).Find(&existing).Error; err != nil {
 			return err
 		}
+		existingByKey := map[string]persistmodel.MessageSubscriptionAssignment{}
+		for _, row := range existing {
+			existingByKey[subscriptionAssignmentKey(row.FilterID, row.ResearchTeamID)] = row
+		}
+		kept := map[uint]bool{}
 		for _, assignment := range assignments {
+			key := subscriptionAssignmentKey(assignment.FilterID, assignment.ResearchTeamID)
+			if existing, ok := existingByKey[key]; ok {
+				kept[existing.ID] = true
+				if !existing.Enabled {
+					if err := tx.Model(&persistmodel.MessageSubscriptionAssignment{}).
+						Where("id = ?", existing.ID).
+						Update("enabled", true).Error; err != nil {
+						return err
+					}
+				}
+				continue
+			}
 			row := messageSubscriptionAssignmentToModel(assignment)
+			row.ID = 0
 			row.SubscriptionID = subscriptionID
 			if err := tx.Create(&row).Error; err != nil {
 				return err
 			}
+			kept[row.ID] = true
 		}
-		return nil
+		deleteIDs := make([]uint, 0, len(existing))
+		for _, row := range existing {
+			if !kept[row.ID] {
+				deleteIDs = append(deleteIDs, row.ID)
+			}
+		}
+		if len(deleteIDs) == 0 {
+			return nil
+		}
+		if err := tx.Model(&persistmodel.IngestedMessageFilterResult{}).
+			Where("assignment_id IN ?", deleteIDs).
+			Update("assignment_id", gorm.Expr("NULL")).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&persistmodel.MessageSubscriptionAssignment{}, deleteIDs).Error
 	})
 }
 
@@ -315,10 +349,13 @@ func (r MessagingRepository) DeleteSubscriptionGraph(ctx context.Context, id uin
 				return err
 			}
 		}
-		if err := tx.Delete(&persistmodel.MessageSubscriptionAssignment{}, "subscription_id = ?", id).Error; err != nil {
+		if err := tx.Delete(&persistmodel.IngestedMessageFilterResult{}, "subscription_id = ?", id).Error; err != nil {
 			return err
 		}
 		if err := tx.Delete(&persistmodel.IngestedMessage{}, "subscription_id = ?", id).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&persistmodel.MessageSubscriptionAssignment{}, "subscription_id = ?", id).Error; err != nil {
 			return err
 		}
 		return tx.Delete(&persistmodel.MessageSubscription{}, id).Error
@@ -497,6 +534,9 @@ func (r MessagingRepository) DeleteMessage(ctx context.Context, message *domainm
 				return err
 			}
 		}
+		if err := tx.Delete(&persistmodel.IngestedMessageFilterResult{}, "message_id = ?", message.ID).Error; err != nil {
+			return err
+		}
 		return tx.Delete(&persistmodel.IngestedMessage{}, message.ID).Error
 	})
 }
@@ -510,6 +550,9 @@ func (r MessagingRepository) DeleteMessagesByIDsWithRefs(ctx context.Context, id
 		}
 		if len(ids) == 0 {
 			return nil
+		}
+		if err := tx.Delete(&persistmodel.IngestedMessageFilterResult{}, "message_id IN ?", ids).Error; err != nil {
+			return err
 		}
 		return tx.Delete(&persistmodel.IngestedMessage{}, ids).Error
 	})
@@ -635,7 +678,7 @@ func messageSubscriptionsToDomain(rows []persistmodel.MessageSubscription) []dom
 }
 
 func preloadSubscriptionGraph(db *gorm.DB) *gorm.DB {
-	return db.Preload("Filter").Preload("Assignments").Preload("Assignments.Filter")
+	return db.Preload("Filter").Preload("Assignments", "enabled = ?", true).Preload("Assignments.Filter")
 }
 
 func preloadMessageFilterResults(db *gorm.DB) *gorm.DB {
@@ -849,7 +892,7 @@ func uniqueSubscriptionAssignments(values []domainmsg.MessageSubscriptionAssignm
 		if value.FilterID == 0 || value.ResearchTeamID == 0 {
 			continue
 		}
-		key := strconv.FormatUint(uint64(value.FilterID), 10) + ":" + strconv.FormatUint(uint64(value.ResearchTeamID), 10)
+		key := subscriptionAssignmentKey(value.FilterID, value.ResearchTeamID)
 		if seen[key] {
 			continue
 		}
@@ -858,4 +901,8 @@ func uniqueSubscriptionAssignments(values []domainmsg.MessageSubscriptionAssignm
 		out = append(out, value)
 	}
 	return out
+}
+
+func subscriptionAssignmentKey(filterID uint, researchTeamID uint) string {
+	return strconv.FormatUint(uint64(filterID), 10) + ":" + strconv.FormatUint(uint64(researchTeamID), 10)
 }

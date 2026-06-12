@@ -3021,7 +3021,7 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 		if !found || subscription == nil {
 			return nil, errors.New("message subscription not found")
 		}
-		for _, assignment := range subscription.Assignments {
+		for _, assignment := range uniqueDomainSubscriptionAssignments(subscription.Assignments) {
 			results = append(results, domainmsg.IngestedMessageFilterResult{
 				MessageID: row.ID, SubscriptionID: row.SubscriptionID, AssignmentID: cleanUintPtr(assignment.ID),
 				FilterID: assignment.FilterID, ResearchTeamID: assignment.ResearchTeamID,

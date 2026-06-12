@@ -89,21 +89,21 @@ type IngestedMessage struct {
 func (IngestedMessage) TableName() string { return "ingested_messages" }
 
 type IngestedMessageFilterResult struct {
-	ID             uint                 `gorm:"primaryKey"`
-	MessageID      uint                 `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
-	Message        *IngestedMessage     `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
-	SubscriptionID uint                 `gorm:"index"`
-	Subscription   *MessageSubscription `gorm:"foreignKey:SubscriptionID;constraint:OnDelete:CASCADE"`
-	AssignmentID   *uint                `gorm:"index"`
-	Assignment     *MessageSubscriptionAssignment
-	FilterID       uint                       `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
-	Filter         *MessageSubscriptionFilter `gorm:"foreignKey:FilterID"`
-	ResearchTeamID uint                       `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
-	ResearchTeam   *ResearchTeam              `gorm:"foreignKey:ResearchTeamID;constraint:OnDelete:RESTRICT"`
-	FilterDecision *domainkernel.NewsDecision `gorm:"size:32"`
-	FilterReason   *string                    `gorm:"type:text"`
-	FilterStatus   string                     `gorm:"size:32;default:unfiltered;index"`
-	RelatedSymbols datatypes.JSON             `gorm:"type:json;default:'[]'"`
+	ID             uint                           `gorm:"primaryKey"`
+	MessageID      uint                           `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
+	Message        *IngestedMessage               `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
+	SubscriptionID uint                           `gorm:"index"`
+	Subscription   *MessageSubscription           `gorm:"foreignKey:SubscriptionID;constraint:OnDelete:CASCADE"`
+	AssignmentID   *uint                          `gorm:"index"`
+	Assignment     *MessageSubscriptionAssignment `gorm:"foreignKey:AssignmentID;constraint:OnDelete:SET NULL"`
+	FilterID       uint                           `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
+	Filter         *MessageSubscriptionFilter     `gorm:"foreignKey:FilterID"`
+	ResearchTeamID uint                           `gorm:"index;uniqueIndex:uq_ingested_message_filter_result"`
+	ResearchTeam   *ResearchTeam                  `gorm:"foreignKey:ResearchTeamID;constraint:OnDelete:RESTRICT"`
+	FilterDecision *domainkernel.NewsDecision     `gorm:"size:32"`
+	FilterReason   *string                        `gorm:"type:text"`
+	FilterStatus   string                         `gorm:"size:32;default:unfiltered;index"`
+	RelatedSymbols datatypes.JSON                 `gorm:"type:json;default:'[]'"`
 	FilteredAt     *time.Time
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

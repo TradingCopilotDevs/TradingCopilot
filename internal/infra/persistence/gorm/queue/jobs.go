@@ -73,6 +73,11 @@ func RunWorker(settings config.Settings) error {
 	if err != nil {
 		return err
 	}
+	if settings.AutoCreateTables {
+		if err := database.AutoMigrate(db); err != nil {
+			return err
+		}
+	}
 	stopHeartbeat := startHeartbeatLoop(db, "worker", settings.MeetingDispatchMode)
 	defer func() {
 		stopHeartbeat()
@@ -210,6 +215,11 @@ func RunScheduler(settings config.Settings) error {
 	db, err := database.Open(settings)
 	if err != nil {
 		return err
+	}
+	if settings.AutoCreateTables {
+		if err := database.AutoMigrate(db); err != nil {
+			return err
+		}
 	}
 	stopHeartbeat := startHeartbeatLoop(db, "scheduler", settings.MeetingDispatchMode)
 	defer func() {

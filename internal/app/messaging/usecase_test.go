@@ -138,6 +138,48 @@ func TestFilterMessageSkipsDisabledSubscriptionAssignments(t *testing.T) {
 	}
 }
 
+func TestEnsureMeetingsForMessageFallbackSkipsDisabledAssignments(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderTelegramChannel,
+		Title:     "News",
+		SourceRef: "@news",
+		Enabled:   true,
+		FilterID:  1,
+		TeamIDs:   []uint{1},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 1, ResearchTeamID: 1, Enabled: true},
+			{ID: 2, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 2, Enabled: false},
+		},
+	}
+	repo.teamAssetClasses[2] = "a_share"
+	row := domainmsg.IngestedMessage{
+		ID:              1,
+		SubscriptionID:  1,
+		Provider:        domainmsg.ProviderTelegramChannel,
+		SourceMessageID: "100",
+		MessageTime:     time.Now(),
+		Text:            "600000 triggered",
+		FilterDecision:  ptrDecision(domainkernel.NewsMeeting),
+		FilterStatus:    domainmsg.FilterStatusFiltered,
+		RelatedSymbols:  jsonBytes(t, []string{"600000"}),
+	}
+	usecase := NewUsecase(repo, &fakeMessagingService{}, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	meetings, err := usecase.ensureMeetingsForMessage(ctx, repo, &row, "legacy_summary")
+	if err != nil {
+		t.Fatalf("ensureMeetingsForMessage: %v", err)
+	}
+	if len(meetings) != 1 || meetings[0].ResearchTeamID != 1 {
+		t.Fatalf("expected one meeting for enabled assignment only, got %+v", meetings)
+	}
+	if repo.createMeetingCalls != 1 {
+		t.Fatalf("disabled assignment should not dispatch a meeting, calls=%d", repo.createMeetingCalls)
+	}
+}
+
 func TestFilterMessageRequiresPersistedSubscriptionAssignments(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()

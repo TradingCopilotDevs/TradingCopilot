@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"strings"
 	"time"
 
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/persistence/gorm/model"
@@ -22,6 +23,9 @@ func AutoMigrate(db *gorm.DB) error {
 		return err
 	}
 	if err := migrateIngestedMessageFilterResults(db); err != nil {
+		return err
+	}
+	if err := ensureMessageFilterResultAssignmentConstraint(db); err != nil {
 		return err
 	}
 	if err := normalizeResearchTeamAssetClass(db); err != nil {
@@ -116,6 +120,59 @@ func migrateIngestedMessageFilterResults(db *gorm.DB) error {
 				AND existing.research_team_id = message_subscription_assignments.research_team_id
 		)
 	`).Error
+}
+
+func ensureMessageFilterResultAssignmentConstraint(db *gorm.DB) error {
+	if db.Dialector.Name() != "postgres" {
+		return nil
+	}
+	if !db.Migrator().HasTable(&model.IngestedMessageFilterResult{}) || !db.Migrator().HasTable(&model.MessageSubscriptionAssignment{}) {
+		return nil
+	}
+	var deleteRule string
+	if err := db.Raw(`
+		SELECT COALESCE(rc.delete_rule, '')
+		FROM information_schema.table_constraints tc
+		JOIN information_schema.referential_constraints rc
+			ON rc.constraint_schema = tc.constraint_schema
+			AND rc.constraint_name = tc.constraint_name
+		WHERE tc.constraint_schema = current_schema()
+			AND tc.table_name = 'ingested_message_filter_results'
+			AND tc.constraint_name = 'fk_ingested_message_filter_results_assignment'
+		LIMIT 1
+	`).Scan(&deleteRule).Error; err != nil {
+		return err
+	}
+	if strings.EqualFold(strings.TrimSpace(deleteRule), "SET NULL") {
+		return nil
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(`
+			ALTER TABLE ingested_message_filter_results
+			DROP CONSTRAINT IF EXISTS fk_ingested_message_filter_results_assignment
+		`).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec(`
+			UPDATE ingested_message_filter_results
+			SET assignment_id = NULL
+			WHERE assignment_id IS NOT NULL
+				AND NOT EXISTS (
+					SELECT 1
+					FROM message_subscription_assignments
+					WHERE message_subscription_assignments.id = ingested_message_filter_results.assignment_id
+				)
+		`).Error; err != nil {
+			return err
+		}
+		return tx.Exec(`
+			ALTER TABLE ingested_message_filter_results
+			ADD CONSTRAINT fk_ingested_message_filter_results_assignment
+			FOREIGN KEY (assignment_id)
+			REFERENCES message_subscription_assignments(id)
+			ON DELETE SET NULL
+		`).Error
+	})
 }
 
 func normalizeIngestedMessageFilterStatus(db *gorm.DB) error {
