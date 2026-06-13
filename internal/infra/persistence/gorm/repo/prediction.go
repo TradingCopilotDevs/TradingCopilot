@@ -28,12 +28,36 @@ func (r PredictionRepository) SearchMarkets(ctx context.Context, q string, limit
 		limit = 20
 	}
 	var rows []persistmodel.PredictionMarket
-	query := r.db.WithContext(ctx).Order("active desc, closed asc, volume desc, id desc").Limit(limit)
+	query := r.db.WithContext(ctx).
+		Model(&persistmodel.PredictionMarket{}).
+		Preload("Event").
+		Joins("LEFT JOIN prediction_events ON prediction_events.id = prediction_markets.event_id").
+		Limit(limit)
 	q = strings.TrimSpace(q)
 	if q != "" {
-		like := "%" + strings.ToLower(q) + "%"
-		query = query.Where("LOWER(question) LIKE ? OR LOWER(slug) LIKE ? OR LOWER(description) LIKE ?", like, like, like)
+		normalized := strings.ToLower(q)
+		like := "%" + normalized + "%"
+		query = query.Where(strings.Join([]string{
+			"LOWER(prediction_markets.question) LIKE ?",
+			"LOWER(prediction_markets.slug) LIKE ?",
+			"LOWER(prediction_markets.description) LIKE ?",
+			"LOWER(prediction_markets.external_market_id) LIKE ?",
+			"LOWER(prediction_markets.condition_id) LIKE ?",
+			"LOWER(prediction_events.title) LIKE ?",
+			"LOWER(prediction_events.slug) LIKE ?",
+			"LOWER(prediction_events.description) LIKE ?",
+		}, " OR "), like, like, like, like, like, like, like, like)
+		query = query.Select(`prediction_markets.*, CASE
+WHEN LOWER(prediction_markets.slug) = ? OR LOWER(prediction_markets.external_market_id) = ? OR LOWER(prediction_markets.condition_id) = ? THEN 0
+WHEN LOWER(prediction_events.slug) = ? OR LOWER(prediction_events.external_event_id) = ? THEN 1
+WHEN LOWER(prediction_markets.slug) LIKE ? THEN 2
+WHEN LOWER(prediction_events.slug) LIKE ? THEN 3
+WHEN LOWER(prediction_markets.question) LIKE ? THEN 4
+WHEN LOWER(prediction_events.title) LIKE ? THEN 5
+ELSE 9 END AS search_rank`, normalized, normalized, normalized, normalized, normalized, like, like, like, like).
+			Order("search_rank asc")
 	}
+	query = query.Order("prediction_markets.active desc, prediction_markets.closed asc, prediction_markets.volume desc, prediction_markets.id desc")
 	if err := query.Find(&rows).Error; err != nil {
 		return nil, err
 	}
@@ -55,7 +79,7 @@ func (r PredictionRepository) FindEvent(ctx context.Context, id uint) (*domainpr
 
 func (r PredictionRepository) FindMarket(ctx context.Context, id uint) (*domainprediction.Market, bool, error) {
 	var row persistmodel.PredictionMarket
-	err := r.db.WithContext(ctx).First(&row, id).Error
+	err := r.db.WithContext(ctx).Preload("Event").First(&row, id).Error
 	if err == nil {
 		out := predictionMarketFromModel(row)
 		return &out, true, nil
@@ -68,7 +92,7 @@ func (r PredictionRepository) FindMarket(ctx context.Context, id uint) (*domainp
 
 func (r PredictionRepository) FindMarketByExternalID(ctx context.Context, provider string, externalID string) (*domainprediction.Market, bool, error) {
 	var row persistmodel.PredictionMarket
-	err := r.db.WithContext(ctx).Where("provider = ? AND external_market_id = ?", provider, externalID).First(&row).Error
+	err := r.db.WithContext(ctx).Preload("Event").Where("provider = ? AND external_market_id = ?", provider, externalID).First(&row).Error
 	if err == nil {
 		out := predictionMarketFromModel(row)
 		return &out, true, nil
@@ -123,7 +147,7 @@ func (r PredictionRepository) UpsertMarket(ctx context.Context, row *domainpredi
 		return err
 	}
 	var saved persistmodel.PredictionMarket
-	if err := r.db.WithContext(ctx).Where("provider = ? AND external_market_id = ?", modelRow.Provider, modelRow.ExternalMarketID).First(&saved).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Event").Where("provider = ? AND external_market_id = ?", modelRow.Provider, modelRow.ExternalMarketID).First(&saved).Error; err != nil {
 		return err
 	}
 	*row = predictionMarketFromModel(saved)
@@ -154,7 +178,7 @@ func (r PredictionRepository) SaveQuote(ctx context.Context, row *domainpredicti
 
 func (r PredictionRepository) ListMatches(ctx context.Context, filter appprediction.MatchFilter) ([]appprediction.MatchRow, error) {
 	var rows []persistmodel.PredictionMarketMatch
-	q := r.db.WithContext(ctx).Preload("Market").Order("id desc")
+	q := r.db.WithContext(ctx).Preload("Market.Event").Order("id desc")
 	if filter.MessageID != "" {
 		q = q.Where("message_id = ?", filter.MessageID)
 	}
@@ -213,16 +237,37 @@ func (r PredictionRepository) FindMatch(ctx context.Context, id uint) (*domainpr
 }
 
 func (r PredictionRepository) UpsertWatchlist(ctx context.Context, item *domainprediction.WatchlistItem) error {
-	row := predictionWatchlistToModel(*item)
-	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "research_team_id"}, {Name: "market_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"note", "active"}),
-	}).Create(&row).Error
+	db := r.db.WithContext(ctx)
+	var saved persistmodel.PredictionWatchlistItem
+	err := db.Where("research_team_id = ? AND market_id = ?", item.ResearchTeamID, item.MarketID).First(&saved).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		row := predictionWatchlistToModel(*item)
+		if err := db.Create(&row).Error; err != nil {
+			return err
+		}
+		*item = predictionWatchlistFromModel(row)
+		return nil
+	}
 	if err != nil {
 		return err
 	}
-	var saved persistmodel.PredictionWatchlistItem
-	if err := r.db.WithContext(ctx).Where("research_team_id = ? AND market_id = ?", row.ResearchTeamID, row.MarketID).First(&saved).Error; err != nil {
+	updates := map[string]any{
+		"note":   item.Note,
+		"active": item.Active,
+	}
+	if item.SourceMeetingID != nil {
+		updates["source_meeting_id"] = *item.SourceMeetingID
+	}
+	if item.SourceMeetingEventID != nil {
+		updates["source_meeting_event_id"] = *item.SourceMeetingEventID
+	}
+	if item.SourceRoleKey != nil {
+		updates["source_role_key"] = *item.SourceRoleKey
+	}
+	if err := db.Model(&saved).Updates(updates).Error; err != nil {
+		return err
+	}
+	if err := db.First(&saved, saved.ID).Error; err != nil {
 		return err
 	}
 	*item = predictionWatchlistFromModel(saved)
@@ -234,7 +279,7 @@ func (r PredictionRepository) ListWatchlist(ctx context.Context, researchTeamID 
 		limit = 100
 	}
 	var rows []persistmodel.PredictionWatchlistItem
-	q := r.db.WithContext(ctx).Preload("Market").Order("created_at desc, id desc").Limit(limit)
+	q := r.db.WithContext(ctx).Preload("Market.Event").Order("created_at desc, id desc").Limit(limit)
 	if researchTeamID != 0 {
 		q = q.Where("research_team_id = ?", researchTeamID)
 	}
@@ -286,13 +331,19 @@ func predictionMarketsToDomain(rows []persistmodel.PredictionMarket) []domainpre
 }
 
 func predictionMarketFromModel(row persistmodel.PredictionMarket) domainprediction.Market {
-	return domainprediction.Market{
+	out := domainprediction.Market{
 		ID: row.ID, EventID: row.EventID, Provider: row.Provider, ExternalMarketID: row.ExternalMarketID, ConditionID: row.ConditionID, Question: row.Question,
 		Slug: row.Slug, Description: row.Description, Outcomes: domainkernel.JSON(row.Outcomes), OutcomePrices: domainkernel.JSON(row.OutcomePrices),
 		CLOBTokenIDs: domainkernel.JSON(row.CLOBTokenIDs), EnableOrderBook: row.EnableOrderBook, BestBid: row.BestBid, BestAsk: row.BestAsk,
 		LastTradePrice: row.LastTradePrice, Spread: row.Spread, Volume: row.Volume, Liquidity: row.Liquidity, Active: row.Active, Closed: row.Closed,
 		Restricted: row.Restricted, EndDate: row.EndDate, Raw: domainkernel.JSON(row.Raw), UpdatedAt: row.UpdatedAt, CreatedAt: row.CreatedAt,
 	}
+	if row.Event != nil {
+		out.EventExternalEventID = row.Event.ExternalEventID
+		out.EventSlug = row.Event.Slug
+		out.EventTitle = row.Event.Title
+	}
+	return out
 }
 
 func predictionMarketToModel(row domainprediction.Market) persistmodel.PredictionMarket {
@@ -339,11 +390,17 @@ func predictionMatchToModel(row domainprediction.Match) persistmodel.PredictionM
 }
 
 func predictionWatchlistFromModel(row persistmodel.PredictionWatchlistItem) domainprediction.WatchlistItem {
-	return domainprediction.WatchlistItem{ID: row.ID, ResearchTeamID: row.ResearchTeamID, MarketID: row.MarketID, Note: row.Note, Active: row.Active, CreatedAt: row.CreatedAt}
+	return domainprediction.WatchlistItem{
+		ID: row.ID, ResearchTeamID: row.ResearchTeamID, MarketID: row.MarketID, Note: row.Note, Active: row.Active,
+		SourceMeetingID: row.SourceMeetingID, SourceMeetingEventID: row.SourceMeetingEventID, SourceRoleKey: row.SourceRoleKey, CreatedAt: row.CreatedAt,
+	}
 }
 
 func predictionWatchlistToModel(row domainprediction.WatchlistItem) persistmodel.PredictionWatchlistItem {
-	return persistmodel.PredictionWatchlistItem{ID: row.ID, ResearchTeamID: row.ResearchTeamID, MarketID: row.MarketID, Note: row.Note, Active: row.Active, CreatedAt: row.CreatedAt}
+	return persistmodel.PredictionWatchlistItem{
+		ID: row.ID, ResearchTeamID: row.ResearchTeamID, MarketID: row.MarketID, Note: row.Note, Active: row.Active,
+		SourceMeetingID: row.SourceMeetingID, SourceMeetingEventID: row.SourceMeetingEventID, SourceRoleKey: row.SourceRoleKey, CreatedAt: row.CreatedAt,
+	}
 }
 
 func firstPredictionString(values ...string) string {

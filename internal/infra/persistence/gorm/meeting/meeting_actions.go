@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	appmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/app/meeting"
+	appprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/app/prediction"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
@@ -20,7 +21,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var jsonFence = regexp.MustCompile("(?s)```(?:json)?\\s*(\\{.*?\\})\\s*```")
+var (
+	jsonFence                             = regexp.MustCompile("(?s)```(?:json)?\\s*(\\{.*?\\})\\s*```")
+	predictionMarketRecapStockCodePattern = regexp.MustCompile(`(?i)(^|[^a-z0-9])(?:[036]\d{5}|5(?:1|6|8)\d{4}|15\d{4})(?:\.(?:sh|sz|ss))?([^a-z0-9]|$)`)
+	predictionMarketTradingPhrasePattern  = regexp.MustCompile(`(?i)(^|[^a-z0-9])(?:buy|sell|paper\s+trade|paper\s+order|position\s+sizing|entry\s+price|stop\s+loss|take\s+profit)([^a-z0-9]|$)`)
+)
 
 func TryApplyModeratorRecapFromEvents(db *gorm.DB, meeting *domainmeeting.Meeting) (map[string]any, bool, error) {
 	var eventRow persistmodel.MeetingEvent
@@ -34,6 +39,13 @@ func TryApplyModeratorRecapFromEvents(db *gorm.DB, meeting *domainmeeting.Meetin
 	}
 	if !recapHasActions(recap) && strings.TrimSpace(stringFromAny(recap["summary"])) == "" && strings.TrimSpace(stringFromAny(recap["conclusion"])) == "" {
 		return recap, false, nil
+	}
+	if isPredictionMarketMeeting(db, meeting) {
+		if reason := predictionMarketRecapTextBlockReason(recap); reason != "" {
+			roleKey := "moderator"
+			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &roleKey, "Prediction market recap text was blocked.", predictionMarketRecapTextGatePayload(recap, reason))
+			return recap, false, nil
+		}
 	}
 	if err := ApplyMeetingRecapActions(db, meeting, &event, "moderator", recap); err != nil {
 		return recap, false, err
@@ -57,8 +69,23 @@ func ApplyMeetingRecapActions(db *gorm.DB, meeting *domainmeeting.Meeting, recap
 		return nil
 	}
 	predictionMarketMeeting := isPredictionMarketMeeting(db, meeting)
+	if predictionMarketMeeting {
+		if reason := predictionMarketRecapTextBlockReason(recap); reason != "" {
+			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Prediction market recap text was blocked.", predictionMarketRecapTextGatePayload(recap, reason))
+			return nil
+		}
+	}
 	if predictionMarketMeeting && predictionMarketHasBlockedExecutableActions(recap) {
 		_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Prediction market recap executable trading actions were blocked.", recapActionGatePayload(recap, "prediction_market_actions_blocked", "prediction market meetings cannot create A-share watchlist actions or paper orders", "prediction_market_action_boundary", "blocked"))
+	}
+	if predictionMarketMeeting {
+		for _, raw := range objectList(recap["prediction_watchlist_actions"]) {
+			if err := applyPredictionWatchlistAction(db, meeting, recapEvent, moderatorRoleKey, raw); err != nil {
+				_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to update prediction watchlist: "+err.Error(), map[string]any{"status": "prediction_watchlist_error"})
+			}
+		}
+	} else if len(objectList(recap["prediction_watchlist_actions"])) > 0 {
+		_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Prediction watchlist actions were ignored for a non-prediction meeting.", recapActionGatePayload(recap, "prediction_watchlist_actions_ignored", "prediction_watchlist_actions require a prediction-market or mixed meeting with prediction context", "prediction_watchlist_action_boundary", "ignored"))
 	}
 	if !predictionMarketMeeting {
 		watchlistActions := recapWatchlistActions(recap, recapEvent, meeting)
@@ -69,6 +96,19 @@ func ApplyMeetingRecapActions(db *gorm.DB, meeting *domainmeeting.Meeting, recap
 		}
 	}
 	for _, raw := range objectList(recap["wake_plans"]) {
+		if predictionMarketMeeting {
+			if reason := predictionMarketWakePlanBlockReason(raw); reason != "" {
+				blockedRecap := map[string]any{
+					"wake_plans":         []map[string]any{raw},
+					"facts":              recap["facts"],
+					"inferences":         recap["inferences"],
+					"citations":          recap["citations"],
+					"evidence_event_ids": firstNonEmptyAny(recap["evidence_event_ids"], recap["evidenceEventIds"], recap["evidence_ids"], recap["evidenceIds"]),
+				}
+				_, _ = AppendEvent(db, meeting.ID, domainkernel.EventSystem, &moderatorRoleKey, "Prediction market wake plan was blocked.", recapActionGatePayload(blockedRecap, "prediction_market_wake_plan_blocked", reason, "prediction_market_wake_plan_boundary", "blocked"))
+				continue
+			}
+		}
 		if err := applyWakePlanAction(db, meeting, recapEvent, moderatorRoleKey, raw); err != nil {
 			_, _ = AppendEvent(db, meeting.ID, domainkernel.EventError, &moderatorRoleKey, "Failed to create wake plan: "+err.Error(), map[string]any{"status": "wake_plan_error"})
 		}
@@ -91,11 +131,231 @@ func isPredictionMarketMeeting(db *gorm.DB, meeting *domainmeeting.Meeting) bool
 	if err := db.Select("asset_class").First(&team, meeting.ResearchTeamID).Error; err != nil {
 		return false
 	}
-	return strings.TrimSpace(team.AssetClass) == "prediction_market"
+	switch strings.TrimSpace(team.AssetClass) {
+	case "prediction_market":
+		return true
+	case "mixed":
+		return len(MeetingPredictionMarketIDs(db, meeting.ID)) > 0
+	default:
+		return false
+	}
 }
 
 func predictionMarketHasBlockedExecutableActions(recap map[string]any) bool {
 	return len(objectList(recap["watchlist_actions"])) > 0 || len(objectList(recap["orders"])) > 0
+}
+
+func predictionMarketRecapTextBlockReason(recap map[string]any) string {
+	if predictionMarketRecapNarrativeHasAShareFields(recap) ||
+		predictionMarketPayloadHasAShareFields(recap["prediction_watchlist_actions"]) ||
+		predictionMarketPayloadHasAShareFields(recap["predictionWatchlistActions"]) {
+		return "prediction market recap cannot use A-share code, symbol, ticker, or related_symbols fields"
+	}
+	return predictionMarketTextBoundaryBlockReason("recap", predictionMarketRecapTextValues(recap))
+}
+
+func predictionMarketTextBoundaryBlockReason(scope string, values []string) string {
+	text := strings.ToLower(strings.Join(values, "\n"))
+	for _, term := range predictionMarketRecapForbiddenTextTerms {
+		if strings.Contains(text, term) {
+			return fmt.Sprintf("prediction market %s cannot contain A-share or trading term %q", scope, term)
+		}
+	}
+	if match := strings.TrimSpace(predictionMarketTradingPhrasePattern.FindString(text)); match != "" {
+		return fmt.Sprintf("prediction market %s cannot contain trading phrase %q", scope, match)
+	}
+	if match := strings.TrimSpace(predictionMarketRecapStockCodePattern.FindString(text)); match != "" {
+		return fmt.Sprintf("prediction market %s cannot contain China-listed security code %q", scope, match)
+	}
+	return ""
+}
+
+func predictionMarketPayloadHasAShareFields(value any) bool {
+	switch typed := value.(type) {
+	case map[string]any:
+		for key, item := range typed {
+			switch strings.TrimSpace(key) {
+			case "code", "codes", "symbol", "symbols", "ticker", "tickers", "related_symbols", "relatedSymbols":
+				if wakeConfigValuePresent(item) {
+					return true
+				}
+			}
+			if predictionMarketPayloadHasAShareFields(item) {
+				return true
+			}
+		}
+	case []any:
+		for _, item := range typed {
+			if predictionMarketPayloadHasAShareFields(item) {
+				return true
+			}
+		}
+	case []map[string]any:
+		for _, item := range typed {
+			if predictionMarketPayloadHasAShareFields(item) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+var predictionMarketRecapForbiddenTextTerms = []string{
+	"a股",
+	"a-share",
+	"a share",
+	"股票",
+	"个股",
+	"证券",
+	"模拟盘",
+	"paper order",
+	"paper-order",
+	"paper trading",
+	"paper-trading",
+	"paper account",
+	"paper.orders",
+	"paper.create_order",
+	"market.realtime_quote",
+	"market.daily_bars",
+	"自选池",
+	"证券自选",
+	"真实交易",
+	"下单",
+	"买入",
+	"卖出",
+	"仓位",
+	"持仓",
+}
+
+func predictionMarketRecapNarrativeHasAShareFields(recap map[string]any) bool {
+	for _, key := range []string{"code", "codes", "symbol", "symbols", "ticker", "tickers", "related_symbols", "relatedSymbols"} {
+		if wakeConfigValuePresent(recap[key]) {
+			return true
+		}
+	}
+	return false
+}
+
+func predictionMarketRecapTextValues(recap map[string]any) []string {
+	out := []string{}
+	for _, key := range []string{"topic", "tags", "summary", "conclusion", "facts", "assumptions", "inferences", "evidence_gaps", "evidenceGaps", "citations", "prediction_watchlist_actions", "predictionWatchlistActions"} {
+		collectPredictionMarketRecapText(recap[key], &out)
+	}
+	return out
+}
+
+func collectPredictionMarketRecapText(value any, out *[]string) {
+	switch typed := value.(type) {
+	case string:
+		if text := strings.TrimSpace(typed); text != "" {
+			*out = append(*out, text)
+		}
+	case []string:
+		for _, item := range typed {
+			collectPredictionMarketRecapText(item, out)
+		}
+	case []any:
+		for _, item := range typed {
+			collectPredictionMarketRecapText(item, out)
+		}
+	case []map[string]any:
+		for _, item := range typed {
+			collectPredictionMarketRecapText(item, out)
+		}
+	case map[string]any:
+		for _, item := range typed {
+			collectPredictionMarketRecapText(item, out)
+		}
+	}
+}
+
+func predictionMarketRecapTextGatePayload(recap map[string]any, reason string) map[string]any {
+	return map[string]any{
+		"status":      "prediction_market_recap_text_blocked",
+		"reason":      reason,
+		"policy":      "prediction_market_text_boundary",
+		"disposition": "blocked",
+		"recap": map[string]any{
+			"topic":         stringFromAny(recap["topic"]),
+			"summary":       stringFromAny(recap["summary"]),
+			"conclusion":    stringFromAny(recap["conclusion"]),
+			"facts":         stringList(recap["facts"]),
+			"inferences":    stringList(recap["inferences"]),
+			"evidence_gaps": stringList(recap["evidence_gaps"]),
+			"citations":     stringList(recap["citations"]),
+		},
+	}
+}
+
+func predictionMarketWakePlanBlockReason(raw map[string]any) string {
+	triggerType := domainkernel.WakeTriggerType(strings.ToLower(firstNonEmptyString(stringFromAny(raw["trigger_type"]), string(domainkernel.WakeTime))))
+	switch triggerType {
+	case domainkernel.WakeTime:
+		return ""
+	case domainkernel.WakeEvent:
+	case domainkernel.WakeIndicator:
+		return "prediction market meetings cannot create A-share indicator wake plans"
+	default:
+		return fmt.Sprintf("prediction market wake plans only allow time or event triggers, got %s", triggerType)
+	}
+	if predictionMarketWakeConfigHasAShareFields(raw["trigger_config"]) {
+		return "prediction market wake plans cannot use A-share code, symbol, ticker, or related_symbols fields"
+	}
+	return ""
+}
+
+func predictionMarketWakeConfigHasAShareFields(value any) bool {
+	switch typed := value.(type) {
+	case map[string]any:
+		for key, inner := range typed {
+			if predictionMarketWakeConfigKeyBlocked(key) && wakeConfigValuePresent(inner) {
+				return true
+			}
+			if predictionMarketWakeConfigHasAShareFields(inner) {
+				return true
+			}
+		}
+	case []any:
+		for _, inner := range typed {
+			if predictionMarketWakeConfigHasAShareFields(inner) {
+				return true
+			}
+		}
+	case []map[string]any:
+		for _, inner := range typed {
+			if predictionMarketWakeConfigHasAShareFields(inner) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func predictionMarketWakeConfigKeyBlocked(key string) bool {
+	normalized := strings.NewReplacer("_", "", "-", "").Replace(strings.ToLower(strings.TrimSpace(key)))
+	switch normalized {
+	case "code", "codes", "symbol", "symbols", "ticker", "tickers", "relatedsymbol", "relatedsymbols":
+		return true
+	default:
+		return false
+	}
+}
+
+func wakeConfigValuePresent(value any) bool {
+	switch typed := value.(type) {
+	case nil:
+		return false
+	case string:
+		return strings.TrimSpace(typed) != ""
+	case []any:
+		return len(typed) > 0
+	case []string:
+		return len(typed) > 0
+	case map[string]any:
+		return len(typed) > 0
+	default:
+		return strings.TrimSpace(stringFromAny(value)) != ""
+	}
 }
 
 func applyWatchlistAction(db *gorm.DB, meeting *domainmeeting.Meeting, roleKey string, raw map[string]any) error {
@@ -122,6 +382,52 @@ func applyWatchlistAction(db *gorm.DB, meeting *domainmeeting.Meeting, roleKey s
 		return err
 	}
 	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolResult, &roleKey, fmt.Sprintf("Watchlist item %s is active=%v.", item.Code, item.Active), map[string]any{"status": "watchlist_updated", "watchlist_item_id": item.ID, "code": item.Code})
+	return nil
+}
+
+func applyPredictionWatchlistAction(db *gorm.DB, meeting *domainmeeting.Meeting, recapEvent *domainmeeting.Event, roleKey string, raw map[string]any) error {
+	marketID := uintFromAny(firstNonEmptyAny(raw["market_id"], raw["marketId"], raw["prediction_market_id"], raw["predictionMarketId"]))
+	if marketID == 0 {
+		return fmt.Errorf("prediction watchlist action requires market_id")
+	}
+	noteText := strings.TrimSpace(firstNonEmptyString(stringFromAny(raw["note"]), stringFromAny(raw["reason"]), meeting.Topic))
+	var note *string
+	if noteText != "" {
+		note = &noteText
+	}
+	active := boolFromAction(raw["active"], true)
+	args := map[string]any{"market_id": marketID, "note": noteText, "active": active}
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolCall, &roleKey, "Moderator is updating the prediction watchlist.", map[string]any{"status": "tool_call", "tool": "prediction.upsert_watchlist", "arguments": args})
+	source := &appprediction.WatchlistSource{MeetingID: meeting.ID, RoleKey: roleKey}
+	if recapEvent != nil {
+		source.MeetingEventID = recapEvent.ID
+	}
+	item, err := appprediction.NewUsecase(gormrepo.NewPredictionRepository(db), nil).UpsertWatchlistWithSource(dbContext(db), meeting.ResearchTeamID, marketID, note, active, source)
+	if err != nil {
+		return err
+	}
+	market, _, _ := gormrepo.NewPredictionRepository(db).FindMarket(dbContext(db), item.MarketID)
+	payload := map[string]any{
+		"status":                       "prediction_watchlist_updated",
+		"tool":                         "prediction.upsert_watchlist",
+		"prediction_watchlist_item_id": item.ID,
+		"market_id":                    item.MarketID,
+		"active":                       item.Active,
+		"note":                         noteText,
+		"source_meeting_id":            item.SourceMeetingID,
+		"source_meeting_event_id":      item.SourceMeetingEventID,
+		"source_role_key":              nullableStringPointerForTool(item.SourceRoleKey),
+	}
+	if market != nil {
+		payload["market_question"] = market.Question
+		payload["market_slug"] = market.Slug
+		payload["external_market_id"] = market.ExternalMarketID
+		payload["event_id"] = market.EventID
+		payload["external_event_id"] = nullableStringForTool(market.EventExternalEventID)
+		payload["event_slug"] = nullableStringForTool(market.EventSlug)
+		payload["event_title"] = nullableStringForTool(market.EventTitle)
+	}
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventToolResult, &roleKey, fmt.Sprintf("Prediction watchlist item #%d is active=%v for market #%d.", item.ID, item.Active, item.MarketID), payload)
 	return nil
 }
 
@@ -253,21 +559,25 @@ func firstJSONObjectCandidates(text string) []string {
 }
 
 func recapHasActions(recap map[string]any) bool {
-	return len(objectList(recap["watchlist_actions"])) > 0 || len(objectList(recap["wake_plans"])) > 0 || len(objectList(recap["orders"])) > 0
+	return len(objectList(recap["watchlist_actions"])) > 0 ||
+		len(objectList(recap["prediction_watchlist_actions"])) > 0 ||
+		len(objectList(recap["wake_plans"])) > 0 ||
+		len(objectList(recap["orders"])) > 0
 }
 
 func recapActionGatePayload(recap map[string]any, status string, reason string, policy string, disposition string) map[string]any {
 	suggestions := recapActionSuggestions(recap, disposition, reason)
 	return map[string]any{
-		"status":                 status,
-		"reason":                 reason,
-		"policy":                 policy,
-		"disposition":            disposition,
-		"watchlist_action_count": len(objectList(recap["watchlist_actions"])),
-		"wake_plan_count":        len(objectList(recap["wake_plans"])),
-		"order_count":            len(objectList(recap["orders"])),
-		"suggestion_count":       len(suggestions),
-		"suggested_actions":      suggestions,
+		"status":                            status,
+		"reason":                            reason,
+		"policy":                            policy,
+		"disposition":                       disposition,
+		"watchlist_action_count":            len(objectList(recap["watchlist_actions"])),
+		"prediction_watchlist_action_count": len(objectList(recap["prediction_watchlist_actions"])),
+		"wake_plan_count":                   len(objectList(recap["wake_plans"])),
+		"order_count":                       len(objectList(recap["orders"])),
+		"suggestion_count":                  len(suggestions),
+		"suggested_actions":                 suggestions,
 		"evidence_summary": map[string]any{
 			"facts":              stringList(recap["facts"]),
 			"inferences":         stringList(recap["inferences"]),
@@ -280,6 +590,7 @@ func recapActionGatePayload(recap map[string]any, status string, reason string, 
 func recapActionSuggestions(recap map[string]any, disposition string, reason string) []map[string]any {
 	out := []map[string]any{}
 	out = append(out, recapActionSuggestionsForType("watchlist", objectList(recap["watchlist_actions"]), disposition, reason)...)
+	out = append(out, recapActionSuggestionsForType("prediction_watchlist", objectList(recap["prediction_watchlist_actions"]), disposition, reason)...)
 	out = append(out, recapActionSuggestionsForType("wake_plan", objectList(recap["wake_plans"]), disposition, reason)...)
 	out = append(out, recapActionSuggestionsForType("paper_order", objectList(recap["orders"]), disposition, reason)...)
 	return out
@@ -317,6 +628,7 @@ func recapActionsRequireReview(recap map[string]any) bool {
 func recapActionObjects(recap map[string]any) []map[string]any {
 	out := []map[string]any{}
 	out = append(out, objectList(recap["watchlist_actions"])...)
+	out = append(out, objectList(recap["prediction_watchlist_actions"])...)
 	out = append(out, objectList(recap["wake_plans"])...)
 	out = append(out, objectList(recap["orders"])...)
 	return out

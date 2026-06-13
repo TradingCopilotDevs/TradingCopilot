@@ -114,7 +114,7 @@ func (s *Server) buildSetupReadiness(ctx context.Context) (map[string]any, error
 		Ready:     teamReady,
 		Status:    statusFromReady(teamReady, teamErr),
 		Summary:   fmt.Sprintf("%d 个团队，%d 个角色", len(teams), roleCount),
-		Detail:    "会议运行需要团队、模拟盘账户绑定，以及至少一组启用的投研角色。",
+		Detail:    "会议运行需要至少一个投研团队和一组启用角色；A 股/混合团队需要模拟盘账户，预测市场团队只做观察研究且不绑定模拟盘。",
 		ActionKey: "ensure-default-team",
 		Route:     "/research-team",
 	})

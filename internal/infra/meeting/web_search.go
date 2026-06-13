@@ -11,8 +11,16 @@ import (
 const DefaultWebSearchBaseURL = "https://news.google.com/rss/search"
 
 func SearchWeb(client *http.Client, baseURL string, query string, limit int) ([]map[string]any, map[string]any, error) {
+	return searchWeb(client, baseURL, query, limit, "zh-CN", "CN", "CN:zh-Hans")
+}
+
+func SearchWebGlobal(client *http.Client, baseURL string, query string, limit int) ([]map[string]any, map[string]any, error) {
+	return searchWeb(client, baseURL, query, limit, "en-US", "US", "US:en")
+}
+
+func searchWeb(client *http.Client, baseURL string, query string, limit int, hl string, gl string, ceid string) ([]map[string]any, map[string]any, error) {
 	cleaned := strings.Join(strings.Fields(query), " ")
-	args := map[string]any{"query": cleaned, "limit": limit}
+	args := map[string]any{"query": cleaned, "limit": limit, "hl": hl, "gl": gl, "ceid": ceid}
 	if cleaned == "" {
 		return []map[string]any{}, args, nil
 	}
@@ -29,9 +37,9 @@ func SearchWeb(client *http.Client, baseURL string, query string, limit int) ([]
 	}
 	q := endpoint.Query()
 	q.Set("q", cleaned)
-	q.Set("hl", "zh-CN")
-	q.Set("gl", "CN")
-	q.Set("ceid", "CN:zh-Hans")
+	q.Set("hl", hl)
+	q.Set("gl", gl)
+	q.Set("ceid", ceid)
 	endpoint.RawQuery = q.Encode()
 	if client == nil {
 		client = http.DefaultClient

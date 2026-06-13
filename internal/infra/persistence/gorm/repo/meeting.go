@@ -241,6 +241,9 @@ func (r MeetingRepository) DeleteGraph(ctx context.Context, meetingID uint) erro
 	if err := db.Model(&persistmodel.PaperOrder{}).Where("meeting_id = ?", meetingID).Updates(map[string]any{"meeting_id": nil, "source_meeting_event_id": nil}).Error; err != nil {
 		return err
 	}
+	if err := db.Model(&persistmodel.PredictionWatchlistItem{}).Where("source_meeting_id = ?", meetingID).Updates(map[string]any{"source_meeting_id": nil, "source_meeting_event_id": nil, "source_role_key": nil}).Error; err != nil {
+		return err
+	}
 	if err := db.Where("meeting_id = ?", meetingID).Delete(&persistmodel.MeetingEvent{}).Error; err != nil {
 		return err
 	}

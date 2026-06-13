@@ -42,13 +42,20 @@ func (c Client) Search(ctx context.Context, q string, limit int) (appprediction.
 	if limit <= 0 {
 		limit = 20
 	}
+	q = appprediction.NormalizeSearchQuery(q)
+	if isSlugCandidate(q) {
+		result, err := c.searchBySlug(ctx, q)
+		if err == nil && (len(result.Events) > 0 || len(result.Markets) > 0) {
+			return result, nil
+		}
+	}
 	endpoint := strings.TrimRight(c.gammaBaseURL, "/") + "/public-search"
 	values := url.Values{}
 	values.Set("q", strings.TrimSpace(q))
 	values.Set("limit_per_type", strconv.Itoa(limit))
 	values.Set("events_status", "active")
 	values.Set("search_profiles", "false")
-	values.Set("optimized", "true")
+	values.Set("optimized", "false")
 	return c.getSearch(ctx, endpoint+"?"+values.Encode())
 }
 
@@ -157,6 +164,32 @@ func (c Client) getSearch(ctx context.Context, endpoint string) (appprediction.S
 	return appprediction.SearchResult{Events: events, Markets: markets}, nil
 }
 
+func (c Client) searchBySlug(ctx context.Context, slug string) (appprediction.SearchResult, error) {
+	eventEndpoint := strings.TrimRight(c.gammaBaseURL, "/") + "/events/slug/" + url.PathEscape(slug)
+	var eventPayload map[string]any
+	if err := c.getJSON(ctx, eventEndpoint, &eventPayload); err == nil {
+		events := parseEvents([]any{eventPayload})
+		markets := []domainprediction.Market{}
+		for _, event := range events {
+			markets = append(markets, parseMarketsFromRaw(event.Raw)...)
+		}
+		return appprediction.SearchResult{Events: events, Markets: markets}, nil
+	}
+
+	marketEndpoint := strings.TrimRight(c.gammaBaseURL, "/") + "/markets/slug/" + url.PathEscape(slug)
+	var marketPayload map[string]any
+	if err := c.getJSON(ctx, marketEndpoint, &marketPayload); err != nil {
+		return appprediction.SearchResult{}, err
+	}
+	events := parseEvents(anyList(marketPayload["events"]))
+	eventID := ""
+	if len(events) > 0 {
+		eventID = events[0].ExternalEventID
+	}
+	markets := parseMarketRows([]any{marketPayload}, eventID)
+	return appprediction.SearchResult{Events: events, Markets: markets}, nil
+}
+
 func (c Client) getEvents(ctx context.Context, endpoint string) (appprediction.SearchResult, error) {
 	var payload any
 	if err := c.getJSON(ctx, endpoint, &payload); err != nil {
@@ -230,45 +263,56 @@ func parseMarketsFromRaw(raw domainkernel.JSON) []domainprediction.Market {
 		return nil
 	}
 	eventID := firstString(event, "id", "eventId")
-	rows := anyList(event["markets"])
+	return parseMarketRows(anyList(event["markets"]), eventID)
+}
+
+func parseMarketRows(rows []any, eventID string) []domainprediction.Market {
 	out := make([]domainprediction.Market, 0, len(rows))
 	for _, item := range rows {
 		row, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		market := domainprediction.Market{
-			Provider:         domainprediction.ProviderPolymarket,
-			ExternalMarketID: firstString(row, "id", "marketId"),
-			ConditionID:      firstString(row, "conditionId", "condition_id"),
-			Question:         firstString(row, "question", "title"),
-			Slug:             firstString(row, "slug"),
-			Description:      firstString(row, "description"),
-			Outcomes:         jsonValue(parseJSONStringList(row["outcomes"])),
-			OutcomePrices:    jsonValue(parseJSONStringList(row["outcomePrices"])),
-			CLOBTokenIDs:     jsonValue(parseJSONStringList(row["clobTokenIds"])),
-			EnableOrderBook:  boolValue(row["enableOrderBook"]),
-			BestBid:          decimalValue(firstPresent(row, "bestBid", "best_bid")),
-			BestAsk:          decimalValue(firstPresent(row, "bestAsk", "best_ask")),
-			LastTradePrice:   decimalValue(firstPresent(row, "lastTradePrice", "last_trade_price")),
-			Spread:           decimalValue(firstPresent(row, "spread")),
-			Volume:           decimalValue(firstPresent(row, "volume", "volumeNum")),
-			Liquidity:        decimalValue(firstPresent(row, "liquidity", "liquidityNum")),
-			Active:           boolValue(row["active"]),
-			Closed:           boolValue(row["closed"]),
-			Restricted:       boolValue(row["restricted"]),
-			EndDate:          timePtr(firstString(row, "endDate", "endDateIso")),
-			Raw:              jsonValue(withRawEventID(row, eventID)),
-		}
-		if market.ExternalMarketID == "" {
-			market.ExternalMarketID = market.ConditionID
-		}
-		if market.ExternalMarketID == "" || market.Question == "" {
+		market, ok := parseMarketRow(row, eventID)
+		if !ok {
 			continue
 		}
 		out = append(out, market)
 	}
 	return out
+}
+
+func parseMarketRow(row map[string]any, eventID string) (domainprediction.Market, bool) {
+	market := domainprediction.Market{
+		Provider:         domainprediction.ProviderPolymarket,
+		ExternalMarketID: firstString(row, "id", "marketId"),
+		ConditionID:      firstString(row, "conditionId", "condition_id"),
+		Question:         firstString(row, "question", "title"),
+		Slug:             firstString(row, "slug"),
+		Description:      firstString(row, "description"),
+		Outcomes:         jsonValue(parseJSONStringList(row["outcomes"])),
+		OutcomePrices:    jsonValue(parseJSONStringList(row["outcomePrices"])),
+		CLOBTokenIDs:     jsonValue(parseJSONStringList(row["clobTokenIds"])),
+		EnableOrderBook:  boolValue(row["enableOrderBook"]),
+		BestBid:          decimalValue(firstPresent(row, "bestBid", "best_bid")),
+		BestAsk:          decimalValue(firstPresent(row, "bestAsk", "best_ask")),
+		LastTradePrice:   decimalValue(firstPresent(row, "lastTradePrice", "last_trade_price")),
+		Spread:           decimalValue(firstPresent(row, "spread")),
+		Volume:           decimalValue(firstPresent(row, "volume", "volumeNum")),
+		Liquidity:        decimalValue(firstPresent(row, "liquidity", "liquidityNum")),
+		Active:           boolValue(row["active"]),
+		Closed:           boolValue(row["closed"]),
+		Restricted:       boolValue(row["restricted"]),
+		EndDate:          timePtr(firstString(row, "endDate", "endDateIso")),
+		Raw:              jsonValue(withRawEventID(row, eventID)),
+	}
+	if market.ExternalMarketID == "" {
+		market.ExternalMarketID = market.ConditionID
+	}
+	if market.ExternalMarketID == "" || market.Question == "" {
+		return domainprediction.Market{}, false
+	}
+	return market, true
 }
 
 func withRawEventID(row map[string]any, eventID string) map[string]any {
@@ -454,4 +498,18 @@ func uniqueStrings(values []string, limit int) []string {
 		}
 	}
 	return out
+}
+
+func isSlugCandidate(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.ContainsAny(value, " \t\r\n/?#&=") {
+		return false
+	}
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			continue
+		}
+		return false
+	}
+	return strings.Contains(value, "-")
 }

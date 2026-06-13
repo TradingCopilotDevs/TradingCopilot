@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	appprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/app/prediction"
 	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmarket "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/market"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	domainpaper "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/paper"
+	domainprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/prediction"
 	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 	domaintelegram "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/telegram"
 	domainwake "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/wake"
@@ -651,6 +653,193 @@ func TestApplyMeetingRecapActionsBlocksPaperOrdersForPredictionMarketTeam(t *tes
 	mustMeeting(t, db.First(&event, "meeting_id = ? AND type = ? AND payload LIKE ?", meeting.ID, domainkernel.EventSystem, "%prediction_market_actions_blocked%").Error)
 }
 
+func TestApplyMeetingRecapActionsAppliesPredictionWatchlistActions(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	market := persistmodel.PredictionMarket{
+		Provider:         "polymarket",
+		ExternalMarketID: "m-1",
+		Question:         "Will the US and Iran sign a permanent peace deal?",
+		Slug:             "us-iran-peace-deal",
+		Outcomes:         datatypes.JSON([]byte(`["Yes","No"]`)),
+		OutcomePrices:    datatypes.JSON([]byte(`["0.36","0.64"]`)),
+		CLOBTokenIDs:     datatypes.JSON([]byte(`["yes-token","no-token"]`)),
+		Active:           true,
+		EnableOrderBook:  true,
+	}
+	mustMeeting(t, db.Create(&market).Error)
+	meeting, err := CreateMeeting(db, "prediction market watchlist action", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+	role := "moderator"
+	recapEvent, err := AppendEvent(db, meeting.ID, domainkernel.EventRoleMessage, &role, "prediction recap", map[string]any{"status": "recap_completed"})
+	mustMeeting(t, err)
+	recap := map[string]any{
+		"summary":    "prediction market only",
+		"conclusion": "Keep the Polymarket peace-deal market visible for follow-up evidence.",
+		"facts":      []string{"prediction.market_snapshot provided the market state."},
+		"inferences": []string{"the market should remain under observation."},
+		"citations":  []string{"prediction.market_snapshot"},
+		"wake_plans": []map[string]any{},
+		"orders":     []map[string]any{},
+		"watchlist_actions": []map[string]any{
+			{"code": "000001", "note": "should still be blocked", "active": true},
+		},
+		"prediction_watchlist_actions": []map[string]any{
+			{"market_id": market.ID, "note": "Follow official settlement evidence and liquidity.", "active": true},
+		},
+	}
+	mustMeeting(t, ApplyMeetingRecapActions(db, meeting, recapEvent, role, recap))
+
+	var predictionItems []persistmodel.PredictionWatchlistItem
+	mustMeeting(t, db.Where("research_team_id = ? AND market_id = ?", team.ID, market.ID).Find(&predictionItems).Error)
+	if len(predictionItems) != 1 || predictionItems[0].Note == nil || !strings.Contains(*predictionItems[0].Note, "settlement evidence") {
+		t.Fatalf("expected prediction watchlist item, got %+v", predictionItems)
+	}
+	if predictionItems[0].SourceMeetingID == nil || *predictionItems[0].SourceMeetingID != meeting.ID || predictionItems[0].SourceMeetingEventID == nil || *predictionItems[0].SourceMeetingEventID != recapEvent.ID {
+		t.Fatalf("prediction watchlist item should link back to source meeting recap, got %+v", predictionItems[0])
+	}
+	var stockWatchlistCount int64
+	mustMeeting(t, db.Model(&domainmarket.WatchlistItem{}).Count(&stockWatchlistCount).Error)
+	if stockWatchlistCount != 0 {
+		t.Fatalf("prediction recap should not write A-share watchlist rows, got %d", stockWatchlistCount)
+	}
+	var updateEvent domainmeeting.Event
+	mustMeeting(t, db.First(&updateEvent, "meeting_id = ? AND type = ? AND payload LIKE ?", meeting.ID, domainkernel.EventToolResult, "%prediction_watchlist_updated%").Error)
+	var updatePayload map[string]any
+	mustMeeting(t, json.Unmarshal(updateEvent.Payload, &updatePayload))
+	if updatePayload["tool"] != "prediction.upsert_watchlist" || uintFromAny(updatePayload["market_id"]) != market.ID || updatePayload["market_question"] != market.Question || updatePayload["market_slug"] != market.Slug {
+		t.Fatalf("prediction watchlist update should expose market evidence payload, got %+v", updatePayload)
+	}
+	if uintFromAny(updatePayload["source_meeting_id"]) != meeting.ID || uintFromAny(updatePayload["source_meeting_event_id"]) != recapEvent.ID || updatePayload["source_role_key"] != role {
+		t.Fatalf("prediction watchlist update should expose source meeting link, got %+v", updatePayload)
+	}
+}
+
+func TestApplyMeetingRecapActionsFiltersAShareWakePlansForPredictionMarketTeam(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	meeting, err := CreateMeeting(db, "prediction market wake boundary", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+	role := "moderator"
+	recapEvent, err := AppendEvent(db, meeting.ID, domainkernel.EventRoleMessage, &role, "prediction recap", map[string]any{"status": "recap_completed"})
+	mustMeeting(t, err)
+	recap := map[string]any{
+		"summary":           "prediction market only",
+		"conclusion":        "observe market follow-up",
+		"facts":             []string{"prediction.market_snapshot provided the market state."},
+		"inferences":        []string{"the event should remain under observation."},
+		"citations":         []string{"prediction.market_snapshot"},
+		"evidence_gaps":     []string{},
+		"watchlist_actions": []map[string]any{},
+		"orders":            []map[string]any{},
+		"wake_plans": []map[string]any{
+			{"trigger_type": "time", "next_check_at": "2026-07-01 09:00:00", "reason": "scheduled evidence refresh", "trigger_config": map[string]any{"topic": "Check Polymarket Iran peace deal market"}},
+			{"trigger_type": "event", "reason": "watch official-source updates", "trigger_config": map[string]any{"keywords": []string{"Iran peace deal", "Polymarket"}, "prediction_market_ids": []uint{42}, "topic": "Prediction market follow-up"}},
+			{"trigger_type": "indicator", "reason": "must be blocked", "trigger_config": map[string]any{"code": "600519", "threshold": "100"}},
+			{"trigger_type": "event", "reason": "must be blocked", "trigger_config": map[string]any{"related_symbols": []string{"600519"}, "topic": "A-share spillover"}},
+		},
+	}
+	mustMeeting(t, ApplyMeetingRecapActions(db, meeting, recapEvent, role, recap))
+
+	var plans []domainwake.Plan
+	mustMeeting(t, db.Where("meeting_id = ?", meeting.ID).Order("id").Find(&plans).Error)
+	if len(plans) != 2 {
+		t.Fatalf("prediction meeting should keep only two valid wake plans, got %+v", plans)
+	}
+	for _, plan := range plans {
+		if plan.TriggerType == domainkernel.WakeIndicator || strings.Contains(string(plan.TriggerConfig), "600519") {
+			t.Fatalf("prediction wake plan leaked A-share trigger config: %+v", plan)
+		}
+	}
+	var blockedCount int64
+	mustMeeting(t, db.Model(&domainmeeting.Event{}).Where("meeting_id = ? AND payload LIKE ?", meeting.ID, "%prediction_market_wake_plan_blocked%").Count(&blockedCount).Error)
+	if blockedCount != 2 {
+		t.Fatalf("expected two blocked wake plan audit events, got %d", blockedCount)
+	}
+}
+
+func TestPredictionMarketRecapValidationRejectsAShareText(t *testing.T) {
+	bad := map[string]any{
+		"topic":             "prediction market recap",
+		"summary":           "A股 600519 建议加入自选池。",
+		"conclusion":        "观察 Polymarket 事件，但同时买入相关股票。",
+		"facts":             []string{"prediction.market_snapshot provided market state."},
+		"inferences":        []string{"manual evidence review remains necessary."},
+		"citations":         []string{"prediction.market_snapshot"},
+		"watchlist_actions": []map[string]any{},
+		"orders":            []map[string]any{},
+	}
+	err := validateModeratorRecapForMeeting(true)(bad)
+	if err == nil || !strings.Contains(err.Error(), "prediction market recap text violates asset boundary") {
+		t.Fatalf("expected prediction recap text boundary error, got %v", err)
+	}
+	if err := validateModeratorRecapForMeeting(false)(bad); err != nil {
+		t.Fatalf("A-share meeting validator should not use prediction text boundary: %v", err)
+	}
+	good := map[string]any{
+		"topic":             "prediction market recap",
+		"summary":           "The Polymarket market remains an observation candidate.",
+		"conclusion":        "Follow event evidence and resolution criteria before changing confidence.",
+		"facts":             []string{"prediction.market_snapshot provided market state."},
+		"inferences":        []string{"manual evidence review remains necessary."},
+		"citations":         []string{"prediction.market_snapshot"},
+		"watchlist_actions": []map[string]any{},
+		"orders":            []map[string]any{},
+	}
+	if err := validateModeratorRecapForMeeting(true)(good); err != nil {
+		t.Fatalf("valid prediction recap should pass text boundary: %v", err)
+	}
+	badPredictionWatchlist := map[string]any{
+		"topic":             "prediction market recap",
+		"summary":           "The Polymarket market remains an observation candidate.",
+		"conclusion":        "Follow event evidence and resolution criteria before changing confidence.",
+		"facts":             []string{"prediction.market_snapshot provided market state."},
+		"inferences":        []string{"manual evidence review remains necessary."},
+		"citations":         []string{"prediction.market_snapshot"},
+		"orders":            []map[string]any{},
+		"watchlist_actions": []map[string]any{},
+		"prediction_watchlist_actions": []map[string]any{
+			{"market_id": 42, "note": "also add 600519 to 自选池", "code": "600519"},
+		},
+	}
+	if err := validateModeratorRecapForMeeting(true)(badPredictionWatchlist); err == nil || !strings.Contains(err.Error(), "prediction market recap text violates asset boundary") {
+		t.Fatalf("expected prediction watchlist action boundary error, got %v", err)
+	}
+}
+
+func TestTryApplyPredictionMarketRecapBlocksAShareText(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	meeting, err := CreateMeeting(db, "prediction market text boundary", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+	role := "moderator"
+	recap := `{"topic":"polluted recap","tags":["A股"],"summary":"A股 600519 可以关注。","conclusion":"加入证券自选池。","facts":["prediction.market_snapshot provided the market state."],"inferences":["manual review remains necessary."],"citations":["prediction.market_snapshot"],"watchlist_actions":[],"wake_plans":[],"orders":[]}`
+	_, err = AppendEvent(db, meeting.ID, domainkernel.EventRoleMessage, &role, recap, map[string]any{"status": "recap_completed"})
+	mustMeeting(t, err)
+
+	_, applied, err := TryApplyModeratorRecapFromEvents(db, meeting)
+	if err != nil {
+		t.Fatalf("TryApplyModeratorRecapFromEvents: %v", err)
+	}
+	if applied {
+		t.Fatal("polluted prediction recap should not be applied")
+	}
+	var event domainmeeting.Event
+	mustMeeting(t, db.First(&event, "meeting_id = ? AND type = ? AND payload LIKE ?", meeting.ID, domainkernel.EventSystem, "%prediction_market_recap_text_blocked%").Error)
+	if !strings.Contains(event.Content, "Prediction market recap text was blocked") {
+		t.Fatalf("unexpected block event content: %s", event.Content)
+	}
+}
+
 func TestModeratorRecapPromptForPredictionMarketForbidsExecutableActions(t *testing.T) {
 	db := newMeetingTestDB(t)
 	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
@@ -662,8 +851,13 @@ func TestModeratorRecapPromptForPredictionMarketForbidsExecutableActions(t *test
 	if !strings.Contains(prompt, "Prediction-market meetings are observation-only") {
 		t.Fatalf("prediction recap prompt missing observation-only policy: %s", prompt)
 	}
-	if !strings.Contains(prompt, `"watchlist_actions":[]`) || !strings.Contains(prompt, `"orders":[]`) {
+	if !strings.Contains(prompt, `"watchlist_actions":[]`) || !strings.Contains(prompt, `"prediction_watchlist_actions"`) || !strings.Contains(prompt, `"orders":[]`) {
 		t.Fatalf("prediction recap prompt should require empty executable actions: %s", prompt)
+	}
+	for _, forbidden := range []string{"indicator wake_plans", "related_symbols", "code, symbol, ticker", "Do not include A-share sectors"} {
+		if !strings.Contains(prompt, forbidden) {
+			t.Fatalf("prediction recap prompt should explicitly forbid %q in wake plans: %s", forbidden, prompt)
+		}
 	}
 }
 
@@ -687,7 +881,7 @@ func TestManagedPromptsForPredictionMarketAvoidAShareTradingFrame(t *testing.T) 
 	mustMeeting(t, err)
 	meeting.ResearchTeamID = team.ID
 	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
-	_, err = AppendEvent(db, meeting.ID, domainkernel.EventSystem, nil, "context", map[string]any{"status": "meeting_context", "prediction_market_ids": []uint{market.ID}})
+	_, err = AppendEvent(db, meeting.ID, domainkernel.EventSystem, nil, "context", map[string]any{"status": "meeting_context", "prediction_market_ids": []uint{market.ID}, "related_symbols": []string{"600519"}})
 	mustMeeting(t, err)
 	role := domainai.AgentRole{
 		Key:            "odds_analyst",
@@ -711,6 +905,489 @@ func TestManagedPromptsForPredictionMarketAvoidAShareTradingFrame(t *testing.T) 
 	}
 	if strings.Contains(roleContext, "The project targets A-share research and paper trading only") {
 		t.Fatalf("prediction role context leaked A-share execution constraints: %s", roleContext)
+	}
+	if strings.Contains(roleContext, "Related symbols:") {
+		t.Fatalf("prediction role context should not expose A-share related symbols: %s", roleContext)
+	}
+	recapContext := buildRecapContext(db, *meeting)
+	if !strings.Contains(recapContext, "Prediction market context") || !strings.Contains(recapContext, "fed-cut-june") {
+		t.Fatalf("prediction recap context should include linked market evidence: %s", recapContext)
+	}
+	if strings.Contains(recapContext, "Paper accounts and positions") || strings.Contains(recapContext, "Paper risk configs") {
+		t.Fatalf("prediction recap context leaked A-share paper-trading context: %s", recapContext)
+	}
+	planPrompt := moderatorPlanSystemPrompt(true, true)
+	if !strings.Contains(planPrompt, "prediction-market research meeting") || strings.Contains(planPrompt, "A-share multi-agent") {
+		t.Fatalf("prediction moderator plan prompt should not use A-share frame: %s", planPrompt)
+	}
+	planContext := moderatorPlanContext(db, *meeting, []domainai.AgentRole{role}, []string{"- @odds_analyst: analyze"}, nil, nil, 1, true)
+	if strings.Contains(planContext, "Related symbols: 600") {
+		t.Fatalf("prediction moderator plan context should not expose A-share symbols: %s", planContext)
+	}
+	blockedRole := domainai.AgentRole{Key: "bad_tool", Name: "Bad Tool", ToolNames: JSON([]string{"market.realtime_quote"})}
+	results := ExecuteRoleTools(db, *meeting, blockedRole)
+	if len(results) != 1 || !strings.Contains(results[0].Error, "not available in prediction-market meetings") {
+		t.Fatalf("prediction meeting should block A-share market tools, got %+v", results)
+	}
+}
+
+func TestPredictionMarketRoleTurnValidationRejectsAShareAnalysisAndToolRequests(t *testing.T) {
+	validate := validateManagedRoleTurnForMeeting(true)
+	badAnalysis := map[string]any{
+		"type":        "analysis",
+		"content":     "A股 600519 建议买入并加入自选池。",
+		"facts":       []string{"600519 came from market.realtime_quote."},
+		"inferences":  []string{"buy is reasonable"},
+		"citations":   []string{"market.realtime_quote"},
+		"confidence":  "medium",
+		"related_sym": "ignored",
+	}
+	if err := validate(badAnalysis); err == nil || !strings.Contains(err.Error(), "prediction market role analysis violates asset boundary") {
+		t.Fatalf("expected A-share role analysis boundary error, got %v", err)
+	}
+	badTool := map[string]any{
+		"type":       "tool_request",
+		"tool_calls": []map[string]any{{"tool": "market.realtime_quote", "arguments": map[string]any{"code": "600519"}, "reason": "check stock quote"}},
+	}
+	if err := validate(badTool); err == nil || !strings.Contains(err.Error(), "cannot use A-share code") {
+		t.Fatalf("expected A-share tool request boundary error, got %v", err)
+	}
+	good := map[string]any{
+		"type":          "analysis",
+		"content":       "The Polymarket market remains an observation candidate.",
+		"facts":         []string{"prediction.market_snapshot shows the linked market."},
+		"assumptions":   []string{"Resolution source remains unchanged."},
+		"inferences":    []string{"The evidence is not strong enough to change confidence."},
+		"evidence_gaps": []string{"Need official-source confirmation."},
+		"citations":     []string{"prediction.market_snapshot"},
+		"confidence":    "medium",
+	}
+	if err := validate(good); err != nil {
+		t.Fatalf("valid prediction role analysis should pass: %v", err)
+	}
+}
+
+func TestRunMeetingOnceManagedPredictionRoleBlocksAShareAnalysisBeforeRecap(t *testing.T) {
+	fastMeetingAITestSettings(t)
+	responses := []string{
+		`{"content":"Kick off with Polymarket event-fit checks only.","continue_discussion":true,"questions":[{"target":"analyst","question":"Check market fit without A-share framing."}],"focus_roles":["analyst"]}`,
+		`{"type":"analysis","content":"A股 600519 建议买入并加入自选池。","facts":["600519 came from market.realtime_quote"],"assumptions":[],"inferences":["buy is reasonable"],"evidence_gaps":[],"citations":["market.realtime_quote"],"confidence":"medium"}`,
+		`{"type":"analysis","content":"继续给出 paper order 和 600519 仓位建议。","facts":["600519 still relevant"],"assumptions":[],"inferences":["sell later"],"evidence_gaps":[],"citations":["paper.orders"],"confidence":"medium"}`,
+		`{"topic":"Polymarket event follow-up","tags":["prediction"],"summary":"The linked Polymarket market remains an observation candidate.","conclusion":"Continue event-source verification and market-resolution review before changing confidence.","facts":["The analyst turn was blocked by boundary policy."],"assumptions":[],"inferences":["No additional market confidence change is supported yet."],"evidence_gaps":["Need official-source confirmation and settlement-rule review."],"citations":["@analyst"],"watchlist_actions":[],"wake_plans":[],"orders":[]}`,
+	}
+	var calls int
+	var requestPayloads []map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatal(err)
+		}
+		requestPayloads = append(requestPayloads, payload)
+		if calls >= len(responses) {
+			t.Fatalf("unexpected extra model call %d", calls+1)
+		}
+		content := responses[calls]
+		calls++
+		_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": content}}}})
+	}))
+	defer srv.Close()
+	db := newMeetingTestDB(t)
+	providerID := seedMeetingAIProvider(t, db, srv.URL)
+	model := "m"
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	market := persistmodel.PredictionMarket{
+		Provider:         "polymarket",
+		ExternalMarketID: "m-1",
+		Question:         "Will the Iran peace deal happen?",
+		Slug:             "iran-peace-deal",
+		Outcomes:         datatypes.JSON([]byte(`["Yes","No"]`)),
+		OutcomePrices:    datatypes.JSON([]byte(`["0.44","0.56"]`)),
+		CLOBTokenIDs:     datatypes.JSON([]byte(`["yes-token","no-token"]`)),
+		Active:           true,
+		EnableOrderBook:  true,
+	}
+	mustMeeting(t, db.Create(&market).Error)
+	moderator := domainai.AgentRole{Key: "moderator", Name: "Moderator", Responsibility: "moderate", PromptTemplate: "moderate", ProviderID: &providerID, Model: &model, Enabled: true, SortOrder: 1}
+	analyst := domainai.AgentRole{Key: "analyst", Name: "Analyst", Responsibility: "analyze prediction market evidence", PromptTemplate: "Use only prediction-market evidence.", ProviderID: &providerID, Model: &model, Enabled: true, SortOrder: 2}
+	mustMeeting(t, saveTestAgentRole(db, team.ID, &moderator))
+	mustMeeting(t, saveTestAgentRole(db, team.ID, &analyst))
+	mustMeeting(t, db.Create(&domainsettings.AppSetting{Key: "MEETING_MAX_ROUNDS", Value: JSON(map[string]any{"value": 1})}).Error)
+	meeting, err := CreateMeeting(db, "Polymarket Iran peace deal", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+	_, err = AppendEvent(db, meeting.ID, domainkernel.EventSystem, nil, "prediction context", map[string]any{"status": "meeting_context", "prediction_market_ids": []uint{market.ID}, "related_symbols": []string{"600519"}})
+	mustMeeting(t, err)
+
+	mustMeeting(t, RunMeetingOnce(db, meeting.ID))
+	if calls != len(responses) {
+		t.Fatalf("expected %d model calls, got %d", len(responses), calls)
+	}
+	recapMessages := requestMessages(t, requestPayloads[len(requestPayloads)-1])
+	if strings.Contains(recapMessages[1]["content"], "600519") || strings.Contains(recapMessages[1]["content"], "A股") || strings.Contains(recapMessages[1]["content"], "paper order") {
+		t.Fatalf("recap context should not include blocked A-share role text: %s", recapMessages[1]["content"])
+	}
+	var blockedEvent domainmeeting.Event
+	mustMeeting(t, db.First(&blockedEvent, "meeting_id = ? AND role_key = ? AND type = ? AND payload LIKE ?", meeting.ID, "analyst", domainkernel.EventRoleMessage, "%prediction_market_role_analysis_blocked%").Error)
+	if strings.Contains(blockedEvent.Content, "600519") || strings.Contains(string(blockedEvent.Payload), "600519") {
+		t.Fatalf("blocked role event leaked polluted text: content=%s payload=%s", blockedEvent.Content, blockedEvent.Payload)
+	}
+	var completed domainmeeting.Meeting
+	mustMeeting(t, db.First(&completed, meeting.ID).Error)
+	if completed.Status != domainkernel.MeetingCompleted || completed.Conclusion == nil || strings.Contains(*completed.Conclusion, "600519") || strings.Contains(*completed.Conclusion, "A股") {
+		t.Fatalf("prediction meeting conclusion leaked A-share content: %+v", completed)
+	}
+}
+
+func TestMixedTeamMeetingWithPredictionMarketContextUsesPredictionBoundary(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Mixed Team", AssetClass: "mixed", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	market := persistmodel.PredictionMarket{
+		Provider:         "polymarket",
+		ExternalMarketID: "m-1",
+		Question:         "Will the Iran peace deal happen?",
+		Slug:             "iran-peace-deal",
+		Outcomes:         datatypes.JSON([]byte(`["Yes","No"]`)),
+		OutcomePrices:    datatypes.JSON([]byte(`["0.44","0.56"]`)),
+		CLOBTokenIDs:     datatypes.JSON([]byte(`["yes-token","no-token"]`)),
+		Active:           true,
+		EnableOrderBook:  true,
+	}
+	mustMeeting(t, db.Create(&market).Error)
+	meeting, err := CreateMeeting(db, "mixed team prediction market research", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+	_, err = AppendEvent(db, meeting.ID, domainkernel.EventSystem, nil, "context", map[string]any{"status": "meeting_context", "prediction_market_ids": []uint{market.ID}, "related_symbols": []string{"600519"}})
+	mustMeeting(t, err)
+	role := domainai.AgentRole{
+		Key:            "odds_analyst",
+		Name:           "赔率盘口分析师",
+		Responsibility: "Analyze odds.",
+		PromptTemplate: "Use prediction-market evidence.",
+		ToolNames:      domainkernel.JSON([]byte(`["prediction.market_snapshot","market.realtime_quote"]`)),
+		SkillNames:     domainkernel.JSON([]byte(`["odds-market-analysis"]`)),
+	}
+
+	if !isPredictionMarketMeeting(db, meeting) {
+		t.Fatal("mixed team meeting with prediction market ids should use prediction boundary")
+	}
+	systemPrompt := managedRoleSystemPrompt(role, "analysis", isPredictionMarketMeeting(db, meeting))
+	if !strings.Contains(systemPrompt, "prediction-market research meeting") || strings.Contains(systemPrompt, "A-share multi-agent") {
+		t.Fatalf("mixed prediction meeting should use prediction prompt: %s", systemPrompt)
+	}
+	roleContext, _ := buildManagedRoleContext(db, *meeting, role, "analysis", 1, nil, nil)
+	if !strings.Contains(roleContext, "Prediction market context") || strings.Contains(roleContext, "Related symbols:") || strings.Contains(roleContext, "Paper accounts and positions") || strings.Contains(roleContext, "market.realtime_quote") {
+		t.Fatalf("mixed prediction role context leaked non-prediction context: %s", roleContext)
+	}
+	results := ExecuteRoleTools(db, *meeting, role)
+	blocked := false
+	for _, result := range results {
+		if result.Name == "market.realtime_quote" && strings.Contains(result.Error, "not available in prediction-market meetings") {
+			blocked = true
+		}
+	}
+	if !blocked {
+		t.Fatalf("mixed prediction meeting should block A-share market tool, got %+v", results)
+	}
+}
+
+func TestSearchWebForPredictionMeetingUsesGlobalNewsLocale(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	meeting, err := CreateMeeting(db, "US Iran peace deal", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+	_, err = AppendEvent(db, meeting.ID, domainkernel.EventSystem, nil, "legacy context", map[string]any{"status": "meeting_context", "related_symbols": []string{"600519"}})
+	mustMeeting(t, err)
+
+	var gotQuery, gotHL, gotGL, gotCEID string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query().Get("q")
+		gotHL = r.URL.Query().Get("hl")
+		gotGL = r.URL.Query().Get("gl")
+		gotCEID = r.URL.Query().Get("ceid")
+		w.Header().Set("Content-Type", "application/rss+xml")
+		_, _ = w.Write([]byte(`<rss><channel><item><title>Official source</title><link>https://example.com/source</link></item></channel></rss>`))
+	}))
+	defer server.Close()
+	oldBaseURL := webSearchBaseURL
+	webSearchBaseURL = server.URL
+	defer func() { webSearchBaseURL = oldBaseURL }()
+
+	rows, args, err := ExecuteMeetingToolWithArgs(db, *meeting, "web.search", map[string]any{"limit": 1})
+	mustMeeting(t, err)
+	if len(rows) != 1 || rows[0]["title"] != "Official source" {
+		t.Fatalf("unexpected search rows: %+v", rows)
+	}
+	if strings.Contains(gotQuery, "600519") || strings.Contains(stringFromAny(args["query"]), "600519") {
+		t.Fatalf("prediction web search should not prepend A-share symbols, query=%q args=%+v", gotQuery, args)
+	}
+	if gotHL != "en-US" || gotGL != "US" || gotCEID != "US:en" {
+		t.Fatalf("prediction web search locale = hl=%s gl=%s ceid=%s args=%+v", gotHL, gotGL, gotCEID, args)
+	}
+}
+
+func TestPredictionMeetingReferencesRedactNonPredictionSnapshots(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	aShareTeam := persistmodel.ResearchTeam{Name: "A-share Team", AssetClass: "ashare", Active: true}
+	mixedTeam := persistmodel.ResearchTeam{Name: "Mixed Team", AssetClass: "mixed", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	mustMeeting(t, db.Create(&aShareTeam).Error)
+	mustMeeting(t, db.Create(&mixedTeam).Error)
+	source, err := CreateMeeting(db, "Iran prediction research", "manual")
+	mustMeeting(t, err)
+	source.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", source.ID).Update("research_team_id", team.ID).Error)
+	ashareSummary := "A股 600519 买入并加入证券自选池"
+	ashareTarget := persistmodel.Meeting{ResearchTeamID: aShareTeam.ID, Topic: "A股 600519 research", Status: domainkernel.MeetingCompleted, Summary: &ashareSummary, Conclusion: &ashareSummary, Tags: datatypes.JSON([]byte(`["A股"]`))}
+	predictionSummary := "Polymarket peace deal resolution criteria reviewed"
+	predictionTarget := persistmodel.Meeting{ResearchTeamID: mixedTeam.ID, Topic: "Polymarket peace deal reference", Status: domainkernel.MeetingCompleted, Summary: &predictionSummary, Conclusion: &predictionSummary, Tags: datatypes.JSON([]byte(`["prediction"]`))}
+	mustMeeting(t, db.Create(&ashareTarget).Error)
+	mustMeeting(t, db.Create(&predictionTarget).Error)
+	predictionMarket := persistmodel.PredictionMarket{Provider: "polymarket", ExternalMarketID: "m-1", Question: "Will there be a peace deal?", Slug: "peace-deal", Active: true}
+	mustMeeting(t, db.Create(&predictionMarket).Error)
+	_, err = AppendEvent(db, predictionTarget.ID, domainkernel.EventSystem, nil, "prediction context", map[string]any{"status": "meeting_context", "prediction_market_ids": []uint{predictionMarket.ID}})
+	mustMeeting(t, err)
+	ashareNote := "A股 note mentions 600519"
+	predictionNote := "Prediction reference"
+	mustMeeting(t, db.Create(&persistmodel.MeetingReference{SourceMeetingID: source.ID, TargetMeetingID: &ashareTarget.ID, ReferenceType: "meeting", Note: &ashareNote, TargetTopicSnapshot: ashareTarget.Topic, TargetSummarySnapshot: &ashareSummary}).Error)
+	mustMeeting(t, db.Create(&persistmodel.MeetingReference{SourceMeetingID: source.ID, TargetMeetingID: &predictionTarget.ID, ReferenceType: "meeting", Note: &predictionNote, TargetTopicSnapshot: predictionTarget.Topic, TargetSummarySnapshot: &predictionSummary}).Error)
+
+	rows, _, err := ExecuteMeetingToolWithArgs(db, *source, "meeting.references", nil)
+	mustMeeting(t, err)
+	if len(rows) != 2 {
+		t.Fatalf("expected two reference rows, got %+v", rows)
+	}
+	redacted := rows[0]
+	if redacted["redacted"] != true || redacted["note"] != nil || redacted["target_topic_snapshot"] != "" || redacted["target_summary_snapshot"] != nil {
+		t.Fatalf("A-share reference should be redacted in prediction meeting, got %+v", redacted)
+	}
+	kept := rows[1]
+	if kept["redacted"] == true || stringFromAny(kept["target_topic_snapshot"]) != predictionTarget.Topic || stringFromAny(kept["target_summary_snapshot"]) != predictionSummary {
+		t.Fatalf("prediction reference should remain visible, got %+v", kept)
+	}
+	recapContext := buildRecapContext(db, *source)
+	if strings.Contains(recapContext, "600519") || strings.Contains(recapContext, "A股") || strings.Contains(recapContext, "买入") {
+		t.Fatalf("prediction recap context leaked non-prediction reference text: %s", recapContext)
+	}
+	if !strings.Contains(recapContext, predictionTarget.Topic) || !strings.Contains(recapContext, "non_prediction_reference") {
+		t.Fatalf("prediction recap context should keep prediction references and mark redaction: %s", recapContext)
+	}
+}
+
+func TestPredictionMeetingBlocksUnknownMeetingNamespaceTools(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	meeting, err := CreateMeeting(db, "Prediction meeting", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+
+	_, _, err = ExecuteMeetingToolWithArgs(db, *meeting, "meeting.future_stock_context", nil)
+	if err == nil || !strings.Contains(err.Error(), "not available in prediction-market meetings") {
+		t.Fatalf("prediction meeting should block non-allowlisted meeting.* tool, got %v", err)
+	}
+}
+
+func TestPredictionSearchToolPersistsAndReturnsLocalMarketID(t *testing.T) {
+	db := newMeetingTestDB(t)
+	oldProvider := predictionProviderForTool
+	predictionProviderForTool = func(*gorm.DB) appprediction.Provider {
+		return fakeMeetingPredictionProvider{search: appprediction.SearchResult{
+			Events: []domainprediction.Event{{
+				Provider:        domainprediction.ProviderPolymarket,
+				ExternalEventID: "event-iran",
+				Slug:            "us-x-iran-permanent-peace-deal-by",
+				Title:           "US x Iran permanent peace deal by 2026?",
+				Active:          true,
+			}},
+			Markets: []domainprediction.Market{{
+				Provider:         domainprediction.ProviderPolymarket,
+				ExternalMarketID: "1919417",
+				ConditionID:      "cond-iran",
+				Question:         "US x Iran permanent peace deal by 2026?",
+				Slug:             "us-x-iran-permanent-peace-deal-by",
+				Active:           true,
+				EnableOrderBook:  true,
+				CLOBTokenIDs:     domainkernel.NewJSON([]string{"token-yes", "token-no"}),
+				Raw:              domainkernel.NewJSON(map[string]any{"event_id": "event-iran"}),
+			}},
+		}}
+	}
+	defer func() { predictionProviderForTool = oldProvider }()
+
+	inputURL := "https://polymarket.com/events/US-X-Iran-Permanent-Peace-Deal-By#qTlpdC7"
+	rows, args, err := predictionSearchForTool(db, inputURL, 5)
+	if err != nil {
+		t.Fatalf("predictionSearchForTool: %v", err)
+	}
+	if args["query"] != "us-x-iran-permanent-peace-deal-by" {
+		t.Fatalf("tool query should be normalized, args=%+v", args)
+	}
+	if args["original_query"] != inputURL || args["normalized_query"] != "us-x-iran-permanent-peace-deal-by" {
+		t.Fatalf("tool args should preserve original and normalized query, args=%+v", args)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected one search row, got %+v", rows)
+	}
+	marketID := uintFromAny(rows[0]["id"])
+	if marketID == 0 {
+		t.Fatalf("search tool should return persisted local market id, got %+v", rows[0])
+	}
+	if rows[0]["event_slug"] != "us-x-iran-permanent-peace-deal-by" || rows[0]["event_title"] != "US x Iran permanent peace deal by 2026?" || rows[0]["external_event_id"] != "event-iran" {
+		t.Fatalf("search tool should expose readable event identity, got %+v", rows[0])
+	}
+	snapshots := predictionMarketSnapshotsForTool(db, []uint{marketID}, 10)
+	if len(snapshots) != 1 || uintFromAny(snapshots[0]["id"]) != marketID {
+		t.Fatalf("persisted search result should be usable by snapshot tool, got %+v", snapshots)
+	}
+	if snapshots[0]["event_slug"] != "us-x-iran-permanent-peace-deal-by" || snapshots[0]["event_title"] != "US x Iran permanent peace deal by 2026?" {
+		t.Fatalf("snapshot should preserve readable event identity from search, got %+v", snapshots[0])
+	}
+}
+
+func TestPredictionWatchlistToolReturnsTeamScopedMarketSnapshots(t *testing.T) {
+	db := newMeetingTestDB(t)
+	team := persistmodel.ResearchTeam{Name: "Prediction Team", AssetClass: "prediction_market", Active: true}
+	otherTeam := persistmodel.ResearchTeam{Name: "Other Prediction Team", AssetClass: "prediction_market", Active: true}
+	mustMeeting(t, db.Create(&team).Error)
+	mustMeeting(t, db.Create(&otherTeam).Error)
+	event := persistmodel.PredictionEvent{
+		Provider:        "polymarket",
+		ExternalEventID: "event-iran",
+		Slug:            "us-x-iran-permanent-peace-deal-by",
+		Title:           "US x Iran permanent peace deal by 2026?",
+		Active:          true,
+	}
+	mustMeeting(t, db.Create(&event).Error)
+	market := persistmodel.PredictionMarket{
+		EventID:          &event.ID,
+		Provider:         "polymarket",
+		ExternalMarketID: "m-iran",
+		ConditionID:      "cond-iran",
+		Question:         "US x Iran permanent peace deal by June 30, 2026?",
+		Slug:             "us-x-iran-permanent-peace-deal-by-june-30-2026",
+		Outcomes:         datatypes.JSON([]byte(`["Yes","No"]`)),
+		OutcomePrices:    datatypes.JSON([]byte(`["0.41","0.59"]`)),
+		CLOBTokenIDs:     datatypes.JSON([]byte(`["yes-token","no-token"]`)),
+		Active:           true,
+		EnableOrderBook:  true,
+	}
+	otherMarket := market
+	otherMarket.ID = 0
+	otherMarket.ExternalMarketID = "m-other"
+	otherMarket.Question = "Other market"
+	otherMarket.Slug = "other-market"
+	mustMeeting(t, db.Create(&market).Error)
+	mustMeeting(t, db.Create(&otherMarket).Error)
+	note := "Track settlement evidence and liquidity."
+	mustMeeting(t, db.Create(&persistmodel.PredictionWatchlistItem{ResearchTeamID: team.ID, MarketID: market.ID, Note: &note, Active: true}).Error)
+	mustMeeting(t, db.Create(&persistmodel.PredictionWatchlistItem{ResearchTeamID: otherTeam.ID, MarketID: otherMarket.ID, Active: true}).Error)
+	meeting, err := CreateMeeting(db, "prediction watchlist read", "manual")
+	mustMeeting(t, err)
+	meeting.ResearchTeamID = team.ID
+	mustMeeting(t, db.Model(&domainmeeting.Meeting{}).Where("id = ?", meeting.ID).Update("research_team_id", team.ID).Error)
+
+	rows, args, err := ExecuteMeetingToolWithArgs(db, *meeting, "prediction.watchlist", map[string]any{"limit": 10})
+	mustMeeting(t, err)
+	if args["researchTeamId"] != team.ID {
+		t.Fatalf("tool should be scoped to meeting team, args=%+v", args)
+	}
+	if len(rows) != 1 || uintFromAny(rows[0]["market_id"]) != market.ID {
+		t.Fatalf("expected one team-scoped watchlist row, got %+v", rows)
+	}
+	if rows[0]["note"] != note || rows[0]["active"] != true {
+		t.Fatalf("watchlist metadata missing, got %+v", rows[0])
+	}
+	marketSnapshot, ok := rows[0]["market"].(map[string]any)
+	if !ok {
+		t.Fatalf("watchlist row should include market snapshot, got %+v", rows[0])
+	}
+	if marketSnapshot["event_slug"] != event.Slug || marketSnapshot["event_title"] != event.Title || marketSnapshot["external_event_id"] != event.ExternalEventID {
+		t.Fatalf("watchlist market should expose readable event identity, got %+v", marketSnapshot)
+	}
+	if uintFromAny(marketSnapshot["id"]) != market.ID || marketSnapshot["question"] != market.Question {
+		t.Fatalf("watchlist market snapshot mismatch, got %+v", marketSnapshot)
+	}
+}
+
+func TestPredictionToolsExposeOutcomeTokenMapping(t *testing.T) {
+	db := newMeetingTestDB(t)
+	oldProvider := predictionProviderForTool
+	predictionProviderForTool = func(*gorm.DB) appprediction.Provider {
+		return fakeMeetingPredictionProvider{
+			orderbook: map[string]any{"best_bid": "0.42", "best_ask": "0.45"},
+			history:   []map[string]any{{"t": float64(1710000000), "p": "0.44"}},
+		}
+	}
+	defer func() { predictionProviderForTool = oldProvider }()
+	event := persistmodel.PredictionEvent{
+		Provider:        "polymarket",
+		ExternalEventID: "event-iran",
+		Slug:            "us-x-iran-permanent-peace-deal-by",
+		Title:           "US x Iran permanent peace deal by 2026?",
+		Active:          true,
+	}
+	mustMeeting(t, db.Create(&event).Error)
+	market := persistmodel.PredictionMarket{
+		EventID:          &event.ID,
+		Provider:         "polymarket",
+		ExternalMarketID: "m-yes-no",
+		Question:         "Will the event happen?",
+		Outcomes:         datatypes.JSON([]byte(`["Yes","No"]`)),
+		OutcomePrices:    datatypes.JSON([]byte(`["0.44","0.56"]`)),
+		CLOBTokenIDs:     datatypes.JSON([]byte(`["yes-token","no-token"]`)),
+		Active:           true,
+		EnableOrderBook:  true,
+	}
+	mustMeeting(t, db.Create(&market).Error)
+
+	snapshots := predictionMarketSnapshotsForTool(db, []uint{market.ID}, 10)
+	if len(snapshots) != 1 {
+		t.Fatalf("expected one snapshot, got %+v", snapshots)
+	}
+	if uintFromAny(snapshots[0]["event_id"]) != event.ID {
+		t.Fatalf("snapshot should expose local event id, got %+v", snapshots[0])
+	}
+	if snapshots[0]["event_slug"] != event.Slug || snapshots[0]["event_title"] != event.Title || snapshots[0]["external_event_id"] != event.ExternalEventID {
+		t.Fatalf("snapshot should expose readable event identity, got %+v", snapshots[0])
+	}
+	outcomeTokens, ok := snapshots[0]["outcome_tokens"].([]map[string]any)
+	if !ok || len(outcomeTokens) != 2 || outcomeTokens[0]["outcome"] != "Yes" || outcomeTokens[0]["token_id"] != "yes-token" || outcomeTokens[1]["outcome"] != "No" || outcomeTokens[1]["token_id"] != "no-token" {
+		t.Fatalf("snapshot should expose outcome-token mapping, got %+v", snapshots[0]["outcome_tokens"])
+	}
+
+	orderRows, orderArgs, err := predictionOrderbookForTool(db, market.ID, "no-token")
+	mustMeeting(t, err)
+	if len(orderRows) != 1 || orderRows[0]["outcome"] != "No" || orderRows[0]["outcome_price"] != "0.56" || orderRows[0]["outcome_index"] != 1 {
+		t.Fatalf("orderbook should identify selected outcome, rows=%+v args=%+v", orderRows, orderArgs)
+	}
+	if uintFromAny(orderRows[0]["event_id"]) != event.ID {
+		t.Fatalf("orderbook should expose local event id, rows=%+v", orderRows)
+	}
+	if orderRows[0]["event_slug"] != event.Slug || orderRows[0]["event_title"] != event.Title {
+		t.Fatalf("orderbook should expose readable event identity, rows=%+v", orderRows)
+	}
+	if orderArgs["outcome"] != "No" || orderArgs["outcome_price"] != "0.56" {
+		t.Fatalf("orderbook args should carry selected outcome metadata: %+v", orderArgs)
+	}
+	historyRows, historyArgs, err := predictionPriceHistoryForTool(db, market.ID, "")
+	mustMeeting(t, err)
+	if len(historyRows) != 1 || historyRows[0]["token_id"] != "yes-token" || historyRows[0]["outcome"] != "Yes" || historyArgs["outcome"] != "Yes" {
+		t.Fatalf("price history should default to first token and label outcome, rows=%+v args=%+v", historyRows, historyArgs)
+	}
+	if uintFromAny(historyRows[0]["event_id"]) != event.ID {
+		t.Fatalf("price history should expose local event id, rows=%+v", historyRows)
+	}
+	if historyRows[0]["event_slug"] != event.Slug || historyRows[0]["event_title"] != event.Title {
+		t.Fatalf("price history should expose readable event identity, rows=%+v", historyRows)
 	}
 }
 
@@ -1549,6 +2226,31 @@ func TestPredictionRealtimeTokenIDsEnrichesMarketMetadata(t *testing.T) {
 	if len(rows) != 1 || rows[0]["market_id"] != uint(7) || rows[0]["outcome"] != "Yes" || rows[0]["question"] == "" {
 		t.Fatalf("unexpected enriched row: %#v", rows)
 	}
+}
+
+type fakeMeetingPredictionProvider struct {
+	search     appprediction.SearchResult
+	searchErr  error
+	orderbook  map[string]any
+	history    []map[string]any
+	orderErr   error
+	historyErr error
+}
+
+func (f fakeMeetingPredictionProvider) Search(context.Context, string, int) (appprediction.SearchResult, error) {
+	return f.search, f.searchErr
+}
+
+func (fakeMeetingPredictionProvider) SyncActive(context.Context, int) (appprediction.SearchResult, error) {
+	return appprediction.SearchResult{}, nil
+}
+
+func (f fakeMeetingPredictionProvider) OrderBook(context.Context, string) (map[string]any, error) {
+	return f.orderbook, f.orderErr
+}
+
+func (f fakeMeetingPredictionProvider) PriceHistory(context.Context, string) ([]map[string]any, error) {
+	return f.history, f.historyErr
 }
 
 func newMeetingTestDB(t *testing.T) *gorm.DB {

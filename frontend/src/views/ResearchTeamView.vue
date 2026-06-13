@@ -31,14 +31,14 @@
             <span>{{ assetClassLabel(team.assetClass) }}</span>
           </div>
           <div class="mobile-card__meta-row">
-            <span class="mobile-card__meta-label">模拟盘</span>
-            <span>{{ accountName(team.paperAccountId) }}</span>
+            <span class="mobile-card__meta-label">执行账户</span>
+            <span>{{ executionAccountLabel(team) }}</span>
           </div>
         </div>
         <div class="mobile-card__actions" @click.stop>
           <el-button plain @click="openTeam(team)">编辑</el-button>
           <el-button type="primary" plain @click="selectTeam(team)">角色</el-button>
-          <el-popconfirm title="删除团队会删除其会议、自选池和唤醒计划" @confirm="deleteTeam(team)">
+          <el-popconfirm title="删除团队会删除其会议、关注项和唤醒计划" @confirm="deleteTeam(team)">
             <template #reference><el-button plain type="danger">删除</el-button></template>
           </el-popconfirm>
         </div>
@@ -68,8 +68,8 @@
       <el-table-column label="资产类型" width="140">
         <template #default="{ row }">{{ assetClassLabel(row.assetClass) }}</template>
       </el-table-column>
-      <el-table-column label="模拟盘账户" width="180">
-        <template #default="{ row }">{{ accountName(row.paperAccountId) }}</template>
+      <el-table-column label="执行账户" width="180">
+        <template #default="{ row }">{{ executionAccountLabel(row) }}</template>
       </el-table-column>
       <el-table-column label="状态" width="90">
         <template #default="{ row }">
@@ -80,7 +80,7 @@
         <template #default="{ row }">
           <el-button link type="primary" @click.stop="openTeam(row)">编辑</el-button>
           <el-button link type="primary" @click.stop="selectTeam(row)">角色</el-button>
-          <el-popconfirm title="删除团队会删除其会议、自选池和唤醒计划" @confirm="deleteTeam(row)">
+          <el-popconfirm title="删除团队会删除其会议、关注项和唤醒计划" @confirm="deleteTeam(row)">
             <template #reference><el-button link type="danger" @click.stop>删除</el-button></template>
           </el-popconfirm>
         </template>
@@ -210,8 +210,8 @@
       </el-form-item>
       <el-form-item label="职责"><el-input v-model="roleForm.responsibility" type="textarea" :rows="3" /></el-form-item>
       <el-form-item label="提示词"><el-input v-model="roleForm.promptTemplate" type="textarea" :rows="8" /></el-form-item>
-      <el-form-item label="工具"><el-select v-model="roleForm.toolNames" multiple filterable style="width: 100%"><el-option v-for="tool in tools" :key="tool.key" :label="`${tool.title} / ${tool.key}`" :value="tool.key" /></el-select></el-form-item>
-      <el-form-item label="技能"><el-select v-model="roleForm.skillNames" multiple filterable style="width: 100%"><el-option v-for="skill in skills" :key="skill.key" :label="`${skill.title} / ${skill.key}`" :value="skill.key" /></el-select></el-form-item>
+      <el-form-item label="工具"><el-select v-model="roleForm.toolNames" multiple filterable style="width: 100%"><el-option v-for="tool in roleTools" :key="tool.key" :label="`${tool.title} / ${tool.key}`" :value="tool.key" /></el-select></el-form-item>
+      <el-form-item label="技能"><el-select v-model="roleForm.skillNames" multiple filterable style="width: 100%"><el-option v-for="skill in roleSkills" :key="skill.key" :label="`${skill.title} / ${skill.key}`" :value="skill.key" /></el-select></el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="roleDialog = false">取消</el-button>
@@ -248,10 +248,29 @@ const roleForm = reactive<any>({ originalKey: '', key: '', name: '', responsibil
 const selectableAccounts = computed(() => accounts.value.filter((account) => !account.researchTeamId || account.id === teamForm.paperAccountId))
 const teamDialogWidth = computed(() => (isMobile.value ? '100%' : isTablet.value ? '90vw' : '640px'))
 const roleDialogWidth = computed(() => (isMobile.value ? '100%' : isTablet.value ? '92vw' : '900px'))
+const selectedTeamIsPrediction = computed(() => selectedTeam.value?.assetClass === 'prediction_market')
+const predictionAllowedSkillKeys = new Set([
+  'news-source-verification',
+  'web-research',
+  'meeting-moderation',
+  'cross-examination',
+  'evidence-synthesis',
+  'prediction-market-research',
+  'odds-market-analysis',
+  'market-resolution-risk',
+  'wake-plan-design'
+])
+const roleTools = computed(() => (selectedTeamIsPrediction.value ? tools.value.filter((tool) => isPredictionRoleToolAllowed(tool.key)) : tools.value))
+const roleSkills = computed(() => (selectedTeamIsPrediction.value ? skills.value.filter((skill) => isPredictionRoleSkillAllowed(skill.key)) : skills.value))
 
 function accountName(id: number) {
   if (!id) return '-'
   return accounts.value.find((account) => account.id === id)?.name || `#${id}`
+}
+
+function executionAccountLabel(team: any) {
+  if (team?.assetClass === 'prediction_market') return '不绑定'
+  return accountName(team?.paperAccountId)
 }
 
 function assetClassLabel(value?: string) {
@@ -342,11 +361,13 @@ async function deleteTeam(team: any) {
 
 function openRole(role?: any) {
   Object.assign(roleForm, role ? { ...role, originalKey: role.key, model: role.model || '', toolNames: role.toolNames || [], skillNames: role.skillNames || [] } : { originalKey: '', key: '', name: '', responsibility: '', promptTemplate: '', providerId: null, model: '', toolNames: [], skillNames: [], enabled: true, sortOrder: 100 })
+  sanitizeRoleFormCapabilities()
   roleDialog.value = true
 }
 
 async function saveRole() {
   if (!selectedTeam.value) return
+  sanitizeRoleFormCapabilities()
   await runAction('saveRole', async () => {
     const key = roleForm.originalKey || roleForm.key
     await api.put(`/research-teams/${selectedTeam.value.id}/roles/${key}`, jsonapiResource('research-team-roles', { ...roleForm, model: roleForm.model || null, providerId: roleForm.providerId || null }, `${selectedTeam.value.id}:${key}`))
@@ -378,6 +399,32 @@ async function applyDefaults() {
     await api.post(`/research-teams/${selectedTeam.value.id}/roles/apply-defaults`)
     await loadRoles()
   }, { success: '默认角色已应用' })
+}
+
+function sanitizeRoleFormCapabilities() {
+  if (!selectedTeamIsPrediction.value) return
+  roleForm.toolNames = filterRoleValues(roleForm.toolNames, isPredictionRoleToolAllowed)
+  roleForm.skillNames = filterRoleValues(roleForm.skillNames, isPredictionRoleSkillAllowed)
+}
+
+function filterRoleValues(values: string[] | null | undefined, allowed: (value: string) => boolean) {
+  const seen = new Set<string>()
+  return (values || []).reduce<string[]>((out, raw) => {
+    const value = String(raw || '').trim()
+    if (!value || !allowed(value) || seen.has(value)) return out
+    seen.add(value)
+    out.push(value)
+    return out
+  }, [])
+}
+
+function isPredictionRoleToolAllowed(key?: string) {
+  const value = String(key || '').trim()
+  return value === 'web.search' || value.startsWith('meeting.') || value.startsWith('prediction.')
+}
+
+function isPredictionRoleSkillAllowed(key?: string) {
+  return predictionAllowedSkillKeys.has(String(key || '').trim())
 }
 
 onMounted(load)

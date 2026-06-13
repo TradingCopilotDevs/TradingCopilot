@@ -8,9 +8,11 @@ import (
 	"strings"
 	"time"
 
+	appprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/app/prediction"
 	domainai "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/ai"
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
+	domainprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/prediction"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/ai/client"
 	"github.com/TradingCopilotDevs/TradingCopilot/internal/infra/config"
 	inframeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/infra/meeting"
@@ -24,6 +26,10 @@ import (
 )
 
 var webSearchBaseURL = inframeeting.DefaultWebSearchBaseURL
+var predictionProviderForTool = func(db *gorm.DB) appprediction.Provider {
+	settings := config.Load()
+	return infraprediction.NewClient(runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleMarket, 20*time.Second))
+}
 
 type MeetingToolResult struct {
 	Name      string
@@ -117,10 +123,17 @@ func ExecuteMeetingTool(db *gorm.DB, meeting domainmeeting.Meeting, name string)
 }
 
 func ExecuteMeetingToolWithArgs(db *gorm.DB, meeting domainmeeting.Meeting, name string, inputArgs map[string]any) ([]map[string]any, map[string]any, error) {
+	predictionMeeting := isPredictionMarketMeeting(db, &meeting)
 	relatedSymbols := MeetingRelatedSymbols(db, meeting.ID)
+	if predictionMeeting {
+		relatedSymbols = nil
+	}
 	args := map[string]any{}
 	for key, value := range inputArgs {
 		args[key] = value
+	}
+	if predictionMeeting && !predictionMeetingToolAllowed(name) {
+		return nil, args, fmt.Errorf("%s is not available in prediction-market meetings", name)
 	}
 	switch name {
 	case "telegram.recent_messages":
@@ -138,9 +151,9 @@ func ExecuteMeetingToolWithArgs(db *gorm.DB, meeting domainmeeting.Meeting, name
 		args["query"] = query
 		limit := intArg(args, "limit", 5, 1, 10)
 		args["limit"] = limit
-		return SearchWeb(db, query, limit)
+		return SearchWebForMeeting(db, meeting, query, limit)
 	case "meeting.references":
-		return meetingReferencesForTool(db, meeting.ID), args, nil
+		return meetingReferencesForTool(db, meeting.ID, predictionMeeting), args, nil
 	case "meeting.transcript":
 		limit := intArg(args, "limit", 12, 1, 30)
 		args["limit"] = limit
@@ -185,6 +198,13 @@ func ExecuteMeetingToolWithArgs(db *gorm.DB, meeting domainmeeting.Meeting, name
 		return predictionPriceHistoryForTool(db, marketID, tokenID)
 	case "prediction.related_matches":
 		return predictionRelatedMatchesForTool(db, meeting.ID), args, nil
+	case "prediction.watchlist":
+		limit := intArg(args, "limit", 20, 1, 100)
+		args["limit"] = limit
+		args["researchTeamId"] = meeting.ResearchTeamID
+		return predictionWatchlistForTool(db, meeting.ResearchTeamID, limit)
+	case "prediction.upsert_watchlist":
+		return deferredActionToolResult(name, "Prediction watchlist actions are proposed during discussion and executed only during the moderator recap as prediction_watchlist_actions.", args), args, nil
 	case "market.watchlist":
 		return watchlistForTool(db, meeting.ResearchTeamID), args, nil
 	case "market.upsert_watchlist":
@@ -228,9 +248,26 @@ func ExecuteMeetingToolWithArgs(db *gorm.DB, meeting domainmeeting.Meeting, name
 	}
 }
 
+func predictionMeetingToolAllowed(name string) bool {
+	name = strings.TrimSpace(name)
+	return name == "web.search" ||
+		name == "meeting.references" ||
+		name == "meeting.transcript" ||
+		strings.HasPrefix(name, "prediction.")
+}
+
 func SearchWeb(db *gorm.DB, query string, limit int) ([]map[string]any, map[string]any, error) {
 	settings := config.Load()
 	client := runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleWeb, 20*time.Second)
+	return inframeeting.SearchWeb(client, webSearchBaseURL, query, limit)
+}
+
+func SearchWebForMeeting(db *gorm.DB, meeting domainmeeting.Meeting, query string, limit int) ([]map[string]any, map[string]any, error) {
+	settings := config.Load()
+	client := runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleWeb, 20*time.Second)
+	if isPredictionMarketMeeting(db, &meeting) {
+		return inframeeting.SearchWebGlobal(client, webSearchBaseURL, query, limit)
+	}
 	return inframeeting.SearchWeb(client, webSearchBaseURL, query, limit)
 }
 
@@ -302,15 +339,63 @@ func recentTelegramMessagesForMeeting(db *gorm.DB, limit int) []map[string]any {
 	return out
 }
 
-func meetingReferencesForTool(db *gorm.DB, meetingID uint) []map[string]any {
+func meetingReferencesForTool(db *gorm.DB, meetingID uint, predictionMeeting bool) []map[string]any {
 	var refRows []persistmodel.MeetingReference
 	db.Where("source_meeting_id = ?", meetingID).Order("created_at").Find(&refRows)
 	rows := meetingReferencesFromModel(refRows)
 	out := make([]map[string]any, 0, len(rows))
+	targetPredictionMeetings := predictionReferenceTargetMeetings(db, rows)
 	for _, row := range rows {
-		out = append(out, map[string]any{"id": row.ID, "target_meeting_id": row.TargetMeetingID, "reference_type": row.ReferenceType, "note": row.Note, "target_topic_snapshot": row.TargetTopicSnapshot, "target_summary_snapshot": row.TargetSummarySnapshot, "target_deleted": row.TargetDeleted, "external_ref": row.ExternalRef})
+		item := map[string]any{
+			"id":                      row.ID,
+			"target_meeting_id":       uintPtrForTool(row.TargetMeetingID),
+			"reference_type":          row.ReferenceType,
+			"note":                    nullableStringPointerForTool(row.Note),
+			"target_topic_snapshot":   row.TargetTopicSnapshot,
+			"target_summary_snapshot": nullableStringPointerForTool(row.TargetSummarySnapshot),
+			"target_deleted":          row.TargetDeleted,
+			"external_ref":            nullableStringPointerForTool(row.ExternalRef),
+		}
+		if predictionMeeting && !predictionReferenceIsPredictionRelevant(row, targetPredictionMeetings) {
+			item["note"] = nil
+			item["target_topic_snapshot"] = ""
+			item["target_summary_snapshot"] = nil
+			item["redacted"] = true
+			item["redaction_reason"] = "non_prediction_reference"
+		}
+		out = append(out, item)
 	}
 	return out
+}
+
+func predictionReferenceTargetMeetings(db *gorm.DB, rows []domainmeeting.Reference) map[uint]bool {
+	ids := make([]uint, 0, len(rows))
+	for _, row := range rows {
+		if row.TargetMeetingID != nil && *row.TargetMeetingID > 0 {
+			ids = append(ids, *row.TargetMeetingID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	var meetings []persistmodel.Meeting
+	db.Where("id IN ?", ids).Find(&meetings)
+	out := make(map[uint]bool, len(meetings))
+	for _, meeting := range meetings {
+		domainMeeting := meetingFromModel(meeting)
+		out[meeting.ID] = isPredictionMarketMeeting(db, &domainMeeting)
+	}
+	return out
+}
+
+func predictionReferenceIsPredictionRelevant(row domainmeeting.Reference, targetPredictionMeetings map[uint]bool) bool {
+	if strings.TrimSpace(row.ReferenceType) == "prediction_market" {
+		return true
+	}
+	if row.TargetMeetingID == nil || *row.TargetMeetingID == 0 {
+		return false
+	}
+	return targetPredictionMeetings[*row.TargetMeetingID]
 }
 
 func meetingTranscriptForTool(db *gorm.DB, meetingID uint, limit int) []map[string]any {
@@ -326,24 +411,33 @@ func meetingTranscriptForTool(db *gorm.DB, meetingID uint, limit int) []map[stri
 }
 
 func predictionSearchForTool(db *gorm.DB, query string, limit int) ([]map[string]any, map[string]any, error) {
+	originalQuery := strings.TrimSpace(query)
+	query = appprediction.NormalizeSearchQuery(originalQuery)
+	args := map[string]any{"query": query, "original_query": originalQuery, "normalized_query": query, "limit": limit}
 	if strings.TrimSpace(query) == "" {
-		return nil, map[string]any{"query": query, "limit": limit}, fmt.Errorf("prediction.search_markets requires query")
+		return nil, args, fmt.Errorf("prediction.search_markets requires query")
 	}
-	settings := config.Load()
-	provider := infraprediction.NewClient(runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleMarket, 20*time.Second))
-	result, err := provider.Search(dbContext(db), query, limit)
+	usecase := appprediction.NewUsecase(gormrepo.NewPredictionRepository(db), predictionProviderForTool(db))
+	result, err := usecase.Search(dbContext(db), query, limit)
 	if err != nil {
-		return nil, map[string]any{"query": query, "limit": limit}, err
+		return nil, args, err
 	}
-	rows := make([]map[string]any, 0, len(result.Markets))
-	for _, row := range result.Markets {
-		rows = append(rows, predictionMarketForTool(row.ID, row.ExternalMarketID, row.ConditionID, row.Question, row.Slug, row.Active, row.Closed, row.Restricted, row.BestBid, row.BestAsk, row.LastTradePrice, row.Spread, row.Volume, row.Liquidity, row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs, row.EndDate))
+	if result.ProviderError != "" {
+		args["provider_warning"] = result.ProviderError
+		if len(result.Rows) == 0 {
+			return nil, args, fmt.Errorf("prediction.search_markets provider unavailable: %s", result.ProviderError)
+		}
 	}
-	return rows, map[string]any{"query": query, "limit": limit}, nil
+	events := predictionEventIdentitiesForTool(db, predictionEventIDsFromDomainMarkets(result.Rows))
+	rows := make([]map[string]any, 0, len(result.Rows))
+	for _, row := range result.Rows {
+		rows = append(rows, predictionMarketForTool(row.ID, predictionEventIdentityFromID(row.EventID, events), row.ExternalMarketID, row.ConditionID, row.Question, row.Slug, row.Active, row.Closed, row.Restricted, row.BestBid, row.BestAsk, row.LastTradePrice, row.Spread, row.Volume, row.Liquidity, row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs, row.EndDate))
+	}
+	return rows, args, nil
 }
 
 func predictionMarketSnapshotsForTool(db *gorm.DB, marketIDs []uint, limit int) []map[string]any {
-	query := db.Model(&persistmodel.PredictionMarket{}).Order("updated_at desc").Limit(limit)
+	query := db.Model(&persistmodel.PredictionMarket{}).Preload("Event").Order("updated_at desc").Limit(limit)
 	if len(marketIDs) > 0 {
 		query = query.Where("id IN ?", marketIDs)
 	}
@@ -351,7 +445,7 @@ func predictionMarketSnapshotsForTool(db *gorm.DB, marketIDs []uint, limit int) 
 	query.Find(&rows)
 	out := make([]map[string]any, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, predictionMarketForTool(row.ID, row.ExternalMarketID, row.ConditionID, row.Question, row.Slug, row.Active, row.Closed, row.Restricted, row.BestBid, row.BestAsk, row.LastTradePrice, row.Spread, row.Volume, row.Liquidity, row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs, row.EndDate))
+		out = append(out, predictionMarketForTool(row.ID, predictionEventIdentityFromModel(row.EventID, row.Event), row.ExternalMarketID, row.ConditionID, row.Question, row.Slug, row.Active, row.Closed, row.Restricted, row.BestBid, row.BestAsk, row.LastTradePrice, row.Spread, row.Volume, row.Liquidity, row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs, row.EndDate))
 	}
 	return out
 }
@@ -362,13 +456,28 @@ func predictionOrderbookForTool(db *gorm.DB, marketID uint, tokenID string) ([]m
 	if err != nil {
 		return nil, args, err
 	}
-	settings := config.Load()
-	provider := infraprediction.NewClient(runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleMarket, 20*time.Second))
+	provider := predictionProviderForTool(db)
 	book, err := provider.OrderBook(dbContext(db), tokenID)
 	if err != nil {
 		return nil, args, err
 	}
-	return []map[string]any{{"market_id": row.ID, "question": row.Question, "token_id": tokenID, "orderbook": book}}, args, nil
+	outcome := predictionOutcomeTokenForTool(row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs, tokenID)
+	event := predictionEventIdentityFromModel(row.EventID, row.Event)
+	item := map[string]any{
+		"market_id":      row.ID,
+		"question":       row.Question,
+		"token_id":       tokenID,
+		"outcome_tokens": predictionOutcomeTokensForTool(row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs),
+		"orderbook":      book,
+	}
+	addPredictionEventIdentityForTool(item, event)
+	for key, value := range outcome {
+		if key != "token_id" {
+			item[key] = value
+			args[key] = value
+		}
+	}
+	return []map[string]any{item}, args, nil
 }
 
 func predictionPriceHistoryForTool(db *gorm.DB, marketID uint, tokenID string) ([]map[string]any, map[string]any, error) {
@@ -377,19 +486,34 @@ func predictionPriceHistoryForTool(db *gorm.DB, marketID uint, tokenID string) (
 	if err != nil {
 		return nil, args, err
 	}
-	settings := config.Load()
-	provider := infraprediction.NewClient(runtimeproxy.NewHTTPClient(db, settings, runtimeproxy.ModuleMarket, 20*time.Second))
+	provider := predictionProviderForTool(db)
 	history, err := provider.PriceHistory(dbContext(db), tokenID)
 	if err != nil {
 		return nil, args, err
 	}
-	return []map[string]any{{"market_id": row.ID, "question": row.Question, "token_id": tokenID, "price_history": history}}, args, nil
+	outcome := predictionOutcomeTokenForTool(row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs, tokenID)
+	event := predictionEventIdentityFromModel(row.EventID, row.Event)
+	item := map[string]any{
+		"market_id":      row.ID,
+		"question":       row.Question,
+		"token_id":       tokenID,
+		"outcome_tokens": predictionOutcomeTokensForTool(row.Outcomes, row.OutcomePrices, row.CLOBTokenIDs),
+		"price_history":  history,
+	}
+	addPredictionEventIdentityForTool(item, event)
+	for key, value := range outcome {
+		if key != "token_id" {
+			item[key] = value
+			args[key] = value
+		}
+	}
+	return []map[string]any{item}, args, nil
 }
 
 func predictionRelatedMatchesForTool(db *gorm.DB, meetingID uint) []map[string]any {
 	messageIDs := meetingMessageIDs(db, meetingID)
 	var rows []persistmodel.PredictionMarketMatch
-	query := db.Preload("Market").Order("score desc, created_at desc").Limit(50)
+	query := db.Preload("Market.Event").Order("score desc, created_at desc").Limit(50)
 	if len(messageIDs) > 0 {
 		query = query.Where("message_id IN ?", messageIDs)
 	}
@@ -398,11 +522,53 @@ func predictionRelatedMatchesForTool(db *gorm.DB, meetingID uint) []map[string]a
 	for _, row := range rows {
 		item := map[string]any{"id": row.ID, "message_id": row.MessageID, "market_id": row.MarketID, "query": row.Query, "score": row.Score, "status": row.Status, "reason": row.Reason, "news_snippet": truncateForTool(row.NewsSnippet, 360), "score_breakdown": rawJSONForTool(row.ScoreBreakdown), "candidate_snapshot": rawJSONForTool(row.CandidateSnapshot)}
 		if row.Market != nil {
-			item["market"] = predictionMarketForTool(row.Market.ID, row.Market.ExternalMarketID, row.Market.ConditionID, row.Market.Question, row.Market.Slug, row.Market.Active, row.Market.Closed, row.Market.Restricted, row.Market.BestBid, row.Market.BestAsk, row.Market.LastTradePrice, row.Market.Spread, row.Market.Volume, row.Market.Liquidity, row.Market.Outcomes, row.Market.OutcomePrices, row.Market.CLOBTokenIDs, row.Market.EndDate)
+			item["market"] = predictionMarketForTool(row.Market.ID, predictionEventIdentityFromModel(row.Market.EventID, row.Market.Event), row.Market.ExternalMarketID, row.Market.ConditionID, row.Market.Question, row.Market.Slug, row.Market.Active, row.Market.Closed, row.Market.Restricted, row.Market.BestBid, row.Market.BestAsk, row.Market.LastTradePrice, row.Market.Spread, row.Market.Volume, row.Market.Liquidity, row.Market.Outcomes, row.Market.OutcomePrices, row.Market.CLOBTokenIDs, row.Market.EndDate)
 		}
 		out = append(out, item)
 	}
 	return out
+}
+
+func predictionWatchlistForTool(db *gorm.DB, researchTeamID uint, limit int) ([]map[string]any, map[string]any, error) {
+	args := map[string]any{"researchTeamId": researchTeamID, "limit": limit}
+	rows, err := appprediction.NewUsecase(gormrepo.NewPredictionRepository(db), nil).ListWatchlist(dbContext(db), researchTeamID, limit)
+	if err != nil {
+		return nil, args, err
+	}
+	out := make([]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		item := map[string]any{
+			"id":               row.Item.ID,
+			"research_team_id": row.Item.ResearchTeamID,
+			"market_id":        row.Item.MarketID,
+			"note":             nullableStringPointerForTool(row.Item.Note),
+			"active":           row.Item.Active,
+			"created_at":       row.Item.CreatedAt,
+			"market": predictionMarketForTool(
+				row.Market.ID,
+				predictionEventIdentityFromDomainMarket(row.Market),
+				row.Market.ExternalMarketID,
+				row.Market.ConditionID,
+				row.Market.Question,
+				row.Market.Slug,
+				row.Market.Active,
+				row.Market.Closed,
+				row.Market.Restricted,
+				row.Market.BestBid,
+				row.Market.BestAsk,
+				row.Market.LastTradePrice,
+				row.Market.Spread,
+				row.Market.Volume,
+				row.Market.Liquidity,
+				row.Market.Outcomes,
+				row.Market.OutcomePrices,
+				row.Market.CLOBTokenIDs,
+				row.Market.EndDate,
+			),
+		}
+		out = append(out, item)
+	}
+	return out, args, nil
 }
 
 func MeetingPredictionMarketIDs(db *gorm.DB, meetingID uint) []uint {
@@ -468,7 +634,7 @@ func predictionMarketTokenForTool(db *gorm.DB, marketID uint, tokenID string) (p
 	if marketID == 0 {
 		return row, tokenID, fmt.Errorf("prediction market id is required")
 	}
-	if err := db.First(&row, marketID).Error; err != nil {
+	if err := db.Preload("Event").First(&row, marketID).Error; err != nil {
 		return row, tokenID, err
 	}
 	if strings.TrimSpace(tokenID) == "" {
@@ -722,13 +888,145 @@ func stringListFromJSON(raw []byte) []string {
 	return out
 }
 
-func predictionMarketForTool(id uint, externalMarketID string, conditionID string, question string, slug string, active bool, closed bool, restricted bool, bestBid any, bestAsk any, lastTradePrice any, spread any, volume any, liquidity any, outcomes []byte, outcomePrices []byte, clobTokenIDs []byte, endDate any) map[string]any {
-	return map[string]any{
+type predictionEventIdentityForTool struct {
+	ID              *uint
+	ExternalEventID string
+	Slug            string
+	Title           string
+}
+
+func predictionMarketForTool(id uint, event predictionEventIdentityForTool, externalMarketID string, conditionID string, question string, slug string, active bool, closed bool, restricted bool, bestBid any, bestAsk any, lastTradePrice any, spread any, volume any, liquidity any, outcomes []byte, outcomePrices []byte, clobTokenIDs []byte, endDate any) map[string]any {
+	item := map[string]any{
 		"id": id, "external_market_id": externalMarketID, "condition_id": conditionID, "question": question, "slug": slug,
 		"active": active, "closed": closed, "restricted": restricted, "best_bid": bestBid, "best_ask": bestAsk,
 		"last_trade_price": lastTradePrice, "spread": spread, "volume": volume, "liquidity": liquidity,
-		"outcomes": rawJSONForTool(outcomes), "outcome_prices": rawJSONForTool(outcomePrices), "clob_token_ids": rawJSONForTool(clobTokenIDs), "end_date": endDate,
+		"outcomes": rawJSONForTool(outcomes), "outcome_prices": rawJSONForTool(outcomePrices), "clob_token_ids": rawJSONForTool(clobTokenIDs), "outcome_tokens": predictionOutcomeTokensForTool(outcomes, outcomePrices, clobTokenIDs), "end_date": endDate,
 	}
+	addPredictionEventIdentityForTool(item, event)
+	return item
+}
+
+func addPredictionEventIdentityForTool(item map[string]any, event predictionEventIdentityForTool) {
+	item["event_id"] = uintPtrForTool(event.ID)
+	item["external_event_id"] = nullableStringForTool(event.ExternalEventID)
+	item["event_slug"] = nullableStringForTool(event.Slug)
+	item["event_title"] = nullableStringForTool(event.Title)
+}
+
+func predictionEventIDsFromDomainMarkets(rows []domainprediction.Market) []uint {
+	seen := map[uint]bool{}
+	out := []uint{}
+	for _, row := range rows {
+		if row.EventID == nil || *row.EventID == 0 || seen[*row.EventID] {
+			continue
+		}
+		seen[*row.EventID] = true
+		out = append(out, *row.EventID)
+	}
+	return out
+}
+
+func predictionEventIdentitiesForTool(db *gorm.DB, eventIDs []uint) map[uint]predictionEventIdentityForTool {
+	if len(eventIDs) == 0 {
+		return nil
+	}
+	var rows []persistmodel.PredictionEvent
+	db.Where("id IN ?", eventIDs).Find(&rows)
+	out := make(map[uint]predictionEventIdentityForTool, len(rows))
+	for _, row := range rows {
+		out[row.ID] = predictionEventIdentityFromModel(&row.ID, &row)
+	}
+	return out
+}
+
+func predictionEventIdentityFromID(eventID *uint, rows map[uint]predictionEventIdentityForTool) predictionEventIdentityForTool {
+	if eventID == nil || *eventID == 0 {
+		return predictionEventIdentityForTool{}
+	}
+	if row, ok := rows[*eventID]; ok {
+		return row
+	}
+	return predictionEventIdentityForTool{ID: eventID}
+}
+
+func predictionEventIdentityFromModel(eventID *uint, event *persistmodel.PredictionEvent) predictionEventIdentityForTool {
+	if event != nil {
+		id := event.ID
+		if id == 0 && eventID != nil {
+			id = *eventID
+		}
+		return predictionEventIdentityForTool{ID: &id, ExternalEventID: event.ExternalEventID, Slug: event.Slug, Title: event.Title}
+	}
+	return predictionEventIdentityFromID(eventID, nil)
+}
+
+func predictionEventIdentityFromDomainMarket(market domainprediction.Market) predictionEventIdentityForTool {
+	return predictionEventIdentityForTool{
+		ID:              market.EventID,
+		ExternalEventID: market.EventExternalEventID,
+		Slug:            market.EventSlug,
+		Title:           market.EventTitle,
+	}
+}
+
+func uintPtrForTool(value *uint) any {
+	if value != nil && *value > 0 {
+		return *value
+	}
+	return nil
+}
+
+func nullableStringForTool(value string) any {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	return value
+}
+
+func nullableStringPointerForTool(value *string) any {
+	if value == nil {
+		return nil
+	}
+	return nullableStringForTool(*value)
+}
+
+func predictionOutcomeTokensForTool(outcomesRaw []byte, outcomePricesRaw []byte, clobTokenIDsRaw []byte) []map[string]any {
+	outcomes := stringListFromJSON(outcomesRaw)
+	prices := stringListFromJSON(outcomePricesRaw)
+	tokenIDs := stringListFromJSON(clobTokenIDsRaw)
+	limit := len(tokenIDs)
+	if len(outcomes) > limit {
+		limit = len(outcomes)
+	}
+	if len(prices) > limit {
+		limit = len(prices)
+	}
+	rows := make([]map[string]any, 0, limit)
+	for index := 0; index < limit; index++ {
+		item := map[string]any{"outcome_index": index}
+		if index < len(outcomes) && strings.TrimSpace(outcomes[index]) != "" {
+			item["outcome"] = strings.TrimSpace(outcomes[index])
+		}
+		if index < len(prices) && strings.TrimSpace(prices[index]) != "" {
+			item["outcome_price"] = strings.TrimSpace(prices[index])
+		}
+		if index < len(tokenIDs) && strings.TrimSpace(tokenIDs[index]) != "" {
+			item["token_id"] = strings.TrimSpace(tokenIDs[index])
+		}
+		rows = append(rows, item)
+	}
+	return rows
+}
+
+func predictionOutcomeTokenForTool(outcomesRaw []byte, outcomePricesRaw []byte, clobTokenIDsRaw []byte, tokenID string) map[string]any {
+	tokenID = strings.TrimSpace(tokenID)
+	for _, row := range predictionOutcomeTokensForTool(outcomesRaw, outcomePricesRaw, clobTokenIDsRaw) {
+		if strings.TrimSpace(stringFromAny(row["token_id"])) == tokenID {
+			return row
+		}
+	}
+	return map[string]any{"token_id": tokenID}
 }
 
 func toolResultsPublic(results []MeetingToolResult) []map[string]any {

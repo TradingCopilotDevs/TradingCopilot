@@ -46,7 +46,7 @@ func buildMeetingTrustReport(row domainmeeting.Meeting, events []domainmeeting.E
 			recapActionSuggestions = append(recapActionSuggestions, recapActionSuggestionsFromEvent(event, payload)...)
 		case "recap_action_review":
 			recapActionReviews = append(recapActionReviews, recapActionReviewFromEvent(event, payload))
-		case "tool_result", "paper_order_created", "watchlist_updated", "wake_plan_created":
+		case "tool_result", "paper_order_created", "watchlist_updated", "prediction_watchlist_updated", "wake_plan_created":
 			evidence = append(evidence, trustEvidenceFromEvent(event, payload))
 		case "role_completed":
 			modelSnapshots = append(modelSnapshots, modelSnapshotFromEvent(event, payload))
@@ -327,6 +327,10 @@ func trustReviewFromEvent(event domainmeeting.Event, payload map[string]any) map
 }
 
 func trustEvidenceFromEvent(event domainmeeting.Event, payload map[string]any) map[string]any {
+	preview := trustFirstNonNil(payload["result_preview"], payload["rows"], payload["result"])
+	if preview == nil {
+		preview = payload
+	}
 	return map[string]any{
 		"eventId":   event.ID,
 		"sequence":  event.Sequence,
@@ -334,7 +338,7 @@ func trustEvidenceFromEvent(event domainmeeting.Event, payload map[string]any) m
 		"roleKey":   eventRoleKey(event),
 		"tool":      firstNonEmptyAnyString(payload["tool"], payload["tool_name"]),
 		"status":    payload["status"],
-		"preview":   trustFirstNonNil(payload["result_preview"], payload["rows"], payload["result"]),
+		"preview":   preview,
 		"createdAt": event.CreatedAt,
 	}
 }

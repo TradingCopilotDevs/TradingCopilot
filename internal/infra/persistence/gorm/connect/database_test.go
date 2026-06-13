@@ -214,6 +214,11 @@ func TestAutoMigrateUpgradesPreviousVersionSchemaWithoutRebuild(t *testing.T) {
 			t.Fatalf("expected upgraded schema to contain %s", table)
 		}
 	}
+	for _, column := range []string{"source_meeting_id", "source_meeting_event_id", "source_role_key"} {
+		if !db.Migrator().HasColumn(&persistmodel.PredictionWatchlistItem{}, column) {
+			t.Fatalf("expected upgraded prediction_watchlist_items to contain %s", column)
+		}
+	}
 	for _, column := range []string{"display_name", "role", "active", "last_login_at"} {
 		if !db.Migrator().HasColumn(&persistmodel.AdminUser{}, column) {
 			t.Fatalf("expected upgraded admin_users to contain %s", column)

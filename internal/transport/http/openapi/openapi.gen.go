@@ -3547,6 +3547,153 @@ func (e PlatformAdapterUpsertDocumentDataType) Valid() bool {
 	}
 }
 
+// Defines values for PredictionEventAttributesProvider.
+const (
+	PredictionEventAttributesProviderPolymarket PredictionEventAttributesProvider = "polymarket"
+)
+
+// Valid indicates whether the value is a known member of the PredictionEventAttributesProvider enum.
+func (e PredictionEventAttributesProvider) Valid() bool {
+	switch e {
+	case PredictionEventAttributesProviderPolymarket:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionEventResourceType.
+const (
+	PredictionEvents PredictionEventResourceType = "prediction-events"
+)
+
+// Valid indicates whether the value is a known member of the PredictionEventResourceType enum.
+func (e PredictionEventResourceType) Valid() bool {
+	switch e {
+	case PredictionEvents:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionMarketAttributesProvider.
+const (
+	PredictionMarketAttributesProviderPolymarket PredictionMarketAttributesProvider = "polymarket"
+)
+
+// Valid indicates whether the value is a known member of the PredictionMarketAttributesProvider enum.
+func (e PredictionMarketAttributesProvider) Valid() bool {
+	switch e {
+	case PredictionMarketAttributesProviderPolymarket:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionMarketMatchAttributesStatus.
+const (
+	Candidate      PredictionMarketMatchAttributesStatus = "candidate"
+	Confirmed      PredictionMarketMatchAttributesStatus = "confirmed"
+	Linked         PredictionMarketMatchAttributesStatus = "linked"
+	Rejected       PredictionMarketMatchAttributesStatus = "rejected"
+	ReviewRequired PredictionMarketMatchAttributesStatus = "review_required"
+)
+
+// Valid indicates whether the value is a known member of the PredictionMarketMatchAttributesStatus enum.
+func (e PredictionMarketMatchAttributesStatus) Valid() bool {
+	switch e {
+	case Candidate:
+		return true
+	case Confirmed:
+		return true
+	case Linked:
+		return true
+	case Rejected:
+		return true
+	case ReviewRequired:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionMarketMatchResourceType.
+const (
+	PredictionMarketMatches PredictionMarketMatchResourceType = "prediction-market-matches"
+)
+
+// Valid indicates whether the value is a known member of the PredictionMarketMatchResourceType enum.
+func (e PredictionMarketMatchResourceType) Valid() bool {
+	switch e {
+	case PredictionMarketMatches:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionMarketResourceType.
+const (
+	PredictionMarkets PredictionMarketResourceType = "prediction-markets"
+)
+
+// Valid indicates whether the value is a known member of the PredictionMarketResourceType enum.
+func (e PredictionMarketResourceType) Valid() bool {
+	switch e {
+	case PredictionMarkets:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionMarketSyncResourceAttributesProvider.
+const (
+	Polymarket PredictionMarketSyncResourceAttributesProvider = "polymarket"
+)
+
+// Valid indicates whether the value is a known member of the PredictionMarketSyncResourceAttributesProvider enum.
+func (e PredictionMarketSyncResourceAttributesProvider) Valid() bool {
+	switch e {
+	case Polymarket:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionMarketSyncResourceType.
+const (
+	PredictionMarketSyncs PredictionMarketSyncResourceType = "prediction-market-syncs"
+)
+
+// Valid indicates whether the value is a known member of the PredictionMarketSyncResourceType enum.
+func (e PredictionMarketSyncResourceType) Valid() bool {
+	switch e {
+	case PredictionMarketSyncs:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PredictionWatchlistResourceType.
+const (
+	PredictionWatchlistItems PredictionWatchlistResourceType = "prediction-watchlist-items"
+)
+
+// Valid indicates whether the value is a known member of the PredictionWatchlistResourceType enum.
+func (e PredictionWatchlistResourceType) Valid() bool {
+	switch e {
+	case PredictionWatchlistItems:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ProxySettingResourceId.
 const (
 	ProxySettingResourceIdCurrent ProxySettingResourceId = "current"
@@ -7845,6 +7992,210 @@ type PlatformAdapterUpsertDocument struct {
 
 // PlatformAdapterUpsertDocumentDataType defines model for PlatformAdapterUpsertDocument.Data.Type.
 type PlatformAdapterUpsertDocumentDataType string
+
+// PredictionEventAttributes defines model for PredictionEventAttributes.
+type PredictionEventAttributes struct {
+	Active          *bool                              `json:"active,omitempty"`
+	Category        *string                            `json:"category,omitempty"`
+	Closed          *bool                              `json:"closed,omitempty"`
+	CreatedAt       *time.Time                         `json:"createdAt,omitempty"`
+	Description     *string                            `json:"description,omitempty"`
+	EndDate         *time.Time                         `json:"endDate,omitempty"`
+	ExternalEventId *string                            `json:"externalEventId,omitempty"`
+	Liquidity       interface{}                        `json:"liquidity,omitempty"`
+	OpenInterest    interface{}                        `json:"openInterest,omitempty"`
+	Provider        *PredictionEventAttributesProvider `json:"provider,omitempty"`
+	Raw             interface{}                        `json:"raw,omitempty"`
+	Slug            *string                            `json:"slug,omitempty"`
+	Tags            *[]string                          `json:"tags,omitempty"`
+	Title           *string                            `json:"title,omitempty"`
+	UpdatedAt       *time.Time                         `json:"updatedAt,omitempty"`
+	Volume          interface{}                        `json:"volume,omitempty"`
+}
+
+// PredictionEventAttributesProvider defines model for PredictionEventAttributes.Provider.
+type PredictionEventAttributesProvider string
+
+// PredictionEventDocument defines model for PredictionEventDocument.
+type PredictionEventDocument struct {
+	Data PredictionEventResource `json:"data"`
+}
+
+// PredictionEventResource defines model for PredictionEventResource.
+type PredictionEventResource struct {
+	Attributes PredictionEventAttributes   `json:"attributes"`
+	Id         string                      `json:"id"`
+	Type       PredictionEventResourceType `json:"type"`
+}
+
+// PredictionEventResourceType defines model for PredictionEventResource.Type.
+type PredictionEventResourceType string
+
+// PredictionMarketAttributes defines model for PredictionMarketAttributes.
+type PredictionMarketAttributes struct {
+	Active           *bool                               `json:"active,omitempty"`
+	BestAsk          interface{}                         `json:"bestAsk,omitempty"`
+	BestBid          interface{}                         `json:"bestBid,omitempty"`
+	ClobTokenIds     *[]string                           `json:"clobTokenIds,omitempty"`
+	Closed           *bool                               `json:"closed,omitempty"`
+	ConditionId      *string                             `json:"conditionId,omitempty"`
+	CreatedAt        *time.Time                          `json:"createdAt,omitempty"`
+	Description      *string                             `json:"description,omitempty"`
+	EnableOrderBook  *bool                               `json:"enableOrderBook,omitempty"`
+	EndDate          *time.Time                          `json:"endDate,omitempty"`
+	EventId          *int                                `json:"eventId,omitempty"`
+	EventSlug        *string                             `json:"eventSlug,omitempty"`
+	EventTitle       *string                             `json:"eventTitle,omitempty"`
+	ExternalEventId  *string                             `json:"externalEventId,omitempty"`
+	ExternalMarketId *string                             `json:"externalMarketId,omitempty"`
+	LastTradePrice   interface{}                         `json:"lastTradePrice,omitempty"`
+	Liquidity        interface{}                         `json:"liquidity,omitempty"`
+	OutcomePrices    *[]interface{}                      `json:"outcomePrices,omitempty"`
+	Outcomes         *[]string                           `json:"outcomes,omitempty"`
+	Provider         *PredictionMarketAttributesProvider `json:"provider,omitempty"`
+	Question         *string                             `json:"question,omitempty"`
+	Raw              interface{}                         `json:"raw,omitempty"`
+	Restricted       *bool                               `json:"restricted,omitempty"`
+	Slug             *string                             `json:"slug,omitempty"`
+	Spread           interface{}                         `json:"spread,omitempty"`
+	UpdatedAt        *time.Time                          `json:"updatedAt,omitempty"`
+	Volume           interface{}                         `json:"volume,omitempty"`
+}
+
+// PredictionMarketAttributesProvider defines model for PredictionMarketAttributes.Provider.
+type PredictionMarketAttributesProvider string
+
+// PredictionMarketDocument defines model for PredictionMarketDocument.
+type PredictionMarketDocument struct {
+	Data PredictionMarketResource `json:"data"`
+}
+
+// PredictionMarketMatchAttributes defines model for PredictionMarketMatchAttributes.
+type PredictionMarketMatchAttributes struct {
+	CandidateSnapshot interface{}                            `json:"candidateSnapshot,omitempty"`
+	CreatedAt         *time.Time                             `json:"createdAt,omitempty"`
+	Market            *PredictionMarketAttributes            `json:"market,omitempty"`
+	MarketId          *int                                   `json:"marketId,omitempty"`
+	MessageId         *int                                   `json:"messageId,omitempty"`
+	NewsSnippet       *string                                `json:"newsSnippet,omitempty"`
+	Query             *string                                `json:"query,omitempty"`
+	Reason            *string                                `json:"reason,omitempty"`
+	ReviewedAt        *time.Time                             `json:"reviewedAt,omitempty"`
+	ReviewedBy        *string                                `json:"reviewedBy,omitempty"`
+	Score             interface{}                            `json:"score,omitempty"`
+	ScoreBreakdown    interface{}                            `json:"scoreBreakdown,omitempty"`
+	Status            *PredictionMarketMatchAttributesStatus `json:"status,omitempty"`
+	UpdatedAt         *time.Time                             `json:"updatedAt,omitempty"`
+}
+
+// PredictionMarketMatchAttributesStatus defines model for PredictionMarketMatchAttributes.Status.
+type PredictionMarketMatchAttributesStatus string
+
+// PredictionMarketMatchCollectionDocument defines model for PredictionMarketMatchCollectionDocument.
+type PredictionMarketMatchCollectionDocument struct {
+	Data []PredictionMarketMatchResource `json:"data"`
+	Meta *map[string]interface{}         `json:"meta,omitempty"`
+}
+
+// PredictionMarketMatchDocument defines model for PredictionMarketMatchDocument.
+type PredictionMarketMatchDocument struct {
+	Data PredictionMarketMatchResource `json:"data"`
+}
+
+// PredictionMarketMatchResource defines model for PredictionMarketMatchResource.
+type PredictionMarketMatchResource struct {
+	Attributes PredictionMarketMatchAttributes   `json:"attributes"`
+	Id         string                            `json:"id"`
+	Type       PredictionMarketMatchResourceType `json:"type"`
+}
+
+// PredictionMarketMatchResourceType defines model for PredictionMarketMatchResource.Type.
+type PredictionMarketMatchResourceType string
+
+// PredictionMarketResource defines model for PredictionMarketResource.
+type PredictionMarketResource struct {
+	Attributes PredictionMarketAttributes   `json:"attributes"`
+	Id         string                       `json:"id"`
+	Type       PredictionMarketResourceType `json:"type"`
+}
+
+// PredictionMarketResourceType defines model for PredictionMarketResource.Type.
+type PredictionMarketResourceType string
+
+// PredictionMarketSearchCollectionDocument defines model for PredictionMarketSearchCollectionDocument.
+type PredictionMarketSearchCollectionDocument struct {
+	Data []PredictionMarketResource `json:"data"`
+	Meta PredictionMarketSearchMeta `json:"meta"`
+}
+
+// PredictionMarketSearchMeta defines model for PredictionMarketSearchMeta.
+type PredictionMarketSearchMeta struct {
+	NextCursor string `json:"nextCursor"`
+
+	// NormalizedQuery User query after URL/slug normalization.
+	NormalizedQuery string `json:"normalizedQuery"`
+
+	// ProviderWarning Present when external provider search failed but local cached results were returned.
+	ProviderWarning      *string                `json:"providerWarning,omitempty"`
+	Query                string                 `json:"query"`
+	Total                int                    `json:"total"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// PredictionMarketSyncDocument defines model for PredictionMarketSyncDocument.
+type PredictionMarketSyncDocument struct {
+	Data PredictionMarketSyncResource `json:"data"`
+}
+
+// PredictionMarketSyncResource defines model for PredictionMarketSyncResource.
+type PredictionMarketSyncResource struct {
+	Attributes struct {
+		Provider PredictionMarketSyncResourceAttributesProvider `json:"provider"`
+		Synced   int                                            `json:"synced"`
+	} `json:"attributes"`
+	Id   string                           `json:"id"`
+	Type PredictionMarketSyncResourceType `json:"type"`
+}
+
+// PredictionMarketSyncResourceAttributesProvider defines model for PredictionMarketSyncResource.Attributes.Provider.
+type PredictionMarketSyncResourceAttributesProvider string
+
+// PredictionMarketSyncResourceType defines model for PredictionMarketSyncResource.Type.
+type PredictionMarketSyncResourceType string
+
+// PredictionWatchlistAttributes defines model for PredictionWatchlistAttributes.
+type PredictionWatchlistAttributes struct {
+	Active               *bool                       `json:"active,omitempty"`
+	CreatedAt            *time.Time                  `json:"createdAt,omitempty"`
+	Market               *PredictionMarketAttributes `json:"market,omitempty"`
+	MarketId             *int                        `json:"marketId,omitempty"`
+	Note                 *string                     `json:"note,omitempty"`
+	ResearchTeamId       *int                        `json:"researchTeamId,omitempty"`
+	SourceMeetingEventId *int                        `json:"sourceMeetingEventId,omitempty"`
+	SourceMeetingId      *int                        `json:"sourceMeetingId,omitempty"`
+	SourceRoleKey        *string                     `json:"sourceRoleKey,omitempty"`
+}
+
+// PredictionWatchlistCollectionDocument defines model for PredictionWatchlistCollectionDocument.
+type PredictionWatchlistCollectionDocument struct {
+	Data []PredictionWatchlistResource `json:"data"`
+	Meta *map[string]interface{}       `json:"meta,omitempty"`
+}
+
+// PredictionWatchlistDocument defines model for PredictionWatchlistDocument.
+type PredictionWatchlistDocument struct {
+	Data PredictionWatchlistResource `json:"data"`
+}
+
+// PredictionWatchlistResource defines model for PredictionWatchlistResource.
+type PredictionWatchlistResource struct {
+	Attributes PredictionWatchlistAttributes   `json:"attributes"`
+	Id         string                          `json:"id"`
+	Type       PredictionWatchlistResourceType `json:"type"`
+}
+
+// PredictionWatchlistResourceType defines model for PredictionWatchlistResource.Type.
+type PredictionWatchlistResourceType string
 
 // ProxySettingAttributes defines model for ProxySettingAttributes.
 type ProxySettingAttributes struct {
@@ -14333,6 +14684,126 @@ func (a OpsRecentErrorEntry) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'time': %w", err)
 		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for PredictionMarketSearchMeta. Returns the specified
+// element and whether it was found
+func (a PredictionMarketSearchMeta) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for PredictionMarketSearchMeta
+func (a *PredictionMarketSearchMeta) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for PredictionMarketSearchMeta to handle AdditionalProperties
+func (a *PredictionMarketSearchMeta) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["nextCursor"]; found {
+		err = json.Unmarshal(raw, &a.NextCursor)
+		if err != nil {
+			return fmt.Errorf("error reading 'nextCursor': %w", err)
+		}
+		delete(object, "nextCursor")
+	}
+
+	if raw, found := object["normalizedQuery"]; found {
+		err = json.Unmarshal(raw, &a.NormalizedQuery)
+		if err != nil {
+			return fmt.Errorf("error reading 'normalizedQuery': %w", err)
+		}
+		delete(object, "normalizedQuery")
+	}
+
+	if raw, found := object["providerWarning"]; found {
+		err = json.Unmarshal(raw, &a.ProviderWarning)
+		if err != nil {
+			return fmt.Errorf("error reading 'providerWarning': %w", err)
+		}
+		delete(object, "providerWarning")
+	}
+
+	if raw, found := object["query"]; found {
+		err = json.Unmarshal(raw, &a.Query)
+		if err != nil {
+			return fmt.Errorf("error reading 'query': %w", err)
+		}
+		delete(object, "query")
+	}
+
+	if raw, found := object["total"]; found {
+		err = json.Unmarshal(raw, &a.Total)
+		if err != nil {
+			return fmt.Errorf("error reading 'total': %w", err)
+		}
+		delete(object, "total")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for PredictionMarketSearchMeta to handle AdditionalProperties
+func (a PredictionMarketSearchMeta) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["nextCursor"], err = json.Marshal(a.NextCursor)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'nextCursor': %w", err)
+	}
+
+	object["normalizedQuery"], err = json.Marshal(a.NormalizedQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'normalizedQuery': %w", err)
+	}
+
+	if a.ProviderWarning != nil {
+		object["providerWarning"], err = json.Marshal(a.ProviderWarning)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'providerWarning': %w", err)
+		}
+	}
+
+	object["query"], err = json.Marshal(a.Query)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'query': %w", err)
+	}
+
+	object["total"], err = json.Marshal(a.Total)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {

@@ -1,8 +1,10 @@
 package httptransport
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	appprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/app/prediction"
 	domainprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/prediction"
@@ -16,11 +18,21 @@ func (s *Server) searchPredictionMarkets(w http.ResponseWriter, r *http.Request)
 		writeJSONAPIError(w, http.StatusBadGateway, "prediction-market-search-failed", "Prediction market search failed", err.Error(), "")
 		return
 	}
+	if result.ProviderError != "" && result.NormalizedQuery != "" && len(result.Rows) == 0 {
+		writeJSONAPIError(w, http.StatusBadGateway, "prediction-market-provider-unavailable", "Prediction market provider unavailable", result.ProviderError, "")
+		return
+	}
 	out := make([]jsonapi.Resource, 0, len(result.Rows))
 	for _, row := range result.Rows {
 		out = append(out, predictionMarketResource(row))
 	}
-	jsonapi.Write(w, http.StatusOK, jsonapi.Document{Data: out, Meta: jsonapi.PageMeta(len(result.Rows), "")})
+	meta := jsonapi.PageMeta(len(result.Rows), "")
+	meta["query"] = result.Query
+	meta["normalizedQuery"] = result.NormalizedQuery
+	if result.ProviderError != "" {
+		meta["providerWarning"] = result.ProviderError
+	}
+	jsonapi.Write(w, http.StatusOK, jsonapi.Document{Data: out, Meta: meta})
 }
 
 func (s *Server) syncPredictionMarkets(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +115,10 @@ func (s *Server) reviewPredictionMatch(w http.ResponseWriter, r *http.Request) {
 func (s *Server) listPredictionWatchlist(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.predictionUsecase.ListWatchlist(r.Context(), uintQuery(r, "researchTeamId"), intQueryWithDefault(r, "limit", 100))
 	if err != nil {
+		if errors.Is(err, appprediction.ErrPredictionWatchlistTeamRequired) || errors.Is(err, appprediction.ErrPredictionWatchlistTeamInvalid) {
+			writeJSONAPIError(w, http.StatusBadRequest, "prediction-watchlist-team-invalid", "Prediction watchlist team invalid", err.Error(), "")
+			return
+		}
 		writeJSONAPIError(w, http.StatusInternalServerError, "prediction-watchlist-load-failed", "Prediction watchlist load failed", err.Error(), "")
 		return
 	}
@@ -168,18 +184,29 @@ func predictionWatchlistOnlyResource(row domainprediction.WatchlistItem) jsonapi
 
 func predictionWatchlistAttributes(row domainprediction.WatchlistItem) map[string]any {
 	return map[string]any{
-		"researchTeamId": row.ResearchTeamID, "marketId": row.MarketID, "note": row.Note, "active": row.Active, "createdAt": row.CreatedAt,
+		"researchTeamId": row.ResearchTeamID, "marketId": row.MarketID, "note": row.Note, "active": row.Active,
+		"sourceMeetingId": row.SourceMeetingID, "sourceMeetingEventId": row.SourceMeetingEventID, "sourceRoleKey": row.SourceRoleKey,
+		"createdAt": row.CreatedAt,
 	}
 }
 
 func predictionMarketAttributes(row domainprediction.Market) map[string]any {
 	return map[string]any{
-		"eventId": row.EventID, "provider": row.Provider, "externalMarketId": row.ExternalMarketID, "conditionId": row.ConditionID, "question": row.Question,
+		"eventId": row.EventID, "externalEventId": nullableStringValue(row.EventExternalEventID), "eventSlug": nullableStringValue(row.EventSlug), "eventTitle": nullableStringValue(row.EventTitle),
+		"provider": row.Provider, "externalMarketId": row.ExternalMarketID, "conditionId": row.ConditionID, "question": row.Question,
 		"slug": row.Slug, "description": row.Description, "outcomes": rawJSONValue(row.Outcomes), "outcomePrices": rawJSONValue(row.OutcomePrices),
 		"clobTokenIds": rawJSONValue(row.CLOBTokenIDs), "enableOrderBook": row.EnableOrderBook, "bestBid": row.BestBid, "bestAsk": row.BestAsk,
 		"lastTradePrice": row.LastTradePrice, "spread": row.Spread, "volume": row.Volume, "liquidity": row.Liquidity, "active": row.Active,
 		"closed": row.Closed, "restricted": row.Restricted, "endDate": row.EndDate, "raw": rawJSONValue(row.Raw), "updatedAt": row.UpdatedAt, "createdAt": row.CreatedAt,
 	}
+}
+
+func nullableStringValue(value string) any {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	return value
 }
 
 func intQueryWithDefault(r *http.Request, key string, fallback int) int {

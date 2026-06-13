@@ -29,7 +29,10 @@ func runManagedRoleTurn(ctx context.Context, db *gorm.DB, meeting domainmeeting.
 	}
 
 	roleContext, relatedSymbols := buildManagedRoleContext(db, meeting, role, stage, roundNumber, priorDiscussion, assignedQuestions)
-	systemPrompt := managedRoleSystemPrompt(role, stage, isPredictionMarketMeeting(db, &meeting))
+	predictionMeeting := isPredictionMarketMeeting(db, &meeting)
+	systemPrompt := managedRoleSystemPrompt(role, stage, predictionMeeting)
+	validateTurn := validateManagedRoleTurnForMeeting(predictionMeeting)
+	validationRetry := managedRoleTurnValidationRetryInstructionForMeeting(predictionMeeting)
 	toolContextBlocks := []string{}
 	var finalData map[string]any
 	var finalPromptSnapshot map[string]any
@@ -50,8 +53,11 @@ func runManagedRoleTurn(ctx context.Context, db *gorm.DB, meeting domainmeeting.
 			"round": roundNumber, "stage": stage, "tool_iteration": toolIteration, "provider_id": providerIDForRole(role),
 			"provider_name": providerName(role), "prompt_version": managedMeetingPromptVersion, "prompt_snapshot": promptSnapshot,
 		})
-		data, raw, err := callRoleModelJSON(ctx, db, meeting.ID, role, modelName, messages, "Your previous response was not valid JSON. Return one JSON object only.", tokenLabel(role.Key, "analysis"))
+		data, raw, err := callRoleModelJSONValidated(ctx, db, meeting.ID, role, modelName, messages, "Your previous response was not valid JSON. Return one JSON object only.", tokenLabel(role.Key, "analysis"), validateTurn, validationRetry)
 		if err != nil {
+			if predictionMeeting && isPredictionMarketRoleBoundaryError(err) {
+				return blockPredictionMarketRoleTurn(db, meeting, role, progress, roundNumber, stage, predictionMarketRoleBoundaryReason(err)), nil
+			}
 			fallbackMessages := []map[string]string{
 				{"role": "system", "content": systemPrompt},
 				{"role": "user", "content": userPrompt},
@@ -63,6 +69,11 @@ func runManagedRoleTurn(ctx context.Context, db *gorm.DB, meeting domainmeeting.
 			}
 			data = map[string]any{"type": "analysis", "content": rawText}
 			raw = rawText
+			if predictionMeeting {
+				if validationErr := validateTurn(data); validationErr != nil {
+					return blockPredictionMarketRoleTurn(db, meeting, role, progress, roundNumber, stage, predictionMarketRoleBoundaryReason(validationErr)), nil
+				}
+			}
 		}
 		finalData = data
 		finalRaw = raw
@@ -86,4 +97,28 @@ func runManagedRoleTurn(ctx context.Context, db *gorm.DB, meeting domainmeeting.
 		"provider_id": providerIDForRole(role), "provider_name": providerName(role), "model": modelName, "prompt_version": managedMeetingPromptVersion, "prompt_snapshot": finalPromptSnapshot,
 	})
 	return result, nil
+}
+
+func isPredictionMarketRoleBoundaryError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "prediction market role analysis violates asset boundary")
+}
+
+func predictionMarketRoleBoundaryReason(err error) string {
+	if err == nil {
+		return "asset boundary violation"
+	}
+	text := err.Error()
+	if _, after, found := strings.Cut(text, "prediction market role analysis violates asset boundary:"); found {
+		return strings.TrimSpace(after)
+	}
+	return "asset boundary violation"
+}
+
+func blockPredictionMarketRoleTurn(db *gorm.DB, meeting domainmeeting.Meeting, role domainai.AgentRole, progress map[string]int, roundNumber int, stage string, reason string) roleTurnResult {
+	content := role.Name + " response was blocked because it crossed the prediction-market asset boundary. Continue with Polymarket-only evidence and ignore that attempted response."
+	_, _ = AppendEvent(db, meeting.ID, domainkernel.EventRoleMessage, &role.Key, content, map[string]any{
+		"status": "prediction_market_role_analysis_blocked", "model_called": true, "role_name": role.Name, "progress": progress,
+		"round": roundNumber, "stage": stage, "reason": reason, "confidence": "low",
+	})
+	return roleTurnResult{Content: content, Raw: content, Confidence: "low"}
 }

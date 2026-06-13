@@ -112,6 +112,25 @@
             </div>
           </div>
         </div>
+        <div v-if="trustEvidenceItems.length" class="trust-section">
+          <strong>结构化证据</strong>
+          <div class="trust-evidence-list">
+            <div v-for="item in trustEvidenceItems" :key="trustEvidenceKey(item)" class="trust-evidence-item">
+              <div class="trust-evidence-head">
+                <el-tag size="small" :type="trustEvidenceTagType(item.status)" effect="plain">
+                  {{ trustEvidenceStatusLabel(item.status) }}
+                </el-tag>
+                <span class="muted">{{ trustEvidenceTitle(item) }}</span>
+              </div>
+              <div class="trust-evidence-preview">{{ trustEvidencePreviewText(item) }}</div>
+              <div v-if="trustEvidenceMarketId(item)" class="toolbar compact-toolbar">
+                <el-button link type="primary" @click="openPredictionMarketEvidence(item)">
+                  打开预测市场
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div v-if="trustRecapActionSuggestions.length" class="trust-section">
           <strong>待复核动作</strong>
           <div class="trust-action-list">
@@ -122,7 +141,7 @@
                 </el-tag>
                 <span class="muted">{{ recapActionDispositionLabel(item.disposition) }} / 事件 #{{ item.eventId || '-' }}</span>
               </div>
-              <div class="trust-action-spec">{{ recapActionSpecText(item.spec) }}</div>
+              <div class="trust-action-spec">{{ recapActionSpecText(item.spec, item.actionType) }}</div>
               <div class="muted trust-action-reason">{{ item.reason || '需要人工复核后再执行' }}</div>
               <div class="muted trust-action-evidence">{{ recapActionEvidenceText(item.evidenceSummary) }}</div>
               <div v-if="recapActionLatestReview(item)" class="trust-action-review">
@@ -490,6 +509,10 @@ const trustUnsupportedClaims = computed<Record<string, any>[]>(() => {
   return Array.isArray(claims) ? claims.slice(0, 8) : []
 })
 const trustEvidenceGateSummary = computed(() => evidenceGateSummary(trustEvidenceGate.value))
+const trustEvidenceItems = computed<Record<string, any>[]>(() => {
+  const evidence = trustReport.value?.evidence || []
+  return Array.isArray(evidence) ? evidence.slice(0, 8) : []
+})
 const trustClaimBindings = computed<Record<string, any>[]>(() => (trustReport.value?.claimEvidenceBindings || []).slice(0, 6))
 const trustSentenceReviews = computed<MeetingTrustReviewAttributes[]>(() => trustReport.value?.sentenceReviews || [])
 const trustRecapActionSuggestions = computed<MeetingRecapActionSuggestion[]>(() => {
@@ -978,6 +1001,71 @@ function recapActionEvidenceEventIds(item: MeetingRecapActionSuggestion) {
   return trustNumberArray(summary.evidence_event_ids ?? summary.evidenceEventIds)
 }
 
+function trustEvidenceKey(item: Record<string, any>) {
+  return String(item.eventId || item.id || `${item.sequence || 'seq'}-${item.status || 'evidence'}-${item.tool || ''}`)
+}
+
+function trustEvidenceStatusLabel(value: unknown) {
+  return ({
+    tool_result: '工具结果',
+    prediction_watchlist_updated: '预测关注已更新',
+    watchlist_updated: '自选已更新',
+    paper_order_created: '模拟单已创建',
+    wake_plan_created: '唤醒已创建'
+  } as Record<string, string>)[String(value || '')] || String(value || '证据')
+}
+
+function trustEvidenceTagType(value: unknown) {
+  return ({
+    tool_result: 'primary',
+    prediction_watchlist_updated: 'success',
+    watchlist_updated: 'success',
+    paper_order_created: 'warning',
+    wake_plan_created: 'info'
+  } as Record<string, 'primary' | 'success' | 'warning' | 'info'>)[String(value || '')] || 'info'
+}
+
+function trustEvidenceTitle(item: Record<string, any>) {
+  const tool = String(item.tool || '').trim()
+  const role = String(item.roleKey || '').trim()
+  const eventText = item.eventId ? `事件 #${item.eventId}` : '事件 -'
+  const pieces = [tool, role ? `角色 ${role}` : '', eventText].filter(Boolean)
+  return pieces.join(' / ')
+}
+
+function trustEvidencePreviewText(item: Record<string, any>) {
+  const preview = item.preview && typeof item.preview === 'object' ? (item.preview as Record<string, unknown>) : {}
+  const rawPreview = typeof item.preview === 'string' ? item.preview : ''
+  const parts = [
+    compactActionValue('市场ID', preview.market_id ?? preview.marketId),
+    compactActionValue('市场', preview.market_question ?? preview.marketQuestion),
+    compactActionValue('Market slug', preview.market_slug ?? preview.marketSlug),
+    compactActionValue('Event', preview.event_slug ?? preview.eventSlug ?? preview.event_title ?? preview.eventTitle),
+    compactActionValue('状态', preview.active === false ? '停用' : preview.active === true ? '关注' : ''),
+    compactActionValue('备注', preview.note),
+    compactActionValue('预览', rawPreview)
+  ].filter(Boolean)
+  if (parts.length) return parts.join(' / ')
+  try {
+    const text = JSON.stringify(item.preview ?? {})
+    return text && text !== '{}' ? text.slice(0, 180) : '暂无证据摘要'
+  } catch {
+    return '暂无证据摘要'
+  }
+}
+
+function trustEvidenceMarketId(item: Record<string, any>) {
+  const preview = item.preview && typeof item.preview === 'object' ? (item.preview as Record<string, unknown>) : {}
+  const n = Number(preview.market_id ?? preview.marketId)
+  return Number.isFinite(n) && n > 0 ? n : undefined
+}
+
+function openPredictionMarketEvidence(item: Record<string, any>) {
+  const marketId = trustEvidenceMarketId(item)
+  if (!marketId) return
+  void router.push({ path: '/prediction-markets', query: { marketId: String(marketId), sourceMeetingId: String(id) } })
+}
+
 function trustReviewRefsText(item: TrustReviewCandidate) {
   const evidenceText = item.evidenceEventIds.length ? `证据事件 #${item.evidenceEventIds.join('、')}` : '未绑定证据事件'
   const citationText = item.citationIds.length ? `引用 ${item.citationIds.join('、')}` : '未绑定引用'
@@ -987,6 +1075,7 @@ function trustReviewRefsText(item: TrustReviewCandidate) {
 function recapActionTypeLabel(value: unknown) {
   return ({
     watchlist: '自选',
+    prediction_watchlist: '预测关注',
     wake_plan: '唤醒',
     paper_order: '模拟单'
   } as Record<string, string>)[String(value || '')] || String(value || '动作')
@@ -1032,8 +1121,16 @@ function recapActionReviewMeta(review: MeetingRecapActionReviewAttributes | null
   return `${reviewer} / ${time}${note}`
 }
 
-function recapActionSpecText(value: unknown) {
+function recapActionSpecText(value: unknown, actionType?: unknown) {
   const spec = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  if (String(actionType || '') === 'prediction_watchlist') {
+    const parts = [
+      compactActionValue('市场ID', spec.market_id ?? spec.marketId ?? spec.prediction_market_id ?? spec.predictionMarketId),
+      compactActionValue('状态', spec.active === false ? '停用' : '关注'),
+      compactActionValue('原因', spec.reason ?? spec.note)
+    ].filter(Boolean)
+    if (parts.length) return parts.join(' / ')
+  }
   const parts = [
     compactActionValue('代码', spec.code),
     compactActionValue('名称', spec.name),
@@ -1223,6 +1320,7 @@ useAutoRefresh({
 .detail-side,
 .detail-side .panel,
 .trust-section,
+.trust-evidence-item,
 .trust-action-item,
 .trust-binding-item,
 .trust-review-item,
@@ -1495,6 +1593,43 @@ useAutoRefresh({
 .trust-action-list {
   display: grid;
   gap: 10px;
+}
+
+.trust-evidence-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trust-evidence-item {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+  padding: 10px;
+}
+
+.trust-evidence-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  min-width: 0;
+}
+
+.trust-evidence-head .muted {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.trust-evidence-preview {
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .trust-action-item {

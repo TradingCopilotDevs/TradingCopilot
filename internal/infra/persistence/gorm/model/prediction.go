@@ -100,14 +100,17 @@ type PredictionMarketMatch struct {
 func (PredictionMarketMatch) TableName() string { return "prediction_market_matches" }
 
 type PredictionWatchlistItem struct {
-	ID             uint              `gorm:"primaryKey"`
-	ResearchTeamID uint              `gorm:"not null;index;uniqueIndex:uq_prediction_watchlist_team_market"`
-	ResearchTeam   *ResearchTeam     `gorm:"foreignKey:ResearchTeamID;constraint:OnDelete:CASCADE"`
-	MarketID       uint              `gorm:"not null;index;uniqueIndex:uq_prediction_watchlist_team_market"`
-	Market         *PredictionMarket `gorm:"foreignKey:MarketID;constraint:OnDelete:CASCADE"`
-	Note           *string           `gorm:"type:text"`
-	Active         bool              `gorm:"default:true"`
-	CreatedAt      time.Time
+	ID                   uint              `gorm:"primaryKey"`
+	ResearchTeamID       uint              `gorm:"not null;index;uniqueIndex:uq_prediction_watchlist_team_market"`
+	ResearchTeam         *ResearchTeam     `gorm:"foreignKey:ResearchTeamID;constraint:OnDelete:CASCADE"`
+	MarketID             uint              `gorm:"not null;index;uniqueIndex:uq_prediction_watchlist_team_market"`
+	Market               *PredictionMarket `gorm:"foreignKey:MarketID;constraint:OnDelete:CASCADE"`
+	Note                 *string           `gorm:"type:text"`
+	Active               bool              `gorm:"default:true"`
+	SourceMeetingID      *uint             `gorm:"index"`
+	SourceMeetingEventID *uint             `gorm:"index"`
+	SourceRoleKey        *string           `gorm:"size:64"`
+	CreatedAt            time.Time
 }
 
 func (PredictionWatchlistItem) TableName() string { return "prediction_watchlist_items" }

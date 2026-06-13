@@ -104,6 +104,9 @@ func (r ResearchRepository) DeleteTeamGraph(ctx context.Context, id uint) error 
 		if err := db.Model(&persistmodel.PaperOrder{}).Where("meeting_id IN ?", meetingIDs).Updates(map[string]any{"meeting_id": nil, "source_meeting_event_id": nil}).Error; err != nil {
 			return err
 		}
+		if err := db.Model(&persistmodel.PredictionWatchlistItem{}).Where("source_meeting_id IN ?", meetingIDs).Updates(map[string]any{"source_meeting_id": nil, "source_meeting_event_id": nil, "source_role_key": nil}).Error; err != nil {
+			return err
+		}
 		if err := db.Where("meeting_id IN ?", meetingIDs).Delete(&persistmodel.MeetingEvent{}).Error; err != nil {
 			return err
 		}

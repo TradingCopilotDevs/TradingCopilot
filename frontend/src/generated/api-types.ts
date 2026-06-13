@@ -3443,9 +3443,60 @@ export interface components {
             /** @enum {string} */
             type: "prediction-events";
             id: string;
+            attributes: components["schemas"]["PredictionEventAttributes"];
+        };
+        PredictionEventDocument: {
+            data: components["schemas"]["PredictionEventResource"];
+        };
+        PredictionEventAttributes: {
+            /** @enum {string} */
+            provider?: "polymarket";
+            externalEventId?: string;
+            slug?: string;
+            title?: string;
+            description?: string;
+            category?: string | null;
+            tags?: string[];
+            active?: boolean;
+            closed?: boolean;
+            /** Format: date-time */
+            endDate?: string | null;
+            volume?: unknown;
+            liquidity?: unknown;
+            openInterest?: unknown;
+            raw?: unknown;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PredictionMarketSyncDocument: {
+            data: components["schemas"]["PredictionMarketSyncResource"];
+        };
+        PredictionMarketSyncResource: {
+            /** @enum {string} */
+            type: "prediction-market-syncs";
+            id: string;
             attributes: {
-                [key: string]: unknown;
+                /** @enum {string} */
+                provider: "polymarket";
+                synced: number;
             };
+        };
+        PredictionMarketSearchCollectionDocument: {
+            data: components["schemas"]["PredictionMarketResource"][];
+            meta: components["schemas"]["PredictionMarketSearchMeta"];
+        };
+        PredictionMarketSearchMeta: {
+            total: number;
+            nextCursor: string;
+            query: string;
+            /** @description User query after URL/slug normalization. */
+            normalizedQuery: string;
+            /** @description Present when external provider search failed but local cached results were returned. */
+            providerWarning?: string;
+        } & {
+            [key: string]: unknown;
         };
         PredictionMarketResource: {
             /** @enum {string} */
@@ -3453,14 +3504,21 @@ export interface components {
             id: string;
             attributes: components["schemas"]["PredictionMarketAttributes"];
         };
+        PredictionMarketDocument: {
+            data: components["schemas"]["PredictionMarketResource"];
+        };
         PredictionMarketAttributes: {
             eventId?: number | null;
+            externalEventId?: string | null;
+            eventSlug?: string | null;
+            eventTitle?: string | null;
             /** @enum {string} */
             provider?: "polymarket";
             externalMarketId?: string;
             conditionId?: string;
             question?: string;
             slug?: string;
+            description?: string;
             outcomes?: string[];
             outcomePrices?: unknown[];
             clobTokenIds?: string[];
@@ -3472,10 +3530,15 @@ export interface components {
             active?: boolean;
             closed?: boolean;
             restricted?: boolean;
+            /** Format: date-time */
+            endDate?: string | null;
             volume?: unknown;
             liquidity?: unknown;
-            openInterest?: unknown;
             raw?: unknown;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
         PredictionMarketQuoteResource: {
             /** @enum {string} */
@@ -3501,17 +3564,63 @@ export interface components {
             /** @enum {string} */
             type: "prediction-market-matches";
             id: string;
-            attributes: {
+            attributes: components["schemas"]["PredictionMarketMatchAttributes"];
+        };
+        PredictionMarketMatchCollectionDocument: {
+            data: components["schemas"]["PredictionMarketMatchResource"][];
+            meta?: {
                 [key: string]: unknown;
             };
+        };
+        PredictionMarketMatchDocument: {
+            data: components["schemas"]["PredictionMarketMatchResource"];
+        };
+        PredictionMarketMatchAttributes: {
+            messageId?: number | null;
+            marketId?: number;
+            query?: string;
+            newsSnippet?: string;
+            candidateSnapshot?: unknown;
+            score?: unknown;
+            scoreBreakdown?: unknown;
+            /** @enum {string} */
+            status?: "candidate" | "linked" | "review_required" | "rejected" | "confirmed";
+            reason?: string;
+            reviewedBy?: string | null;
+            /** Format: date-time */
+            reviewedAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            market?: components["schemas"]["PredictionMarketAttributes"];
         };
         PredictionWatchlistResource: {
             /** @enum {string} */
             type: "prediction-watchlist-items";
             id: string;
-            attributes: {
+            attributes: components["schemas"]["PredictionWatchlistAttributes"];
+        };
+        PredictionWatchlistCollectionDocument: {
+            data: components["schemas"]["PredictionWatchlistResource"][];
+            meta?: {
                 [key: string]: unknown;
             };
+        };
+        PredictionWatchlistDocument: {
+            data: components["schemas"]["PredictionWatchlistResource"];
+        };
+        PredictionWatchlistAttributes: {
+            researchTeamId?: number;
+            marketId?: number;
+            note?: string | null;
+            active?: boolean;
+            sourceMeetingId?: number | null;
+            sourceMeetingEventId?: number | null;
+            sourceRoleKey?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            market?: components["schemas"]["PredictionMarketAttributes"];
         };
         MarketSeriesPointCollectionDocument: {
             data: components["schemas"]["MarketSeriesPointResource"][];
@@ -5810,6 +5919,78 @@ export interface components {
                 "application/vnd.api+json": components["schemas"]["MarketQuoteDocument"];
             };
         };
+        /** @description Prediction market search JSON:API collection with provider/cache metadata. */
+        PredictionMarketSearchCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionMarketSearchCollectionDocument"];
+            };
+        };
+        /** @description Prediction market sync JSON:API document. */
+        PredictionMarketSyncDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionMarketSyncDocument"];
+            };
+        };
+        /** @description Prediction event JSON:API document. */
+        PredictionEventDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionEventDocument"];
+            };
+        };
+        /** @description Prediction market JSON:API document. */
+        PredictionMarketDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionMarketDocument"];
+            };
+        };
+        /** @description Prediction market match JSON:API collection. */
+        PredictionMarketMatchCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionMarketMatchCollectionDocument"];
+            };
+        };
+        /** @description Prediction market match JSON:API document. */
+        PredictionMarketMatchDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionMarketMatchDocument"];
+            };
+        };
+        /** @description Prediction watchlist JSON:API collection. */
+        PredictionWatchlistCollectionDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionWatchlistCollectionDocument"];
+            };
+        };
+        /** @description Prediction watchlist JSON:API document. */
+        PredictionWatchlistDocument: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/vnd.api+json": components["schemas"]["PredictionWatchlistDocument"];
+            };
+        };
         /** @description Market series JSON:API collection. */
         MarketSeriesPointCollectionDocument: {
             headers: {
@@ -7417,7 +7598,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionMarketSearchCollectionDocument"];
             502: components["responses"]["JsonApiErrorDocument"];
         };
     };
@@ -7432,7 +7613,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionMarketSyncDocument"];
             502: components["responses"]["JsonApiErrorDocument"];
         };
     };
@@ -7447,7 +7628,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionEventDocument"];
             404: components["responses"]["JsonApiErrorDocument"];
         };
     };
@@ -7464,7 +7645,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionMarketDocument"];
             404: components["responses"]["JsonApiErrorDocument"];
         };
     };
@@ -7482,7 +7663,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionMarketMatchCollectionDocument"];
         };
     };
     postPredictionMatchReview: {
@@ -7496,7 +7677,7 @@ export interface operations {
         };
         requestBody: components["requestBodies"]["JsonApiDocumentRequest"];
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionMarketMatchDocument"];
             400: components["responses"]["JsonApiErrorDocument"];
             404: components["responses"]["JsonApiErrorDocument"];
         };
@@ -7513,7 +7694,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionWatchlistCollectionDocument"];
+            400: components["responses"]["JsonApiErrorDocument"];
         };
     };
     postPredictionWatchlist: {
@@ -7525,7 +7707,7 @@ export interface operations {
         };
         requestBody: components["requestBodies"]["JsonApiDocumentRequest"];
         responses: {
-            200: components["responses"]["JsonApiDocument"];
+            200: components["responses"]["PredictionWatchlistDocument"];
             400: components["responses"]["JsonApiErrorDocument"];
         };
     };

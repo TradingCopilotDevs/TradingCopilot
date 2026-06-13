@@ -30,31 +30,34 @@ type Event struct {
 }
 
 type Market struct {
-	ID               uint
-	EventID          *uint
-	Provider         string
-	ExternalMarketID string
-	ConditionID      string
-	Question         string
-	Slug             string
-	Description      string
-	Outcomes         kernel.JSON
-	OutcomePrices    kernel.JSON
-	CLOBTokenIDs     kernel.JSON
-	EnableOrderBook  bool
-	BestBid          decimal.Decimal
-	BestAsk          decimal.Decimal
-	LastTradePrice   decimal.Decimal
-	Spread           decimal.Decimal
-	Volume           decimal.Decimal
-	Liquidity        decimal.Decimal
-	Active           bool
-	Closed           bool
-	Restricted       bool
-	EndDate          *time.Time
-	Raw              kernel.JSON
-	UpdatedAt        time.Time
-	CreatedAt        time.Time
+	ID                   uint
+	EventID              *uint
+	EventExternalEventID string
+	EventSlug            string
+	EventTitle           string
+	Provider             string
+	ExternalMarketID     string
+	ConditionID          string
+	Question             string
+	Slug                 string
+	Description          string
+	Outcomes             kernel.JSON
+	OutcomePrices        kernel.JSON
+	CLOBTokenIDs         kernel.JSON
+	EnableOrderBook      bool
+	BestBid              decimal.Decimal
+	BestAsk              decimal.Decimal
+	LastTradePrice       decimal.Decimal
+	Spread               decimal.Decimal
+	Volume               decimal.Decimal
+	Liquidity            decimal.Decimal
+	Active               bool
+	Closed               bool
+	Restricted           bool
+	EndDate              *time.Time
+	Raw                  kernel.JSON
+	UpdatedAt            time.Time
+	CreatedAt            time.Time
 }
 
 type Quote struct {
@@ -90,10 +93,13 @@ type Match struct {
 }
 
 type WatchlistItem struct {
-	ID             uint
-	ResearchTeamID uint
-	MarketID       uint
-	Note           *string
-	Active         bool
-	CreatedAt      time.Time
+	ID                   uint
+	ResearchTeamID       uint
+	MarketID             uint
+	Note                 *string
+	Active               bool
+	SourceMeetingID      *uint
+	SourceMeetingEventID *uint
+	SourceRoleKey        *string
+	CreatedAt            time.Time
 }

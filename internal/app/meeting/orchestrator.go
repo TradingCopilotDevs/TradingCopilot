@@ -178,7 +178,7 @@ func ValidateModeratorRecapActions(recap map[string]any) error {
 
 func ModeratorRecapValidationRetryInstruction(err error) string {
 	return "Your previous response was valid JSON but contained invalid executable actions: " + err.Error() + `. Return one corrected JSON object only.
-If you keep watchlist_actions, wake_plans, or orders, include facts or inferences plus citations that tie the action to transcript, referenced meetings, or tool results.
+If you keep watchlist_actions, prediction_watchlist_actions, wake_plans, or orders, include facts or inferences plus citations that tie the action to transcript, referenced meetings, or tool results.
 If evidence is missing, move the idea to assumptions/evidence_gaps and remove the executable action.
 For indicator wake_plans, trigger_config must include code, symbol, or ticker, plus a numeric threshold, target, target_price, value, or target_value.
 Do not include an indicator wake_plan if the meeting transcript lacks a concrete code and numeric threshold.`
@@ -199,7 +199,10 @@ func validateModeratorRecapActionEvidence(recap map[string]any) error {
 }
 
 func ModeratorRecapHasActions(recap map[string]any) bool {
-	return len(objectList(recap["watchlist_actions"])) > 0 || len(objectList(recap["wake_plans"])) > 0 || len(objectList(recap["orders"])) > 0
+	return len(objectList(recap["watchlist_actions"])) > 0 ||
+		len(objectList(recap["prediction_watchlist_actions"])) > 0 ||
+		len(objectList(recap["wake_plans"])) > 0 ||
+		len(objectList(recap["orders"])) > 0
 }
 
 func sanitizeQuestions(raw any, validRoleKeys map[string]struct{}, fallbackTarget string) []map[string]string {

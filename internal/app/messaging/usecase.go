@@ -108,7 +108,8 @@ var DefaultPredictionFilterSeed = domainmsg.MessageSubscriptionFilter{
 3. decision=meeting 只用于高时效、高影响、市场映射明确或需要多角色核验结算规则/赔率变化的消息；decision=observe 用于可能相关但市场、时间窗或证据仍需人工确认的消息；decision=ignore 用于低置信、过期、不可裁定或无预测市场映射的消息。
 4. related_prediction_markets 要写可用于 Gamma 搜索的候选表达，例如事件名、market slug、英文/中文问题句、关键实体+结果+时间窗；没有候选就返回空数组。
 5. match_confidence 使用0到1：>=0.75 表示高度可能有关联并可触发会议；0.45到0.75 表示进入人工确认/观察；<0.45 不应关联。match_reason 必须说明主体、结果、时间窗、证据强弱和不确定点。
-6. 不输出任何真实交易、钱包、API key、充值提现、仓位或模拟盘动作建议；预测市场 v1 只能观察、关注、核验和安排后续唤醒。`,
+6. related_symbols 必须始终是空数组，不要输出 A 股代码、股票代码、ticker 或任何可被当作证券标的的字段。
+7. 不输出任何真实交易、钱包、API key、充值提现、仓位或模拟盘动作建议；预测市场 v1 只能观察、关注、核验和安排后续唤醒。`,
 	Enabled:   true,
 	IsDefault: false,
 }
@@ -2541,6 +2542,9 @@ func (u Usecase) ensureManualFilterResults(ctx context.Context, repo Repository,
 		if result.RelatedSymbols == nil {
 			result.RelatedSymbols = u.service.JSON(nil)
 		}
+		if err := u.clearPredictionTeamRelatedSymbols(ctx, repo, assignment.ResearchTeamID, &result); err != nil {
+			return err
+		}
 		if err := repo.SaveMessageFilterResult(ctx, &result); err != nil {
 			return err
 		}
@@ -2549,6 +2553,20 @@ func (u Usecase) ensureManualFilterResults(ctx context.Context, repo Repository,
 	row.FilterResults = results
 	u.applyMessageFilterSummary(row, results)
 	return repo.SaveMessage(ctx, row)
+}
+
+func (u Usecase) clearPredictionTeamRelatedSymbols(ctx context.Context, repo Repository, teamID uint, result *domainmsg.IngestedMessageFilterResult) error {
+	if result == nil || teamID == 0 {
+		return nil
+	}
+	assetClasses, err := repo.ResearchTeamAssetClasses(ctx, []uint{teamID})
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(assetClasses[teamID]) == "prediction_market" {
+		result.RelatedSymbols = u.service.JSON(nil)
+	}
+	return nil
 }
 
 func (u Usecase) UpdateSubscriptionTitle(ctx context.Context, id uint, title string) error {
@@ -2839,7 +2857,14 @@ func (u Usecase) applyFilter(ctx context.Context, repo Repository, row *domainms
 	if err := repo.SaveMessage(ctx, row); err != nil {
 		return err
 	}
+	shouldMatchPrediction := false
 	if u.predictionMatcher != nil && row.FilterDecision != nil && *row.FilterDecision != domainkernel.NewsIgnore {
+		shouldMatchPrediction, err = predictionMatcherEnabledForAssignments(ctx, repo, assignments)
+		if err != nil {
+			return err
+		}
+	}
+	if shouldMatchPrediction {
 		messageID := row.ID
 		_, _ = u.predictionMatcher.MatchNews(ctx, &messageID, row.Text)
 	}
@@ -2865,6 +2890,24 @@ func (u Usecase) messageFilterAssignments(ctx context.Context, repo Repository, 
 		}
 	}
 	return uniqueDomainSubscriptionAssignments(assignments), nil
+}
+
+func predictionMatcherEnabledForAssignments(ctx context.Context, repo Repository, assignments []domainmsg.MessageSubscriptionAssignment) (bool, error) {
+	teamIDs := make([]uint, 0, len(assignments))
+	for _, assignment := range assignments {
+		teamIDs = append(teamIDs, assignment.ResearchTeamID)
+	}
+	assetClasses, err := repo.ResearchTeamAssetClasses(ctx, uniqueUintIDs(teamIDs))
+	if err != nil {
+		return false, err
+	}
+	for _, teamID := range teamIDs {
+		switch strings.TrimSpace(assetClasses[teamID]) {
+		case "prediction_market", "mixed":
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (u Usecase) applyFilterAssignment(ctx context.Context, repo Repository, row *domainmsg.IngestedMessage, assignment domainmsg.MessageSubscriptionAssignment) (domainmsg.IngestedMessageFilterResult, error) {
@@ -2910,6 +2953,9 @@ func (u Usecase) applyFilterAssignment(ctx context.Context, repo Repository, row
 		result.FilterStatus = domainmsg.FilterStatusFiltered
 		if result.RelatedSymbols == nil {
 			result.RelatedSymbols = u.service.JSON(nil)
+		}
+		if err := u.clearPredictionTeamRelatedSymbols(ctx, repo, assignment.ResearchTeamID, &result); err != nil {
+			return result, err
 		}
 		if filterResult.FilterID != 0 {
 			result.FilterID = filterResult.FilterID
@@ -3046,27 +3092,43 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 	if !found || subscription == nil {
 		return nil, errors.New("message subscription not found")
 	}
+	teamIDs := make([]uint, 0, len(meetingResults))
+	for _, result := range meetingResults {
+		teamIDs = append(teamIDs, result.ResearchTeamID)
+	}
+	assetClasses, err := repo.ResearchTeamAssetClasses(ctx, uniqueUintIDs(teamIDs))
+	if err != nil {
+		return nil, err
+	}
 	predictionMatches := u.predictionMatchesForMessage(ctx, row.ID)
 	predictionMarketIDs := linkedPredictionMarketIDs(predictionMatches)
 	created := []*domainmeeting.Meeting{}
 	for _, result := range meetingResults {
 		teamID := result.ResearchTeamID
-		symbols := relatedSymbolsFromJSON(result.RelatedSymbols)
-		if len(symbols) == 0 {
-			symbols = relatedSymbolsFromJSON(row.RelatedSymbols)
-		}
-		if len(symbols) == 0 {
-			symbols = u.service.ExtractRelatedSymbols(row.Text)
+		isPredictionMeeting := messageResultShouldUsePredictionMeeting(assetClasses[teamID], predictionMarketIDs)
+		var symbols []string
+		if !isPredictionMeeting {
+			symbols = relatedSymbolsFromJSON(result.RelatedSymbols)
+			if len(symbols) == 0 {
+				symbols = relatedSymbolsFromJSON(row.RelatedSymbols)
+			}
+			if len(symbols) == 0 {
+				symbols = u.service.ExtractRelatedSymbols(row.Text)
+			}
 		}
 		symbolPart := "message-event"
-		if len(symbols) > 0 {
+		if isPredictionMeeting {
+			symbolPart = "prediction market message"
+			if len(predictionMarketIDs) > 0 {
+				symbolPart = fmt.Sprintf("prediction markets %s", joinUintIDs(predictionMarketIDs, 3))
+			}
+		} else if len(symbols) > 0 {
 			limit := len(symbols)
 			if limit > 3 {
 				limit = 3
 			}
 			symbolPart = strings.Join(symbols[:limit], ", ")
-		}
-		if len(predictionMarketIDs) > 0 && symbolPart == "message-event" {
+		} else if len(predictionMarketIDs) > 0 {
 			symbolPart = fmt.Sprintf("prediction markets %s", joinUintIDs(predictionMarketIDs, 3))
 		}
 		ready, reason, err := repo.ResearchTeamReady(ctx, teamID)
@@ -3093,10 +3155,17 @@ func (u Usecase) ensureMeetingsForMessage(ctx context.Context, repo Repository, 
 			return nil, err
 		}
 		content := fmt.Sprintf("Subscription %s triggered a meeting.\nFilter #%d / Team #%d\nFilter reason: %s\nRelated symbols: %s\nRelated prediction markets: %s\n\n%s", subscription.Title, result.FilterID, teamID, stringValue(result.FilterReason), strings.Join(symbols, ", "), joinUintIDs(predictionMarketIDs, 10), row.Text)
+		payloadRelatedSymbols := symbols
+		if isPredictionMeeting && payloadRelatedSymbols == nil {
+			payloadRelatedSymbols = []string{}
+		}
+		if isPredictionMeeting {
+			content = fmt.Sprintf("Subscription %s triggered a prediction market meeting.\nFilter #%d / Team #%d\nFilter reason: %s\nRelated prediction markets: %s\n\n%s", subscription.Title, result.FilterID, teamID, stringValue(result.FilterReason), joinUintIDs(predictionMarketIDs, 10), row.Text)
+		}
 		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: "Meeting submitted for execution.", Payload: u.service.JSON(map[string]any{"status": "queued"})}); err != nil {
 			return nil, err
 		}
-		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: content, Payload: u.service.JSON(map[string]any{"status": "message_subscription_triggered", "ingested_message_id": row.ID, "message_filter_result_id": result.ID, "subscription_id": subscription.ID, "filter_id": result.FilterID, "research_team_id": teamID, "decision": *result.FilterDecision, "related_symbols": symbols, "prediction_market_ids": predictionMarketIDs, "prediction_market_matches": predictionMatchPayload(predictionMatches)})}); err != nil {
+		if err := repo.AppendMeetingEvent(ctx, &domainmeeting.Event{MeetingID: meeting.ID, Type: domainkernel.EventSystem, Content: content, Payload: u.service.JSON(map[string]any{"status": "message_subscription_triggered", "ingested_message_id": row.ID, "message_filter_result_id": result.ID, "subscription_id": subscription.ID, "filter_id": result.FilterID, "research_team_id": teamID, "decision": *result.FilterDecision, "related_symbols": payloadRelatedSymbols, "prediction_market_ids": predictionMarketIDs, "prediction_market_matches": predictionMatchPayload(predictionMatches)})}); err != nil {
 			return nil, err
 		}
 		note := fmt.Sprintf("%s / filter#%d / team#%d / message#%s", subscription.Title, result.FilterID, teamID, row.SourceMessageID)
@@ -5183,6 +5252,17 @@ func linkedPredictionMarketIDs(matches []domainprediction.Match) []uint {
 
 func isLinkedPredictionMatch(match domainprediction.Match) bool {
 	return match.Status == "linked" || match.Status == "confirmed"
+}
+
+func messageResultShouldUsePredictionMeeting(assetClass string, predictionMarketIDs []uint) bool {
+	switch strings.TrimSpace(assetClass) {
+	case "prediction_market":
+		return true
+	case "mixed":
+		return len(predictionMarketIDs) > 0
+	default:
+		return false
+	}
 }
 
 func predictionMatchPayload(matches []domainprediction.Match) []map[string]any {

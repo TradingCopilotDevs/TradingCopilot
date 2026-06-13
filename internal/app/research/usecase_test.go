@@ -3,6 +3,7 @@ package research
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -55,11 +56,13 @@ func TestPredictionMarketDefaultRolesUseOnlyResearchEvidenceTools(t *testing.T) 
 	if !created || team == nil || team.AssetClass != AssetClassPredictionMarket || team.PaperAccountID != 0 {
 		t.Fatalf("unexpected prediction team team=%+v created=%v", team, created)
 	}
+	toolsByRole := map[string][]string{}
 	for _, role := range repo.roles[team.ID] {
 		var tools []string
 		if err := json.Unmarshal(role.ToolNames, &tools); err != nil {
 			t.Fatalf("role %s tools: %v", role.Key, err)
 		}
+		toolsByRole[role.Key] = tools
 		for _, tool := range tools {
 			if strings.HasPrefix(tool, "paper.") || strings.HasPrefix(tool, "wake.") {
 				t.Fatalf("prediction role %s should not enable execution tool %s", role.Key, tool)
@@ -71,6 +74,214 @@ func TestPredictionMarketDefaultRolesUseOnlyResearchEvidenceTools(t *testing.T) 
 		if !strings.Contains(role.PromptTemplate, "证据") {
 			t.Fatalf("prediction role %s prompt should force evidence-aware reasoning: %s", role.Key, role.PromptTemplate)
 		}
+		for _, skill := range jsonStringList(role.SkillNames) {
+			if skill == "risk-review" {
+				t.Fatalf("prediction role %s should use prediction-specific risk skills, got %s", role.Key, skill)
+			}
+		}
+	}
+	requireRoleTool(t, toolsByRole, "moderator", "prediction.search_markets")
+	requireRoleTool(t, toolsByRole, "moderator", "prediction.watchlist")
+	requireRoleTool(t, toolsByRole, "risk", "prediction.orderbook")
+	requireRoleTool(t, toolsByRole, "risk", "prediction.price_history")
+	rejectRoleTool(t, toolsByRole, "risk", "prediction.watchlist")
+	requireRoleTool(t, toolsByRole, "synthesis", "prediction.upsert_watchlist")
+	requireRoleTool(t, toolsByRole, "synthesis", "prediction.watchlist")
+}
+
+func TestEnsureDefaultPredictionTeamRepairsLegacyDefaultRoles(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeResearchRepo()
+	repo.paperAccounts[10] = true
+	team := domainresearch.Team{Name: DefaultPredictionTeamName, AssetClass: AssetClassAShare, PaperAccountID: 10, Active: true}
+	if err := repo.CreateTeam(ctx, &team); err != nil {
+		t.Fatal(err)
+	}
+	providerID := uint(99)
+	model := "custom-model"
+	if err := repo.CreateRole(ctx, &domainresearch.TeamRole{
+		ResearchTeamID: team.ID,
+		Key:            "moderator",
+		Name:           "旧主持人",
+		Responsibility: "legacy",
+		PromptTemplate: "你是A股多智能体投研会议的主持人。",
+		ProviderID:     &providerID,
+		Model:          &model,
+		ToolNames:      jsonList([]string{"paper.create_order", "market.realtime_quote", "meeting.transcript"}),
+		SkillNames:     jsonList([]string{"trade-execution-planning", "prediction-market-research"}),
+		Enabled:        true,
+		SortOrder:      99,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.CreateRole(ctx, &domainresearch.TeamRole{
+		ResearchTeamID: team.ID,
+		Key:            "custom",
+		Name:           "Custom",
+		PromptTemplate: "custom prediction role",
+		ToolNames:      jsonList([]string{"paper.orders", "prediction.market_snapshot", "web.search"}),
+		SkillNames:     jsonList([]string{"portfolio-construction", "risk-review"}),
+		Enabled:        true,
+		SortOrder:      120,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	usecase := NewUsecase(repo, fakeResearchTx{repo: repo})
+
+	repaired, created, err := usecase.EnsureDefaultPredictionTeam(ctx)
+	if err != nil {
+		t.Fatalf("EnsureDefaultPredictionTeam: %v", err)
+	}
+	if created || repaired == nil || repaired.ID != team.ID || repaired.AssetClass != AssetClassPredictionMarket || repaired.PaperAccountID != 0 {
+		t.Fatalf("expected existing default team to be repaired, team=%+v created=%v", repaired, created)
+	}
+	roles := repo.roles[team.ID]
+	if len(roles) != len(PredictionMarketDefaultRoles)+1 {
+		t.Fatalf("missing prediction default roles after repair: got %d roles", len(roles))
+	}
+	moderator := roles["moderator"]
+	if !strings.Contains(moderator.PromptTemplate, "预测市场") || strings.Contains(moderator.PromptTemplate, "A股多智能体") {
+		t.Fatalf("moderator prompt was not repaired: %s", moderator.PromptTemplate)
+	}
+	if moderator.ProviderID == nil || *moderator.ProviderID != providerID || moderator.Model == nil || *moderator.Model != model {
+		t.Fatalf("repair should preserve provider/model: %+v", moderator)
+	}
+	requireRoleTool(t, map[string][]string{"moderator": jsonStringList(moderator.ToolNames)}, "moderator", "prediction.search_markets")
+	requireStringList(t, jsonStringList(roles["custom"].ToolNames), []string{"prediction.market_snapshot", "web.search"})
+	requireStringList(t, jsonStringList(roles["custom"].SkillNames), []string{})
+	if !strings.Contains(roles["custom"].PromptTemplate, predictionRolePromptBoundaryMarker) {
+		t.Fatalf("custom prediction role prompt should be boundary-wrapped: %s", roles["custom"].PromptTemplate)
+	}
+}
+
+func TestUpsertRoleSanitizesPredictionTeamCapabilities(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeResearchRepo()
+	team := domainresearch.Team{Name: "Prediction", AssetClass: AssetClassPredictionMarket, Active: true}
+	if err := repo.CreateTeam(ctx, &team); err != nil {
+		t.Fatal(err)
+	}
+	usecase := NewUsecase(repo, fakeResearchTx{repo: repo})
+
+	role, err := usecase.UpsertRole(ctx, team.ID, "custom", RoleInput{
+		Key:            "custom",
+		Name:           "Custom",
+		Responsibility: "custom",
+		PromptTemplate: "custom prompt",
+		ToolNames: []string{
+			"web.search",
+			"market.realtime_quote",
+			"paper.orders",
+			"prediction.market_snapshot",
+			"meeting.transcript",
+			"meeting.future_stock_context",
+			"wake.create_plan",
+			" prediction.orderbook ",
+			"web.search",
+		},
+		SkillNames: []string{
+			"prediction-market-research",
+			"portfolio-construction",
+			"wake-plan-design",
+			"trade-execution-planning",
+			" risk-review ",
+			"prediction-market-research",
+		},
+		Enabled:   true,
+		SortOrder: 10,
+	})
+	if err != nil {
+		t.Fatalf("UpsertRole: %v", err)
+	}
+	requireStringList(t, jsonStringList(role.ToolNames), []string{
+		"web.search",
+		"prediction.market_snapshot",
+		"meeting.transcript",
+		"prediction.orderbook",
+	})
+	requireStringList(t, jsonStringList(role.SkillNames), []string{
+		"prediction-market-research",
+		"wake-plan-design",
+	})
+	if !strings.Contains(role.PromptTemplate, predictionRolePromptBoundaryMarker) || !strings.Contains(role.PromptTemplate, "custom prompt") {
+		t.Fatalf("prediction role prompt should preserve custom prompt under boundary, got: %s", role.PromptTemplate)
+	}
+}
+
+func TestCreatePredictionTeamCopyRolesFiltersAShareCapabilities(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeResearchRepo()
+	repo.paperAccounts[10] = true
+	source := domainresearch.Team{Name: "A Share", AssetClass: AssetClassAShare, PaperAccountID: 10, Active: true}
+	if err := repo.CreateTeam(ctx, &source); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.CreateRole(ctx, &domainresearch.TeamRole{
+		ResearchTeamID: source.ID,
+		Key:            "portfolio",
+		Name:           "Portfolio",
+		PromptTemplate: "custom prompt",
+		ToolNames:      jsonList([]string{"market.watchlist", "paper.create_order", "web.search", "prediction.search_markets", "wake.create_plan"}),
+		SkillNames:     jsonList([]string{"portfolio-construction", "prediction-market-research", "evidence-synthesis", "trade-execution-planning"}),
+		Enabled:        true,
+		SortOrder:      90,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	usecase := NewUsecase(repo, fakeResearchTx{repo: repo})
+	copyFrom := source.ID
+
+	team, err := usecase.CreateTeam(ctx, TeamInput{
+		Name:                "Prediction Copy",
+		AssetClass:          AssetClassPredictionMarket,
+		Active:              true,
+		CopyRolesFromTeamID: &copyFrom,
+	})
+	if err != nil {
+		t.Fatalf("CreateTeam: %v", err)
+	}
+	role := repo.roles[team.ID]["portfolio"]
+	requireStringList(t, jsonStringList(role.ToolNames), []string{"web.search", "prediction.search_markets"})
+	requireStringList(t, jsonStringList(role.SkillNames), []string{"prediction-market-research", "evidence-synthesis"})
+	if !strings.Contains(role.PromptTemplate, predictionRolePromptBoundaryMarker) {
+		t.Fatalf("copied prediction role prompt should include boundary, got: %s", role.PromptTemplate)
+	}
+}
+
+func TestUpdateTeamToPredictionMarketFiltersExistingRoleCapabilities(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeResearchRepo()
+	repo.paperAccounts[10] = true
+	team := domainresearch.Team{Name: "A Share", AssetClass: AssetClassAShare, PaperAccountID: 10, Active: true}
+	if err := repo.CreateTeam(ctx, &team); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.CreateRole(ctx, &domainresearch.TeamRole{
+		ResearchTeamID: team.ID,
+		Key:            "analyst",
+		Name:           "Analyst",
+		PromptTemplate: "custom prompt",
+		ToolNames:      jsonList([]string{"market.daily_bars", "paper.positions", "meeting.references", "prediction.market_snapshot"}),
+		SkillNames:     jsonList([]string{"technical-analysis", "market-resolution-risk", "watchlist-curation", "web-research"}),
+		Enabled:        true,
+		SortOrder:      20,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	usecase := NewUsecase(repo, fakeResearchTx{repo: repo})
+
+	updated, found, err := usecase.UpdateTeam(ctx, team.ID, TeamInput{AssetClass: AssetClassPredictionMarket}, map[string]bool{"assetClass": true})
+	if err != nil {
+		t.Fatalf("UpdateTeam: %v", err)
+	}
+	if !found || updated.AssetClass != AssetClassPredictionMarket || updated.PaperAccountID != 0 {
+		t.Fatalf("unexpected updated team=%+v found=%v", updated, found)
+	}
+	role := repo.roles[team.ID]["analyst"]
+	requireStringList(t, jsonStringList(role.ToolNames), []string{"meeting.references", "prediction.market_snapshot"})
+	requireStringList(t, jsonStringList(role.SkillNames), []string{"market-resolution-risk", "web-research"})
+	if !strings.Contains(role.PromptTemplate, predictionRolePromptBoundaryMarker) {
+		t.Fatalf("updated prediction role prompt should include boundary, got: %s", role.PromptTemplate)
 	}
 }
 
@@ -83,7 +294,7 @@ func TestPredictionMarketDefaultRolePromptsCoverResolutionOddsRiskAndActionBound
 		}
 	}
 	joined := strings.Join(allPrompts, "\n")
-	for _, required := range []string{"结算", "时间窗", "赔率", "流动性", "证据缺口", "不要输出真实交易", "模拟盘订单"} {
+	for _, required := range []string{"结算", "时间窗", "赔率", "流动性", "证据缺口", "prediction_watchlist_actions", "不要输出真实交易", "模拟盘订单"} {
 		if !strings.Contains(joined, required) {
 			t.Fatalf("prediction role prompts should cover %q, got:\n%s", required, joined)
 		}
@@ -143,6 +354,32 @@ func TestApplyDefaultRolesDeletesAndRebuildsDefaultRoles(t *testing.T) {
 	}
 	if moderator.ProviderID != nil || moderator.Model != nil {
 		t.Fatalf("default reset should clear provider/model: %+v", moderator)
+	}
+}
+
+func requireRoleTool(t *testing.T, toolsByRole map[string][]string, role string, tool string) {
+	t.Helper()
+	for _, value := range toolsByRole[role] {
+		if value == tool {
+			return
+		}
+	}
+	t.Fatalf("prediction role %s should include tool %s, got %+v", role, tool, toolsByRole[role])
+}
+
+func rejectRoleTool(t *testing.T, toolsByRole map[string][]string, role string, tool string) {
+	t.Helper()
+	for _, value := range toolsByRole[role] {
+		if value == tool {
+			t.Fatalf("prediction role %s should not include tool %s, got %+v", role, tool, toolsByRole[role])
+		}
+	}
+}
+
+func requireStringList(t *testing.T, got []string, want []string) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("list = %+v, want %+v", got, want)
 	}
 }
 

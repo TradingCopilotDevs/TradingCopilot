@@ -419,6 +419,58 @@ func TestResearchTeamContractIsExplicit(t *testing.T) {
 	}
 }
 
+func TestPredictionMarketContractIsExplicit(t *testing.T) {
+	root := repoRoot(t)
+	openapiRaw, err := os.ReadFile(filepath.Join(root, "api", "openapi.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	openapiText := string(openapiRaw)
+	for _, required := range []string{
+		"PredictionEventAttributes",
+		"PredictionMarketAttributes",
+		"PredictionMarketMatchAttributes",
+		"PredictionWatchlistAttributes",
+		"PredictionMarketMatchCollectionDocument",
+		"PredictionWatchlistCollectionDocument",
+		"normalizedQuery",
+		"providerWarning",
+		"marketId:",
+		"externalEventId:",
+		"eventSlug:",
+		"eventTitle:",
+		"scoreBreakdown:",
+		"researchTeamId:",
+		"sourceMeetingId:",
+		"sourceMeetingEventId:",
+		"sourceRoleKey:",
+		"market:",
+	} {
+		if !strings.Contains(openapiText, required) {
+			t.Fatalf("api/openapi.yaml must declare explicit prediction market contract field %q", required)
+		}
+	}
+	for _, forbidden := range []string{
+		"PredictionMarketMatchResource:\n      type: object\n      required: [type, id, attributes]\n      properties:\n        type: { type: string, enum: [prediction-market-matches] }\n        id: { type: string }\n        attributes:\n          type: object\n          additionalProperties: true",
+		"PredictionWatchlistResource:\n      type: object\n      required: [type, id, attributes]\n      properties:\n        type: { type: string, enum: [prediction-watchlist-items] }\n        id: { type: string }\n        attributes:\n          type: object\n          additionalProperties: true",
+	} {
+		if strings.Contains(openapiText, forbidden) {
+			t.Fatalf("api/openapi.yaml still exposes weak or mismatched prediction contract via %q", forbidden)
+		}
+	}
+
+	apiContractRaw, err := os.ReadFile(filepath.Join(root, "doc", "api-contract.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	apiContractText := string(apiContractRaw)
+	for _, required := range []string{"无协议裸域名 URL", "带分享 fragment", "prediction_market_recap_text_blocked", "不使用弱 `additionalProperties`"} {
+		if !strings.Contains(apiContractText, required) {
+			t.Fatalf("doc/api-contract.md must document prediction market contract via %q", required)
+		}
+	}
+}
+
 func TestPaperRiskConfigContractIncludesAccountBinding(t *testing.T) {
 	root := repoRoot(t)
 	openapiRaw, err := os.ReadFile(filepath.Join(root, "api", "openapi.yaml"))

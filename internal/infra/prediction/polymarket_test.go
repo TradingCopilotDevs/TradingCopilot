@@ -3,6 +3,7 @@ package prediction
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +13,182 @@ import (
 	"github.com/coder/websocket"
 	"github.com/shopspring/decimal"
 )
+
+func TestSearchUsesEventSlugEndpointForPolymarketURL(t *testing.T) {
+	publicSearchCalled := false
+	eventSlugCalls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/events/slug/us-x-iran-permanent-peace-deal-by":
+			eventSlugCalls++
+			writeJSON(t, w, `{
+				"id":"357807",
+				"slug":"us-x-iran-permanent-peace-deal-by",
+				"title":"US x Iran permanent peace deal by...?",
+				"description":"Resolution rules",
+				"active":true,
+				"closed":false,
+				"markets":[{
+					"id":"1919417",
+					"conditionId":"0xbbc6689d0f6d57ea42168836712237c7308b3e0118c8914d31b6126d0f3254c5",
+					"question":"US x Iran permanent peace deal by April 22, 2026?",
+					"slug":"us-x-iran-permanent-peace-deal-by-april-22-2026",
+					"outcomes":"[\"Yes\",\"No\"]",
+					"outcomePrices":"[\"0.001\",\"0.999\"]",
+					"clobTokenIds":"[\"yes-token\",\"no-token\"]",
+					"enableOrderBook":true,
+					"active":true,
+					"closed":true
+				}]
+			}`)
+		case "/public-search":
+			publicSearchCalled = true
+			http.Error(w, "public search should not be needed for exact event slug", http.StatusInternalServerError)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient(server.Client())
+	client.gammaBaseURL = server.URL
+	result, err := client.Search(context.Background(), "https://polymarket.com/event/us-x-iran-permanent-peace-deal-by#qTlpdC7", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if publicSearchCalled {
+		t.Fatal("exact event slug search should not fall back to public search")
+	}
+	if len(result.Events) != 1 || result.Events[0].Slug != "us-x-iran-permanent-peace-deal-by" {
+		t.Fatalf("unexpected events: %#v", result.Events)
+	}
+	if len(result.Markets) != 1 || result.Markets[0].ExternalMarketID != "1919417" {
+		t.Fatalf("unexpected markets: %#v", result.Markets)
+	}
+	assertJSONStringList(t, result.Markets[0].CLOBTokenIDs, []string{"yes-token", "no-token"})
+
+	result, err = client.Search(context.Background(), "polymarket.com/event/us-x-iran-permanent-peace-deal-by#qTlpdC7", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if publicSearchCalled {
+		t.Fatal("bare exact event slug search should not fall back to public search")
+	}
+	if eventSlugCalls != 2 {
+		t.Fatalf("event slug endpoint calls = %d, want 2", eventSlugCalls)
+	}
+	if len(result.Events) != 1 || result.Events[0].Slug != "us-x-iran-permanent-peace-deal-by" {
+		t.Fatalf("unexpected bare URL events: %#v", result.Events)
+	}
+
+	result, err = client.Search(context.Background(), "https://polymarket.com/events/US-X-Iran-Permanent-Peace-Deal-By#qTlpdC7", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if publicSearchCalled {
+		t.Fatal("plural uppercase event slug search should not fall back to public search")
+	}
+	if eventSlugCalls != 3 {
+		t.Fatalf("event slug endpoint calls = %d, want 3", eventSlugCalls)
+	}
+	if len(result.Events) != 1 || result.Events[0].Slug != "us-x-iran-permanent-peace-deal-by" {
+		t.Fatalf("unexpected plural uppercase URL events: %#v", result.Events)
+	}
+}
+
+func TestSearchFallsBackToMarketSlugEndpoint(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/events/slug/fed-cut-june-2026":
+			http.NotFound(w, r)
+		case "/markets/slug/fed-cut-june-2026":
+			writeJSON(t, w, `{
+				"id":"mkt-1",
+				"conditionId":"cond-1",
+				"question":"Will the Fed cut rates by June 2026?",
+				"slug":"fed-cut-june-2026",
+				"outcomes":"[\"Yes\",\"No\"]",
+				"outcomePrices":"[\"0.42\",\"0.58\"]",
+				"clobTokenIds":"[\"yes-token\",\"no-token\"]",
+				"enableOrderBook":true,
+				"active":true,
+				"closed":false,
+				"events":[{
+					"id":"evt-1",
+					"slug":"fed-rates-2026",
+					"title":"Fed rates in 2026",
+					"active":true,
+					"closed":false
+				}]
+			}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient(server.Client())
+	client.gammaBaseURL = server.URL
+	result, err := client.Search(context.Background(), "https://polymarket.com/market/fed-cut-june-2026?tid=abc", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Markets) != 1 || result.Markets[0].Slug != "fed-cut-june-2026" {
+		t.Fatalf("unexpected markets: %#v", result.Markets)
+	}
+	if len(result.Events) != 1 || result.Events[0].Slug != "fed-rates-2026" {
+		t.Fatalf("market slug response should preserve embedded parent event, got %#v", result.Events)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(result.Markets[0].Raw, &raw); err != nil {
+		t.Fatal(err)
+	}
+	if raw["event_id"] != "evt-1" {
+		t.Fatalf("market raw should include embedded event id for persistence, got %#v", raw)
+	}
+}
+
+func TestSearchRequestsFullPublicSearchPayload(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/public-search" {
+			http.NotFound(w, r)
+			return
+		}
+		if got := r.URL.Query().Get("optimized"); got != "false" {
+			t.Fatalf("optimized query = %q, want false", got)
+		}
+		writeJSON(t, w, `{"events":[{
+			"id":"evt-1",
+			"slug":"fed-rates-2026",
+			"title":"Fed rates in 2026",
+			"active":true,
+			"closed":false,
+			"markets":[{
+				"id":"mkt-1",
+				"conditionId":"cond-1",
+				"question":"Will the Fed cut rates by June 2026?",
+				"slug":"fed-cut-june-2026",
+				"outcomes":"[\"Yes\",\"No\"]",
+				"outcomePrices":"[\"0.42\",\"0.58\"]",
+				"clobTokenIds":"[\"yes-token\",\"no-token\"]",
+				"enableOrderBook":true,
+				"active":true,
+				"closed":false
+			}]
+		}]}`)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.Client())
+	client.gammaBaseURL = server.URL
+	result, err := client.Search(context.Background(), "US x Iran permanent peace deal", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Markets) != 1 || result.Markets[0].ExternalMarketID != "mkt-1" {
+		t.Fatalf("public search should parse full market rows, got %#v", result.Markets)
+	}
+}
 
 func TestParseEventsAndMarketsFromGammaPayload(t *testing.T) {
 	var payload []any
@@ -153,6 +330,14 @@ func TestMarketWebSocketSnapshotSubscribesAndNormalizesEvents(t *testing.T) {
 	assets, ok := subscription["assets_ids"].([]any)
 	if !ok || len(assets) != 1 || assets[0] != "yes-token" {
 		t.Fatalf("expected deduplicated assets_ids, got %#v", subscription["assets_ids"])
+	}
+}
+
+func writeJSON(t *testing.T, w http.ResponseWriter, payload string) {
+	t.Helper()
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := io.WriteString(w, payload); err != nil {
+		t.Fatalf("write response: %v", err)
 	}
 }
 

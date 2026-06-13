@@ -287,6 +287,108 @@ func TestBuildMeetingTrustReportBlocksUnsupportedFactAndInferenceClaims(t *testi
 	}
 }
 
+func TestBuildMeetingTrustReportKeepsPredictionWatchlistActionType(t *testing.T) {
+	now := time.Now()
+	roleKey := "moderator"
+	row := domainmeeting.Meeting{
+		ID:        9,
+		Topic:     "prediction action review",
+		CreatedAt: now,
+	}
+	events := []domainmeeting.Event{
+		{
+			ID:        31,
+			MeetingID: row.ID,
+			Sequence:  1,
+			Type:      domainkernel.EventSystem,
+			RoleKey:   &roleKey,
+			Content:   "Prediction watchlist action requires review.",
+			Payload: domainkernel.NewJSON(map[string]any{
+				"status":      "recap_actions_review_required",
+				"policy":      "weak_reference_review",
+				"disposition": "manual_review_required",
+				"reason":      "weak role-only citation",
+				"suggested_actions": []map[string]any{
+					{
+						"action_type": "prediction_watchlist",
+						"index":       0,
+						"disposition": "manual_review_required",
+						"reason":      "weak role-only citation",
+						"spec":        map[string]any{"market_id": 42, "active": true, "note": "watch settlement criteria"},
+					},
+				},
+				"evidence_summary": map[string]any{
+					"facts":     []string{"prediction.market_snapshot returned market state"},
+					"citations": []string{"@analyst"},
+				},
+			}),
+			CreatedAt: now,
+		},
+	}
+
+	report := buildMeetingTrustReport(row, events)
+	if report["recapActionReviewStatus"] != "needs_review" || report["recapActionSuggestionCount"] != 1 {
+		t.Fatalf("prediction recap action review status mismatch: %+v", report)
+	}
+	suggestions := report["recapActionSuggestions"].([]map[string]any)
+	if len(suggestions) != 1 {
+		t.Fatalf("prediction recap action suggestion missing: %+v", report)
+	}
+	suggestion := suggestions[0]
+	if suggestion["actionType"] != "prediction_watchlist" || suggestion["disposition"] != "manual_review_required" {
+		t.Fatalf("prediction recap action type mismatch: %+v", suggestion)
+	}
+	spec := suggestion["spec"].(map[string]any)
+	marketID, ok := numericUint(spec["market_id"])
+	if !ok || marketID != 42 || spec["active"] != true {
+		t.Fatalf("prediction recap action spec mismatch: %+v", suggestion)
+	}
+}
+
+func TestBuildMeetingTrustReportCountsPredictionWatchlistUpdatesAsEvidence(t *testing.T) {
+	now := time.Now()
+	roleKey := "moderator"
+	row := domainmeeting.Meeting{
+		ID:        10,
+		Topic:     "prediction watchlist evidence",
+		CreatedAt: now,
+	}
+	events := []domainmeeting.Event{
+		{
+			ID:        41,
+			MeetingID: row.ID,
+			Sequence:  1,
+			Type:      domainkernel.EventToolResult,
+			RoleKey:   &roleKey,
+			Content:   "Prediction watchlist item #7 is active=true for market #42.",
+			Payload: domainkernel.NewJSON(map[string]any{
+				"status":                       "prediction_watchlist_updated",
+				"tool":                         "prediction.upsert_watchlist",
+				"prediction_watchlist_item_id": 7,
+				"market_id":                    42,
+				"active":                       true,
+				"market_question":              "Will the US and Iran sign a permanent peace deal?",
+				"event_slug":                   "us-x-iran-permanent-peace-deal-by",
+			}),
+			CreatedAt: now,
+		},
+	}
+
+	report := buildMeetingTrustReport(row, events)
+	if report["evidenceCount"] != 1 {
+		t.Fatalf("prediction watchlist update should count as evidence: %+v", report)
+	}
+	evidence := report["evidence"].([]map[string]any)
+	if len(evidence) != 1 || evidence[0]["tool"] != "prediction.upsert_watchlist" || evidence[0]["status"] != "prediction_watchlist_updated" {
+		t.Fatalf("prediction watchlist evidence mismatch: %+v", evidence)
+	}
+	preview := evidence[0]["preview"].(map[string]any)
+	marketID, ok := numericUint(preview["market_id"])
+	if !ok || marketID != 42 || preview["event_slug"] != "us-x-iran-permanent-peace-deal-by" {
+		t.Fatalf("prediction watchlist evidence preview should expose market identity: %+v", preview)
+	}
+}
+
 func containsString(values []string, needle string) bool {
 	for _, value := range values {
 		if value == needle {

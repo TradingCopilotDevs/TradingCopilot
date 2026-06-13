@@ -32,12 +32,7 @@ func runModeratorPlan(ctx context.Context, db *gorm.DB, meeting domainmeeting.Me
 		validRoleKeys[role.Key] = struct{}{}
 		roleBrief = append(roleBrief, fmt.Sprintf("- @%s: %s | %s", role.Key, role.Name, role.Responsibility))
 	}
-	prompt := "You are the moderator of an A-share multi-agent investment research meeting. Return JSON only with schema: " +
-		`{"content":"markdown summary","continue_discussion":true,"focus_roles":["role_key"],"questions":[{"target":"role_key|all","question":"..."}]}` +
-		" Decide whether discussion should continue, which roles should respond, and what concrete evidence gaps remain."
-	if kickoff {
-		prompt += " This is kickoff: decompose the topic and assign first-round questions."
-	}
+	prompt := moderatorPlanSystemPrompt(kickoff, isPredictionMarketMeeting(db, &meeting))
 	data, raw, err := callRoleModelJSON(ctx, db, meeting.ID, moderator, modelName, []map[string]string{
 		{"role": "system", "content": prompt},
 		{"role": "user", "content": moderatorPlanContext(db, meeting, roles, roleBrief, priorDiscussion, pendingQuestions, roundNumber, kickoff)},
@@ -73,6 +68,22 @@ func runModeratorPlan(ctx context.Context, db *gorm.DB, meeting domainmeeting.Me
 	return plan, nil
 }
 
+func moderatorPlanSystemPrompt(kickoff bool, predictionMeeting bool) string {
+	frame := "You are the moderator of an A-share multi-agent investment research meeting."
+	gaps := "Decide whether discussion should continue, which roles should respond, and what concrete evidence gaps remain."
+	if predictionMeeting {
+		frame = "You are the moderator of a prediction-market research meeting using public Polymarket data only."
+		gaps = "Decide whether discussion should continue, which roles should respond, and what concrete event-fit, resolution, odds, liquidity, or source evidence gaps remain. Do not ask for A-share trading, watchlist, or paper-order work."
+	}
+	prompt := frame + " Return JSON only with schema: " +
+		`{"content":"markdown summary","continue_discussion":true,"focus_roles":["role_key"],"questions":[{"target":"role_key|all","question":"..."}]}` +
+		" " + gaps
+	if kickoff {
+		prompt += " This is kickoff: decompose the topic and assign first-round questions."
+	}
+	return prompt
+}
+
 func fallbackModeratorPlanFromText(raw string, roles []domainai.AgentRole, moderator domainai.AgentRole, kickoff bool) (moderatorPlan, bool) {
 	return appmeeting.FallbackModeratorPlanFromText(raw, participantRoleKeys(roles, moderator.Key), kickoff)
 }
@@ -101,7 +112,8 @@ func finalizeManagedMeeting(ctx context.Context, db *gorm.DB, meeting *domainmee
 		{"role": "user", "content": buildRecapContext(db, *meeting)},
 	}
 	recapPromptSnapshot := rolePromptSnapshot(moderator, modelName, recapMessages, tokenLabel(moderator.Key, "recap"), managedMeetingPromptVersion)
-	recap, raw, err := callRoleModelJSONValidated(ctx, db, meeting.ID, moderator, modelName, recapMessages, "Your previous response was not a valid JSON object. Return one JSON object only.", tokenLabel(moderator.Key, "recap"), validateModeratorRecapActions, moderatorRecapValidationRetryInstruction)
+	predictionMeeting := isPredictionMarketMeeting(db, meeting)
+	recap, raw, err := callRoleModelJSONValidated(ctx, db, meeting.ID, moderator, modelName, recapMessages, "Your previous response was not a valid JSON object. Return one JSON object only.", tokenLabel(moderator.Key, "recap"), validateModeratorRecapForMeeting(predictionMeeting), moderatorRecapValidationRetryInstructionForMeeting(predictionMeeting))
 	if err != nil {
 		return err
 	}
@@ -192,12 +204,103 @@ func callRoleModelJSONValidated(ctx context.Context, db *gorm.DB, meetingID uint
 	return nil, previousRaw, fmt.Errorf("%s returned invalid JSON/action after retries: %s: %w", role.Key, truncateForTool(previousRaw, 240), lastErr)
 }
 
-func validateModeratorRecapActions(recap map[string]any) error {
-	return appmeeting.ValidateModeratorRecapActions(recap)
+func validateModeratorRecapForMeeting(predictionMeeting bool) func(map[string]any) error {
+	return func(recap map[string]any) error {
+		if err := appmeeting.ValidateModeratorRecapActions(recap); err != nil {
+			return err
+		}
+		if predictionMeeting {
+			if reason := predictionMarketRecapTextBlockReason(recap); reason != "" {
+				return fmt.Errorf("prediction market recap text violates asset boundary: %s", reason)
+			}
+		}
+		return nil
+	}
 }
 
-func moderatorRecapValidationRetryInstruction(err error) string {
-	return appmeeting.ModeratorRecapValidationRetryInstruction(err)
+func validateManagedRoleTurnForMeeting(predictionMeeting bool) func(map[string]any) error {
+	if !predictionMeeting {
+		return nil
+	}
+	return func(data map[string]any) error {
+		if reason := predictionMarketManagedRoleTurnBlockReason(data); reason != "" {
+			return fmt.Errorf("prediction market role analysis violates asset boundary: %s", reason)
+		}
+		return nil
+	}
+}
+
+func predictionMarketManagedRoleTurnBlockReason(data map[string]any) string {
+	if len(data) == 0 {
+		return ""
+	}
+	if predictionMarketPayloadHasAShareFields(data) {
+		return "prediction market role output cannot use A-share code, symbol, ticker, or related_symbols fields"
+	}
+	outputType := strings.ToLower(strings.TrimSpace(stringFromAny(data["type"])))
+	scope := "role analysis"
+	if outputType == "tool_request" {
+		scope = "role tool request"
+		for _, call := range objectList(data["tool_calls"]) {
+			toolName := strings.TrimSpace(stringFromAny(call["tool"]))
+			if toolName != "" && !predictionMeetingToolAllowed(toolName) {
+				return fmt.Sprintf("prediction market role cannot request tool %q", toolName)
+			}
+		}
+	}
+	return predictionMarketTextBoundaryBlockReason(scope, predictionMarketRoleTurnTextValues(data))
+}
+
+func predictionMarketRoleTurnTextValues(value any) []string {
+	out := []string{}
+	var walk func(any)
+	walk = func(item any) {
+		switch typed := item.(type) {
+		case string:
+			if text := strings.TrimSpace(typed); text != "" {
+				out = append(out, text)
+			}
+		case []string:
+			for _, value := range typed {
+				walk(value)
+			}
+		case []any:
+			for _, value := range typed {
+				walk(value)
+			}
+		case []map[string]any:
+			for _, value := range typed {
+				walk(value)
+			}
+		case map[string]any:
+			for _, value := range typed {
+				walk(value)
+			}
+		}
+	}
+	walk(value)
+	return out
+}
+
+func moderatorRecapValidationRetryInstructionForMeeting(predictionMeeting bool) func(error) string {
+	return func(err error) string {
+		if predictionMeeting && strings.Contains(err.Error(), "prediction market recap text violates asset boundary") {
+			return "Rewrite the prediction-market recap as JSON only. Remove all A-share, stock, security-code, paper-trading, order, watchlist_actions, position-sizing, code/symbol/ticker/related_symbols, or trading-language content from topic, tags, summary, conclusion, facts, assumptions, inferences, evidence_gaps, wake_plans, and citations. Keep only Polymarket event facts, market-question fit, resolution criteria, odds/liquidity evidence, assumptions, inferences, evidence gaps, prediction_watchlist_actions keyed by market_id, and observation wake plans. Return watchlist_actions:[] and orders:[]."
+		}
+		return appmeeting.ModeratorRecapValidationRetryInstruction(err)
+	}
+}
+
+func managedRoleTurnValidationRetryInstructionForMeeting(predictionMeeting bool) func(error) string {
+	if !predictionMeeting {
+		return nil
+	}
+	return func(err error) string {
+		if strings.Contains(err.Error(), "prediction market role analysis violates asset boundary") {
+			return "Rewrite the prediction-market role response as JSON only. Use either a permitted tool_request or an analysis object. Remove all A-share, stock, security-code, paper-trading, buy/sell, order, watchlist, position-sizing, code/symbol/ticker/related_symbols, and market.* or paper.* content. Keep only Polymarket event facts, market-question fit, resolution criteria, odds/liquidity evidence, assumptions, inferences, evidence gaps, and questions."
+		}
+		return "Your previous response was valid JSON but did not satisfy the prediction-market role schema. Return one corrected JSON object only."
+	}
 }
 
 func chatRole(ctx context.Context, db *gorm.DB, meetingID uint, role domainai.AgentRole, modelName string, messages []map[string]string, label string) (string, error) {
@@ -245,10 +348,11 @@ func buildManagedRoleContext(db *gorm.DB, meeting domainmeeting.Meeting, role do
 	if triggerText != "" {
 		sections = append(sections, "Trigger context:\n"+triggerText)
 	}
-	if len(relatedSymbols) > 0 {
+	if len(relatedSymbols) > 0 && !predictionMeeting {
 		sections = append(sections, "Related symbols: "+strings.Join(relatedSymbols, ", "))
 	}
 	if predictionMeeting {
+		relatedSymbols = nil
 		sections = append(sections, "Prediction market context:\n"+predictionMarketContext(db, meeting.ID))
 	}
 	if len(assignedQuestions) > 0 {
@@ -266,8 +370,12 @@ func buildManagedRoleContext(db *gorm.DB, meeting domainmeeting.Meeting, role do
 		}
 		sections = append(sections, "Recent discussion:\n"+strings.Join(lines, "\n"))
 	}
-	sections = append(sections, "Referenced meetings and messages:\n"+referenceContext(db, meeting.ID))
-	sections = append(sections, "Available tools:\n"+toolDescriptions(stringsFromJSON(role.ToolNames))+"\n\nAvailable skills:\n"+skillDescriptions(stringsFromJSON(role.SkillNames)))
+	availableTools := stringsFromJSON(role.ToolNames)
+	if predictionMeeting {
+		availableTools = filterMeetingToolNames(availableTools, predictionMeetingToolAllowed)
+	}
+	sections = append(sections, "Referenced meetings and messages:\n"+referenceContext(db, meeting.ID, predictionMeeting))
+	sections = append(sections, "Available tools:\n"+toolDescriptions(availableTools)+"\n\nAvailable skills:\n"+skillDescriptions(stringsFromJSON(role.SkillNames)))
 	if predictionMeeting {
 		sections = append(sections, "System execution constraints:\n- This is a prediction-market research meeting using public Polymarket data only.\n- The goal is to verify event facts, market-question fit, resolution criteria, odds/price evidence, liquidity, and evidence gaps.\n- Do not recommend real trades, wallet/API-key actions, deposits, withdrawals, position sizing, A-share watchlist actions, or paper orders.\n- prediction.* tools provide evidence; cite tool fields and separate facts from assumptions and inferences.\n- Wake plans and follow-up research suggestions are allowed only as observation or verification actions.\n- Do not invent data that is absent from context or tool results.")
 	} else {
@@ -284,10 +392,10 @@ Stage: %s
 Additional instruction: %s
 
 Return JSON only.
-If you need tools, return: {"type":"tool_request","tool_calls":[{"tool":"prediction.search_markets|prediction.market_snapshot|prediction.orderbook|prediction.price_history|prediction.related_matches|meeting.references|meeting.transcript|web.search","arguments":{},"reason":"..."}]}.
+If you need tools, return: {"type":"tool_request","tool_calls":[{"tool":"prediction.search_markets|prediction.market_snapshot|prediction.orderbook|prediction.price_history|prediction.related_matches|prediction.watchlist|prediction.upsert_watchlist|meeting.references|meeting.transcript|web.search","arguments":{},"reason":"..."}]}.
 If you can speak, return: {"type":"analysis","content":"markdown text","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"questions":[{"target":"role_key|all","question":"..."}],"mentions":["role_key"],"citations":["@role_key or prediction.* tool/source"],"confidence":"low|medium|high"}.
 Focus on market-question fit, resolution criteria, time window, source reliability, odds/orderbook/price-history evidence, liquidity, and mismatch risk.
-Do not suggest real trading, paper orders, wallet/API-key actions, deposits, withdrawals, or A-share watchlist actions. Facts must be directly supported by context or tool results; assumptions and inferences must not be mixed into facts. Do not produce the final meeting recap.`, role.Name, role.Responsibility, stage, role.PromptTemplate)
+Do not suggest real trading, paper orders, wallet/API-key actions, deposits, withdrawals, or A-share watchlist actions. If a Polymarket market should be followed, mention prediction_watchlist_actions with a local market_id for the moderator recap instead of stock watchlist language. Facts must be directly supported by context or tool results; assumptions and inferences must not be mixed into facts. Do not produce the final meeting recap.`, role.Name, role.Responsibility, stage, role.PromptTemplate)
 	}
 	return fmt.Sprintf(`You are %s in an A-share multi-agent investment research meeting.
 Responsibility: %s
@@ -303,8 +411,10 @@ Facts must be directly supported by context or tool results; assumptions and inf
 func moderatorPlanContext(db *gorm.DB, meeting domainmeeting.Meeting, roles []domainai.AgentRole, roleBrief []string, priorDiscussion []map[string]any, pendingQuestions []map[string]string, roundNumber int, kickoff bool) string {
 	triggerText, relatedSymbols := triggerContext(db, meeting.ID)
 	predictionContext := "-"
+	relatedSymbolText := strings.Join(relatedSymbols, ", ")
 	if isPredictionMarketMeeting(db, &meeting) {
 		predictionContext = predictionMarketContext(db, meeting.ID)
+		relatedSymbolText = "-"
 	}
 	recentLines := []string{}
 	start := max(len(priorDiscussion)-12, 0)
@@ -322,7 +432,7 @@ func moderatorPlanContext(db *gorm.DB, meeting domainmeeting.Meeting, roles []do
 		questionLines = append(questionLines, "No pending questions.")
 	}
 	return fmt.Sprintf("Meeting topic: %s\nRound: %d\nKickoff: %v\nTrigger context:\n%s\n\nRelated symbols: %s\n\nPrediction market context:\n%s\n\nAvailable roles:\n%s\n\nPending questions:\n%s\n\nRecent discussion:\n%s\n\nReferences:\n%s",
-		meeting.Topic, roundNumber, kickoff, firstNonEmptyString(triggerText, "-"), strings.Join(relatedSymbols, ", "), predictionContext, strings.Join(roleBrief, "\n"), strings.Join(questionLines, "\n"), strings.Join(recentLines, "\n"), referenceContext(db, meeting.ID))
+		meeting.Topic, roundNumber, kickoff, firstNonEmptyString(triggerText, "-"), relatedSymbolText, predictionContext, strings.Join(roleBrief, "\n"), strings.Join(questionLines, "\n"), strings.Join(recentLines, "\n"), referenceContext(db, meeting.ID, isPredictionMarketMeeting(db, &meeting)))
 }
 
 func predictionMarketContext(db *gorm.DB, meetingID uint) string {
@@ -341,12 +451,14 @@ func predictionMarketContext(db *gorm.DB, meetingID uint) string {
 func moderatorRecapPrompt(db *gorm.DB, meeting *domainmeeting.Meeting, moderator domainai.AgentRole) string {
 	if isPredictionMarketMeeting(db, meeting) {
 		return fmt.Sprintf(`You are %s. Produce the final prediction-market meeting recap in JSON only.
-Return schema: {"topic":"final topic","tags":["tag"],"summary":"short summary","conclusion":"observation-only conclusion","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"citations":["@role_key or tool/source"],"watchlist_actions":[],"wake_plans":[{"trigger_type":"time|event","next_check_at":"YYYY-MM-DD HH:MM:SS","reason":"...","trigger_config":{"topic":"optional follow-up topic","keywords":["optional"]}}],"orders":[]}.
+Return schema: {"topic":"final topic","tags":["tag"],"summary":"short summary","conclusion":"observation-only conclusion","facts":["verifiable facts with source context"],"assumptions":["untested assumptions"],"inferences":["reasoned conclusions"],"evidence_gaps":["missing data or validation work"],"citations":["@role_key or tool/source"],"watchlist_actions":[],"prediction_watchlist_actions":[{"market_id":123,"note":"why","active":true}],"wake_plans":[{"trigger_type":"time|event","next_check_at":"YYYY-MM-DD HH:MM:SS","reason":"...","trigger_config":{"topic":"optional follow-up topic","keywords":["optional"]}}],"orders":[]}.
 Prediction-market meetings are observation-only in v1: do not create paper orders, real trading actions, A-share watchlist actions, wallet/API-key instructions, or position sizing.
-The conclusion may recommend observe, follow, manual research, evidence collection, or future wake-up plans for the referenced prediction market.
+The conclusion may recommend observe, follow, manual research, evidence collection, prediction_watchlist_actions for local Polymarket market IDs, or future wake-up plans for the referenced prediction market.
 Facts and inferences must be traceable to the transcript, referenced meetings, prediction.* tool results, or web sources through citations. Put unsupported ideas in assumptions or evidence_gaps, not facts or inferences.
-If a market should stay visible, describe it in conclusion or wake_plans rather than watchlist_actions.
-For event wake_plans, trigger_config must include keywords, regex/pattern, related prediction market ids, decisions, or channel filters.
+Do not include A-share sectors, stock codes, securities watchlists, paper-trading language, buy/sell language, position sizing, or related_symbols anywhere in topic, tags, summary, conclusion, facts, assumptions, inferences, evidence_gaps, wake_plans, or citations.
+If a market should stay visible, use prediction_watchlist_actions with a local market_id; never use watchlist_actions for prediction markets. Check prediction.watchlist evidence before proposing an add, note update, reactivation, or deactivation.
+For event wake_plans, trigger_config must include keywords, regex/pattern, decisions, or channel filters that the system can monitor; include prediction_market_ids only as context when available.
+Do not use indicator wake_plans, related_symbols, code, symbol, ticker, or A-share fields in prediction-market wake_plans.
 For time wake_plans, use next_check_at and a trigger_config topic.
 Always return watchlist_actions as [] and orders as [].`, moderator.Name)
 	}
@@ -389,7 +501,13 @@ func buildRecapContext(db *gorm.DB, meeting domainmeeting.Meeting) string {
 	if len(lines) > 40 {
 		lines = lines[len(lines)-40:]
 	}
-	return "Current topic: " + meeting.Topic + "\n\nReferenced meetings:\n" + referenceContext(db, meeting.ID) + "\n\nPaper accounts and positions:\n" + positionsContext(db, meeting.ResearchTeamID) + "\n\nPaper risk configs:\n" + riskConfigContext(db, meeting.ResearchTeamID) + "\n\nMeeting transcript:\n" + strings.Join(lines, "\n\n")
+	if isPredictionMarketMeeting(db, &meeting) {
+		return "Current topic: " + meeting.Topic +
+			"\n\nPrediction market context:\n" + predictionMarketContext(db, meeting.ID) +
+			"\n\nReferenced meetings:\n" + referenceContext(db, meeting.ID, true) +
+			"\n\nMeeting transcript:\n" + strings.Join(lines, "\n\n")
+	}
+	return "Current topic: " + meeting.Topic + "\n\nReferenced meetings:\n" + referenceContext(db, meeting.ID, false) + "\n\nPaper accounts and positions:\n" + positionsContext(db, meeting.ResearchTeamID) + "\n\nPaper risk configs:\n" + riskConfigContext(db, meeting.ResearchTeamID) + "\n\nMeeting transcript:\n" + strings.Join(lines, "\n\n")
 }
 
 func formatRecapMarkdown(topic string, tags []string, summary string, conclusion string, recap map[string]any) string {
@@ -497,14 +615,20 @@ func triggerContext(db *gorm.DB, meetingID uint) (string, []string) {
 	return selected.Content, symbols
 }
 
-func referenceContext(db *gorm.DB, meetingID uint) string {
-	rows := meetingReferencesForTool(db, meetingID)
+func referenceContext(db *gorm.DB, meetingID uint, predictionMeeting bool) string {
+	rows := meetingReferencesForTool(db, meetingID, predictionMeeting)
 	if len(rows) == 0 {
 		return "No referenced context."
 	}
 	lines := make([]string, 0, len(rows))
 	for _, row := range rows {
-		lines = append(lines, fmt.Sprintf("- %s %s | note=%s", stringFromAny(row["reference_type"]), stringFromAny(row["target_topic_snapshot"]), stringFromAny(row["note"])))
+		referenceType := stringFromAny(row["reference_type"])
+		topic := stringFromAny(row["target_topic_snapshot"])
+		if row["redacted"] == true {
+			reason := firstNonEmptyString(stringFromAny(row["redaction_reason"]), "redacted")
+			topic = "[" + reason + "]"
+		}
+		lines = append(lines, fmt.Sprintf("- %s %s | note=%s", referenceType, topic, stringFromAny(row["note"])))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -540,6 +664,23 @@ func toolDescriptions(toolNames []string) string {
 		lines = append(lines, "- "+name+": "+description)
 	}
 	return strings.Join(lines, "\n")
+}
+
+func filterMeetingToolNames(toolNames []string, allowed func(string) bool) []string {
+	out := []string{}
+	seen := map[string]struct{}{}
+	for _, name := range toolNames {
+		name = strings.TrimSpace(name)
+		if name == "" || !allowed(name) {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		out = append(out, name)
+	}
+	return out
 }
 
 func skillDescriptions(skillNames []string) string {

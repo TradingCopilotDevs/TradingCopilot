@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,7 +28,10 @@ const (
 )
 
 var ErrPredictionMarketNotFound = errors.New("prediction market not found")
+var ErrPredictionWatchlistTeamRequired = errors.New("research team is required")
 var ErrPredictionWatchlistTeamInvalid = errors.New("prediction watchlist requires a prediction market or mixed research team")
+
+var aShareCodeTermPattern = regexp.MustCompile(`^(?:sh|sz|bj)?\d{6}$`)
 
 type Usecase struct {
 	repo     Repository
@@ -128,8 +133,11 @@ type SearchResult struct {
 }
 
 type MarketSearchResult struct {
-	Rows       []domainprediction.Market
-	NextCursor string
+	Rows            []domainprediction.Market
+	NextCursor      string
+	Query           string
+	NormalizedQuery string
+	ProviderError   string
 }
 
 type MatchFilter struct {
@@ -149,6 +157,12 @@ type WatchlistRow struct {
 	Market domainprediction.Market
 }
 
+type WatchlistSource struct {
+	MeetingID      uint
+	MeetingEventID uint
+	RoleKey        string
+}
+
 type MatchReviewInput struct {
 	Status     string
 	Reason     string
@@ -160,17 +174,104 @@ func (u Usecase) Search(ctx context.Context, q string, limit int) (MarketSearchR
 	if limit <= 0 {
 		limit = 20
 	}
-	if u.provider != nil && q != "" {
-		result, err := u.provider.Search(ctx, q, limit)
+	searchQuery := NormalizeSearchQuery(q)
+	providerError := ""
+	if u.provider != nil && searchQuery != "" {
+		result, err := u.provider.Search(ctx, searchQuery, limit)
 		if err == nil {
 			_ = u.persistSearchResult(ctx, result)
+		} else {
+			providerError = err.Error()
 		}
 	}
-	rows, err := u.repo.SearchMarkets(ctx, q, limit)
+	rows, err := u.repo.SearchMarkets(ctx, searchQuery, limit)
 	if err != nil {
 		return MarketSearchResult{}, err
 	}
-	return MarketSearchResult{Rows: rows}, nil
+	return MarketSearchResult{Rows: rows, Query: q, NormalizedQuery: searchQuery, ProviderError: providerError}, nil
+}
+
+func NormalizeSearchQuery(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	if slug := PolymarketSlugFromURL(value); slug != "" {
+		return slug
+	}
+	if slug := PolymarketSlugFromText(value); slug != "" {
+		return slug
+	}
+	return value
+}
+
+func PolymarketSlugFromURL(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	parsed, err := url.Parse(value)
+	if (err != nil || parsed.Host == "") && looksLikeBarePolymarketURL(value) {
+		parsed, err = url.Parse("https://" + value)
+	}
+	if err != nil || parsed.Host == "" {
+		return ""
+	}
+	host := strings.ToLower(parsed.Hostname())
+	if host != "polymarket.com" && !strings.HasSuffix(host, ".polymarket.com") {
+		return ""
+	}
+	parts := strings.Split(strings.Trim(parsed.EscapedPath(), "/"), "/")
+	for i := 0; i+1 < len(parts); i++ {
+		segment := strings.ToLower(parts[i])
+		if segment != "event" && segment != "events" && segment != "market" && segment != "markets" {
+			continue
+		}
+		slug, err := url.PathUnescape(parts[i+1])
+		if err != nil {
+			return ""
+		}
+		return normalizePolymarketSlug(slug)
+	}
+	return ""
+}
+
+func PolymarketSlugFromText(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.ContainsAny(value, "/\\") {
+		return ""
+	}
+	if before, _, found := strings.Cut(value, "#"); found {
+		value = before
+	}
+	if before, _, found := strings.Cut(value, "?"); found {
+		value = before
+	}
+	value = strings.TrimSpace(value)
+	if value == "" || !strings.Contains(value, "-") {
+		return ""
+	}
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			continue
+		}
+		return ""
+	}
+	return normalizePolymarketSlug(value)
+}
+
+func normalizePolymarketSlug(value string) string {
+	return strings.ToLower(strings.TrimSpace(value))
+}
+
+func looksLikeBarePolymarketURL(value string) bool {
+	value = strings.TrimLeft(strings.ToLower(strings.TrimSpace(value)), "/")
+	return value == "polymarket.com" ||
+		strings.HasPrefix(value, "polymarket.com/") ||
+		strings.HasPrefix(value, "www.polymarket.com/") ||
+		strings.HasPrefix(value, "www.polymarket.com") ||
+		strings.HasPrefix(value, "polymarket.com?") ||
+		strings.Contains(value, ".polymarket.com/")
 }
 
 func (u Usecase) SyncActive(ctx context.Context, limit int) (int, error) {
@@ -295,6 +396,10 @@ func (u Usecase) ReviewMatch(ctx context.Context, id uint, input MatchReviewInpu
 }
 
 func (u Usecase) UpsertWatchlist(ctx context.Context, teamID uint, marketID uint, note *string, active bool) (*domainprediction.WatchlistItem, error) {
+	return u.UpsertWatchlistWithSource(ctx, teamID, marketID, note, active, nil)
+}
+
+func (u Usecase) UpsertWatchlistWithSource(ctx context.Context, teamID uint, marketID uint, note *string, active bool, source *WatchlistSource) (*domainprediction.WatchlistItem, error) {
 	if teamID == 0 || marketID == 0 {
 		return nil, errors.New("research team and prediction market are required")
 	}
@@ -311,6 +416,18 @@ func (u Usecase) UpsertWatchlist(ctx context.Context, teamID uint, marketID uint
 		return nil, ErrPredictionMarketNotFound
 	}
 	item := domainprediction.WatchlistItem{ResearchTeamID: teamID, MarketID: marketID, Note: note, Active: active}
+	if source != nil {
+		if source.MeetingID != 0 {
+			item.SourceMeetingID = &source.MeetingID
+		}
+		if source.MeetingEventID != 0 {
+			item.SourceMeetingEventID = &source.MeetingEventID
+		}
+		roleKey := strings.TrimSpace(source.RoleKey)
+		if roleKey != "" {
+			item.SourceRoleKey = &roleKey
+		}
+	}
 	if err := u.repo.UpsertWatchlist(ctx, &item); err != nil {
 		return nil, err
 	}
@@ -318,6 +435,16 @@ func (u Usecase) UpsertWatchlist(ctx context.Context, teamID uint, marketID uint
 }
 
 func (u Usecase) ListWatchlist(ctx context.Context, teamID uint, limit int) ([]WatchlistRow, error) {
+	if teamID == 0 {
+		return nil, ErrPredictionWatchlistTeamRequired
+	}
+	assetClass, found, err := u.repo.ResearchTeamAssetClass(ctx, teamID)
+	if err != nil {
+		return nil, err
+	}
+	if !found || !predictionWatchlistTeamAllowed(assetClass) {
+		return nil, ErrPredictionWatchlistTeamInvalid
+	}
 	if limit <= 0 {
 		limit = 100
 	}
@@ -349,7 +476,7 @@ func (u Usecase) MatchNews(ctx context.Context, messageID *uint, text string) ([
 		}
 		score, breakdown := ScoreMatch(text, market)
 		status := MatchStatusCandidate
-		if score.GreaterThanOrEqual(decimal.NewFromFloat(0.75)) {
+		if score.GreaterThanOrEqual(decimal.NewFromFloat(0.75)) && intFromAny(breakdown["overlap"]) >= 2 {
 			status = MatchStatusLinked
 		} else if score.GreaterThanOrEqual(decimal.NewFromFloat(0.45)) {
 			status = MatchStatusReview
@@ -362,11 +489,11 @@ func (u Usecase) MatchNews(ctx context.Context, messageID *uint, text string) ([
 			MarketID:          market.ID,
 			Query:             query,
 			NewsSnippet:       truncate(text, 1000),
-			CandidateSnapshot: jsonValue(market),
+			CandidateSnapshot: jsonValue(matchCandidateSnapshot(market)),
 			Score:             score,
 			ScoreBreakdown:    jsonValue(breakdown),
 			Status:            status,
-			Reason:            "semantic keyword overlap and market activity score",
+			Reason:            matchReason(market, breakdown),
 		}
 		if err := u.repo.CreateMatch(ctx, &row); err != nil {
 			return nil, err
@@ -463,14 +590,17 @@ func BuildQuery(text string) string {
 
 func ScoreMatch(text string, market domainprediction.Market) (decimal.Decimal, map[string]any) {
 	newsTerms := termSet(text)
-	marketText := strings.Join([]string{market.Question, market.Description, market.Slug}, " ")
+	marketText := strings.Join([]string{market.Question, market.Description, market.Slug, market.EventSlug, market.EventTitle}, " ")
 	marketTerms := termSet(marketText)
 	overlap := 0
+	overlapTerms := []string{}
 	for term := range newsTerms {
 		if marketTerms[term] {
 			overlap++
+			overlapTerms = append(overlapTerms, term)
 		}
 	}
+	sort.Strings(overlapTerms)
 	denom := math.Max(1, math.Sqrt(float64(len(newsTerms))*float64(maxInt(1, len(marketTerms)))))
 	semantic := math.Min(1, float64(overlap)/denom*1.8)
 	activity := 0.0
@@ -487,7 +617,32 @@ func ScoreMatch(text string, market domainprediction.Market) (decimal.Decimal, m
 		activity = 0
 	}
 	score := math.Min(1, semantic*0.8+activity*0.4)
-	return decimal.NewFromFloat(score), map[string]any{"semantic": semantic, "activity": activity, "overlap": overlap}
+	return decimal.NewFromFloat(score), map[string]any{
+		"semantic": semantic, "activity": activity, "overlap": overlap, "overlap_terms": overlapTerms,
+		"news_terms": len(newsTerms), "market_terms": len(marketTerms),
+		"event_slug": market.EventSlug, "event_title": market.EventTitle, "external_event_id": market.EventExternalEventID,
+	}
+}
+
+func matchCandidateSnapshot(market domainprediction.Market) map[string]any {
+	return map[string]any{
+		"id": market.ID, "event_id": market.EventID, "external_event_id": nullablePredictionString(market.EventExternalEventID), "event_slug": nullablePredictionString(market.EventSlug), "event_title": nullablePredictionString(market.EventTitle),
+		"external_market_id": market.ExternalMarketID, "condition_id": market.ConditionID, "question": market.Question, "slug": market.Slug,
+		"active": market.Active, "closed": market.Closed, "restricted": market.Restricted, "enable_order_book": market.EnableOrderBook,
+		"volume": market.Volume, "liquidity": market.Liquidity, "end_date": market.EndDate,
+	}
+}
+
+func matchReason(market domainprediction.Market, breakdown map[string]any) string {
+	terms := strings.Join(stringListFromAny(breakdown["overlap_terms"]), ", ")
+	if terms == "" {
+		terms = "none"
+	}
+	event := firstNonEmptyPredictionString(market.EventSlug, market.EventTitle, market.EventExternalEventID)
+	if event != "" {
+		return fmt.Sprintf("keyword overlap (%s) with event %s plus market activity", terms, event)
+	}
+	return fmt.Sprintf("keyword overlap (%s) plus market activity", terms)
 }
 
 func keywords(text string, limit int) []string {
@@ -525,18 +680,71 @@ func keywords(text string, limit int) []string {
 }
 
 func termSet(text string) map[string]bool {
-	fields := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool {
+	lowerText := strings.ToLower(text)
+	fields := strings.FieldsFunc(lowerText, func(r rune) bool {
 		return !(unicode.IsLetter(r) || unicode.IsDigit(r))
 	})
+	tradingContext := hasPredictionSearchTradingContext(lowerText, fields)
 	out := map[string]bool{}
 	for _, field := range fields {
 		field = strings.TrimSpace(field)
-		if len(field) < 3 || isStopWord(field) {
+		if len(field) < 3 || isStopWord(field) || isPredictionSearchNoiseTerm(field, tradingContext) {
 			continue
 		}
 		out[field] = true
 	}
 	return out
+}
+
+func hasPredictionSearchTradingContext(lowerText string, fields []string) bool {
+	if strings.Contains(lowerText, "a股") ||
+		strings.Contains(lowerText, "a-share") ||
+		strings.Contains(lowerText, "a share") ||
+		strings.Contains(lowerText, "模拟盘") ||
+		strings.Contains(lowerText, "模拟交易") {
+		return true
+	}
+	for _, field := range fields {
+		if isAShareCodeTerm(field) || isClearPredictionTradingArtifact(field) {
+			return true
+		}
+	}
+	return false
+}
+
+func isPredictionSearchNoiseTerm(value string, tradingContext bool) bool {
+	value = strings.TrimSpace(strings.ToLower(value))
+	if value == "" || isAShareCodeTerm(value) || isClearPredictionTradingArtifact(value) {
+		return true
+	}
+	if !tradingContext {
+		return false
+	}
+	switch value {
+	case "share", "shares", "stock", "stocks", "security", "securities",
+		"paper", "order", "orders", "position", "positions", "portfolio", "watchlist",
+		"buy", "sell", "long", "short", "holding", "holdings":
+		return true
+	default:
+		return false
+	}
+}
+
+func isAShareCodeTerm(value string) bool {
+	return aShareCodeTermPattern.MatchString(strings.ToLower(strings.TrimSpace(value)))
+}
+
+func isClearPredictionTradingArtifact(value string) bool {
+	switch strings.TrimSpace(strings.ToLower(value)) {
+	case "a股", "ashare", "ashares", "cnstock", "cnstocks", "stockcode", "stockcodes",
+		"股票", "证券", "个股", "概念股", "板块", "行情", "涨停", "跌停", "涨幅", "跌幅",
+		"自选", "自选股", "买入", "卖出", "买卖", "仓位", "持仓", "加仓", "减仓",
+		"建仓", "清仓", "止盈", "止损", "下单", "订单", "模拟盘", "模拟交易",
+		"沪深", "沪市", "深市", "上证", "深证", "创业板", "科创板", "北交所", "龙虎榜":
+		return true
+	default:
+		return false
+	}
 }
 
 func isStopWord(value string) bool {
@@ -634,6 +842,55 @@ func toString(value any) string {
 	default:
 		return strings.TrimSpace(fmt.Sprint(value))
 	}
+}
+
+func intFromAny(value any) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int64:
+		return int(typed)
+	case float64:
+		return int(typed)
+	case json.Number:
+		if parsed, err := typed.Int64(); err == nil {
+			return int(parsed)
+		}
+	}
+	return 0
+}
+
+func stringListFromAny(value any) []string {
+	switch typed := value.(type) {
+	case []string:
+		return typed
+	case []any:
+		out := make([]string, 0, len(typed))
+		for _, item := range typed {
+			if text := strings.TrimSpace(toString(item)); text != "" {
+				out = append(out, text)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func firstNonEmptyPredictionString(values ...string) string {
+	for _, value := range values {
+		if value = strings.TrimSpace(value); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func nullablePredictionString(value string) any {
+	if value = strings.TrimSpace(value); value != "" {
+		return value
+	}
+	return nil
 }
 
 func jsonValue(value any) domainkernel.JSON {

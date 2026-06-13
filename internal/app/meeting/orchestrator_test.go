@@ -121,6 +121,23 @@ func TestValidateModeratorRecapActionsRequiresEvidenceForExecutableActions(t *te
 	if err := ValidateModeratorRecapActions(valid); err != nil {
 		t.Fatalf("valid evidenced actions rejected: %v", err)
 	}
+
+	predictionMissingCitations := map[string]any{
+		"prediction_watchlist_actions": []any{map[string]any{"market_id": 42, "active": true}},
+		"inferences":                   []any{"prediction market should remain visible"},
+	}
+	if err := ValidateModeratorRecapActions(predictionMissingCitations); err == nil || !strings.Contains(err.Error(), "citation") {
+		t.Fatalf("expected missing citation error for prediction watchlist action, got %v", err)
+	}
+
+	predictionValid := map[string]any{
+		"facts":                        []any{"prediction.market_snapshot provided market state"},
+		"citations":                    []any{"prediction.market_snapshot"},
+		"prediction_watchlist_actions": []any{map[string]any{"market_id": 42, "active": true}},
+	}
+	if err := ValidateModeratorRecapActions(predictionValid); err != nil {
+		t.Fatalf("valid prediction watchlist action rejected: %v", err)
+	}
 }
 
 func TestValidateModeratorRecapActionsKeepsWakePlanSemanticGuard(t *testing.T) {

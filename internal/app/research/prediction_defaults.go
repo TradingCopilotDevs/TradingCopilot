@@ -10,8 +10,9 @@ var PredictionMarketDefaultRoles = []appai.RoleSeed{
 		Prompt: `你是预测市场投研会议主持人，专注 Polymarket 公共市场数据与新闻证据。
 你的任务不是判断“要不要下注”，而是把讨论压到可验证问题上：新闻是否对应某个可裁定市场、市场问题和时间窗是否一致、结算来源是什么、赔率/盘口变化是否有流动性支撑、还有哪些证据缺口。
 主持时要主动要求角色区分事实、假设、推断和市场价格信号；发现 market slug/question 与新闻不匹配时必须打断并要求重找市场。
+在要求加入关注前，先检查 prediction.watchlist，避免重复关注、错误停用或用旧 note 覆盖更具体的跟踪理由。
 不得建议真实下单，不得创建模拟盘订单。最终只能输出观察结论、证据缺口、关注市场和后续唤醒建议。`,
-		Tools:     []string{"meeting.references", "meeting.transcript", "web.search", "prediction.related_matches", "prediction.market_snapshot", "prediction.orderbook"},
+		Tools:     []string{"meeting.references", "meeting.transcript", "web.search", "prediction.search_markets", "prediction.related_matches", "prediction.market_snapshot", "prediction.orderbook", "prediction.watchlist"},
 		Skills:    []string{"meeting-moderation", "cross-examination", "evidence-synthesis", "prediction-market-research", "market-resolution-risk"},
 		SortOrder: 10,
 	},
@@ -54,8 +55,8 @@ var PredictionMarketDefaultRoles = []appai.RoleSeed{
 		Prompt: `你天然站在审慎一侧。指出新闻到市场映射最可能错在哪里，结算规则可能如何反直觉，哪些证据不足以改变概率。
 重点审查：同名事件但时间窗不同、条件市场与主问题混淆、候选市场已关闭/受限、盘口太薄、新闻已被市场提前反映、裁定来源可能不接受当前证据。
 不得给下单建议，只给风险边界、降级理由和后续验证条件。`,
-		Tools:     []string{"web.search", "prediction.market_snapshot", "prediction.related_matches", "meeting.transcript"},
-		Skills:    []string{"risk-review", "market-resolution-risk", "cross-examination"},
+		Tools:     []string{"web.search", "prediction.market_snapshot", "prediction.orderbook", "prediction.price_history", "prediction.related_matches", "meeting.transcript"},
+		Skills:    []string{"market-resolution-risk", "cross-examination", "evidence-synthesis"},
 		SortOrder: 80,
 	},
 	{
@@ -64,8 +65,10 @@ var PredictionMarketDefaultRoles = []appai.RoleSeed{
 		Responsibility: "把会议内容整理成观察结论、关注市场、置信度、证据缺口和下一次唤醒条件。",
 		Prompt: `你负责收敛预测市场会议结论。输出必须包含：是否关联该市场、概率方向、证据强弱、主要反例、是否加入关注、是否创建唤醒计划。
 请把结论写成可复核结构：关联市场、匹配置信度、方向性影响、引用过的证据、仍缺的证据、需要人工确认的点、建议关注或唤醒的条件。
-不要输出真实交易或模拟盘订单；如果需要行动，只能建议关注、观察、人工核验或后续唤醒。`,
-		Tools:     []string{"meeting.references", "meeting.transcript", "prediction.market_snapshot", "prediction.related_matches"},
+如果建议关注，只能使用 prediction_watchlist_actions 语义并引用本地 prediction market id；不得写 A 股 watchlist_actions、证券自选池或股票代码。
+建议更新关注前必须先读取 prediction.watchlist，说明是新增、更新 note、重新启用还是停用，避免重复或无依据覆盖。
+不要输出真实交易或模拟盘订单；如果需要行动，只能建议预测市场关注、观察、人工核验或后续唤醒。`,
+		Tools:     []string{"meeting.references", "meeting.transcript", "prediction.market_snapshot", "prediction.related_matches", "prediction.watchlist", "prediction.upsert_watchlist"},
 		Skills:    []string{"evidence-synthesis", "prediction-market-research", "wake-plan-design"},
 		SortOrder: 90,
 	},

@@ -14,6 +14,7 @@ import (
 	domainkernel "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/kernel"
 	domainmeeting "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/meeting"
 	domainmsg "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/messaging"
+	domainprediction "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/prediction"
 	domainsettings "github.com/TradingCopilotDevs/TradingCopilot/internal/domain/settings"
 )
 
@@ -180,6 +181,170 @@ func TestEnsureMeetingsForMessageFallbackSkipsDisabledAssignments(t *testing.T) 
 	}
 }
 
+func TestEnsureMeetingsForPredictionTeamDoesNotFallbackToAShareSymbols(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.teamAssetClasses[9] = "prediction_market"
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderRSSFeed,
+		Title:     "Prediction News",
+		SourceRef: "https://example.test/feed.xml",
+		Enabled:   true,
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 9, Enabled: true},
+		},
+	}
+	decision := domainkernel.NewsMeeting
+	filteredAt := time.Now()
+	row := domainmsg.IngestedMessage{
+		ID:              1,
+		SubscriptionID:  1,
+		Provider:        domainmsg.ProviderRSSFeed,
+		SourceMessageID: "100",
+		MessageTime:     time.Now(),
+		Text:            "600000 headline appears in the same item as the Iran peace deal market update",
+		RelatedSymbols:  jsonBytes(t, []string{"600001"}),
+		FilterResults: []domainmsg.IngestedMessageFilterResult{{
+			ID:             10,
+			MessageID:      1,
+			SubscriptionID: 1,
+			FilterID:       2,
+			ResearchTeamID: 9,
+			FilterDecision: &decision,
+			FilterReason:   ptrString("prediction market impact"),
+			FilterStatus:   domainmsg.FilterStatusFiltered,
+			RelatedSymbols: jsonBytes(t, []string{"600000"}),
+			FilteredAt:     &filteredAt,
+		}},
+	}
+	messageID := row.ID
+	matcher := &fakePredictionMatcher{matches: []domainprediction.Match{{
+		ID:          1,
+		MessageID:   &messageID,
+		MarketID:    42,
+		Query:       "Iran peace deal",
+		NewsSnippet: row.Text,
+		Status:      "linked",
+		Reason:      "same event and timeframe",
+	}}}
+	service := &fakeMessagingService{extractedSymbols: []string{"600002"}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo}).WithPredictionMatcher(matcher)
+
+	meetings, err := usecase.ensureMeetingsForMessage(ctx, repo, &row, "message_subscription_manual")
+	if err != nil {
+		t.Fatalf("ensureMeetingsForMessage: %v", err)
+	}
+	if len(meetings) != 1 {
+		t.Fatalf("expected one prediction meeting, got %+v", meetings)
+	}
+	if strings.Contains(meetings[0].Topic, "600000") || strings.Contains(meetings[0].Topic, "600001") || strings.Contains(meetings[0].Topic, "600002") {
+		t.Fatalf("prediction meeting topic should not fall back to A-share symbols: %s", meetings[0].Topic)
+	}
+	if !strings.Contains(meetings[0].Topic, "prediction markets 42") {
+		t.Fatalf("prediction meeting topic should use matched market ids, got %s", meetings[0].Topic)
+	}
+	if len(repo.meetingEvents) != 2 {
+		t.Fatalf("expected two meeting events, got %+v", repo.meetingEvents)
+	}
+	triggered := repo.meetingEvents[1]
+	if strings.Contains(triggered.Content, "Related symbols:") {
+		t.Fatalf("prediction meeting content should not include related symbols line:\n%s", triggered.Content)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(triggered.Payload, &payload); err != nil {
+		t.Fatalf("decode payload: %v", err)
+	}
+	symbols, ok := payload["related_symbols"].([]any)
+	if !ok || len(symbols) != 0 {
+		t.Fatalf("prediction meeting payload should carry an empty related_symbols array, got %#v", payload["related_symbols"])
+	}
+	marketIDs, ok := payload["prediction_market_ids"].([]any)
+	if !ok || len(marketIDs) != 1 || marketIDs[0].(float64) != 42 {
+		t.Fatalf("prediction market ids missing from payload: %#v", payload["prediction_market_ids"])
+	}
+	if len(repo.meetingReferences) != 2 {
+		t.Fatalf("expected ingested message and prediction market references, got %+v", repo.meetingReferences)
+	}
+}
+
+func TestEnsureMeetingsForMixedTeamWithPredictionMatchUsesPredictionBoundary(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.teamAssetClasses[9] = "mixed"
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderRSSFeed,
+		Title:     "Mixed News",
+		SourceRef: "https://example.test/feed.xml",
+		Enabled:   true,
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 9, Enabled: true},
+		},
+	}
+	decision := domainkernel.NewsMeeting
+	filteredAt := time.Now()
+	row := domainmsg.IngestedMessage{
+		ID:              1,
+		SubscriptionID:  1,
+		Provider:        domainmsg.ProviderRSSFeed,
+		SourceMessageID: "100",
+		MessageTime:     time.Now(),
+		Text:            "600000 headline appears in the same item as the Iran peace deal market update",
+		RelatedSymbols:  jsonBytes(t, []string{"600001"}),
+		FilterResults: []domainmsg.IngestedMessageFilterResult{{
+			ID:             10,
+			MessageID:      1,
+			SubscriptionID: 1,
+			FilterID:       2,
+			ResearchTeamID: 9,
+			FilterDecision: &decision,
+			FilterReason:   ptrString("prediction market impact"),
+			FilterStatus:   domainmsg.FilterStatusFiltered,
+			RelatedSymbols: jsonBytes(t, []string{"600000"}),
+			FilteredAt:     &filteredAt,
+		}},
+	}
+	messageID := row.ID
+	matcher := &fakePredictionMatcher{matches: []domainprediction.Match{{
+		ID:          1,
+		MessageID:   &messageID,
+		MarketID:    42,
+		Query:       "Iran peace deal",
+		NewsSnippet: row.Text,
+		Status:      "linked",
+		Reason:      "same event and timeframe",
+	}}}
+	service := &fakeMessagingService{extractedSymbols: []string{"600002"}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo}).WithPredictionMatcher(matcher)
+
+	meetings, err := usecase.ensureMeetingsForMessage(ctx, repo, &row, "message_subscription_manual")
+	if err != nil {
+		t.Fatalf("ensureMeetingsForMessage: %v", err)
+	}
+	if len(meetings) != 1 {
+		t.Fatalf("expected one prediction-scoped mixed-team meeting, got %+v", meetings)
+	}
+	if strings.Contains(meetings[0].Topic, "600000") || strings.Contains(meetings[0].Topic, "600001") || strings.Contains(meetings[0].Topic, "600002") {
+		t.Fatalf("mixed-team prediction meeting topic should not fall back to A-share symbols: %s", meetings[0].Topic)
+	}
+	if !strings.Contains(meetings[0].Topic, "prediction markets 42") {
+		t.Fatalf("mixed-team prediction meeting topic should use matched market ids, got %s", meetings[0].Topic)
+	}
+	triggered := repo.meetingEvents[1]
+	if strings.Contains(triggered.Content, "Related symbols:") {
+		t.Fatalf("mixed-team prediction meeting content should not include related symbols line:\n%s", triggered.Content)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(triggered.Payload, &payload); err != nil {
+		t.Fatalf("decode payload: %v", err)
+	}
+	symbols, ok := payload["related_symbols"].([]any)
+	if !ok || len(symbols) != 0 {
+		t.Fatalf("mixed-team prediction meeting payload should carry an empty related_symbols array, got %#v", payload["related_symbols"])
+	}
+}
+
 func TestFilterMessageRequiresPersistedSubscriptionAssignments(t *testing.T) {
 	ctx := context.Background()
 	repo := newFakeMessagingRepo()
@@ -239,6 +404,103 @@ func TestFilterMessageReplacesStaleAssignmentResults(t *testing.T) {
 	results := repo.filterResults[1]
 	if len(results) != 1 || results[0].FilterID != 1 || results[0].ResearchTeamID != 1 {
 		t.Fatalf("expected stale assignment result to be replaced, got %+v", results)
+	}
+}
+
+func TestFilterMessageSkipsPredictionMatcherForAShareOnlyTeam(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderTelegramChannel,
+		Title:     "A-share News",
+		SourceRef: "@news",
+		Enabled:   true,
+		FilterID:  1,
+		TeamIDs:   []uint{1},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 1, ResearchTeamID: 1, Enabled: true},
+		},
+	}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderTelegramChannel, SourceMessageID: "100", MessageTime: time.Now(), Text: "600000 triggered"}
+	repo.filters[1] = domainmsg.MessageSubscriptionFilter{ID: 1, Name: "filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{filter: FilterResult{Decision: ptrDecision(domainkernel.NewsObserve), Reason: ptrString("watch"), RelatedSymbols: jsonBytes(t, []string{"600000"}), FilterID: 1}}
+	matcher := &fakePredictionMatcher{}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo}).WithPredictionMatcher(matcher)
+
+	_, found, err := usecase.FilterMessage(ctx, 1)
+	if err != nil || !found {
+		t.Fatalf("FilterMessage found=%v err=%v", found, err)
+	}
+	if matcher.matchCalls != 0 {
+		t.Fatalf("A-share-only subscription should not run prediction matcher, calls=%d", matcher.matchCalls)
+	}
+}
+
+func TestFilterMessageRunsPredictionMatcherForPredictionTeam(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.teamAssetClasses[9] = "prediction_market"
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderRSSFeed,
+		Title:     "Prediction News",
+		SourceRef: "https://example.test/feed.xml",
+		Enabled:   true,
+		FilterID:  2,
+		TeamIDs:   []uint{9},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 9, Enabled: true},
+		},
+	}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderRSSFeed, SourceMessageID: "100", MessageTime: time.Now(), Text: "Iran peace deal odds moved"}
+	repo.filters[2] = domainmsg.MessageSubscriptionFilter{ID: 2, Name: "prediction filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{filter: FilterResult{Decision: ptrDecision(domainkernel.NewsObserve), Reason: ptrString("prediction watch"), RelatedSymbols: jsonBytes(t, []string{}), FilterID: 2}}
+	matcher := &fakePredictionMatcher{}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo}).WithPredictionMatcher(matcher)
+
+	_, found, err := usecase.FilterMessage(ctx, 1)
+	if err != nil || !found {
+		t.Fatalf("FilterMessage found=%v err=%v", found, err)
+	}
+	if matcher.matchCalls != 1 || matcher.lastMessageID == nil || *matcher.lastMessageID != 1 {
+		t.Fatalf("prediction subscription should run matcher for message 1, calls=%d id=%v", matcher.matchCalls, matcher.lastMessageID)
+	}
+}
+
+func TestFilterMessageClearsRelatedSymbolsForPredictionTeam(t *testing.T) {
+	ctx := context.Background()
+	repo := newFakeMessagingRepo()
+	repo.teamAssetClasses[9] = "prediction_market"
+	repo.subscriptions[1] = domainmsg.MessageSubscription{
+		ID:        1,
+		Provider:  domainmsg.ProviderRSSFeed,
+		Title:     "Prediction News",
+		SourceRef: "https://example.test/feed.xml",
+		Enabled:   true,
+		FilterID:  2,
+		TeamIDs:   []uint{9},
+		Assignments: []domainmsg.MessageSubscriptionAssignment{
+			{ID: 1, SubscriptionID: 1, FilterID: 2, ResearchTeamID: 9, Enabled: true},
+		},
+	}
+	repo.messages[1] = domainmsg.IngestedMessage{ID: 1, SubscriptionID: 1, Provider: domainmsg.ProviderRSSFeed, SourceMessageID: "100", MessageTime: time.Now(), Text: "Iran peace deal odds moved"}
+	repo.filters[2] = domainmsg.MessageSubscriptionFilter{ID: 2, Name: "prediction filter", PromptTemplate: "return JSON", Enabled: true, ProviderID: uintPtr(1)}
+	repo.providers[1] = domainai.Provider{ID: 1, Enabled: true, DefaultModel: "fixture-model", APIKeySecret: &domainsettings.Secret{EncryptedValue: "enc:key"}}
+	service := &fakeMessagingService{filter: FilterResult{Decision: ptrDecision(domainkernel.NewsObserve), Reason: ptrString("prediction watch"), RelatedSymbols: jsonBytes(t, []string{"600000"}), FilterID: 2}}
+	usecase := NewUsecase(repo, service, fakeMessagingSecurity{}, &fakeMessagingTx{repo: repo})
+
+	result, found, err := usecase.FilterMessage(ctx, 1)
+	if err != nil || !found {
+		t.Fatalf("FilterMessage found=%v err=%v", found, err)
+	}
+	if got := relatedSymbolsFromJSON(repo.filterResults[1][0].RelatedSymbols); len(got) != 0 {
+		t.Fatalf("prediction filter result should clear A-share symbols, got %+v", got)
+	}
+	if got := relatedSymbolsFromJSON(result.Row.Message.RelatedSymbols); len(got) != 0 {
+		t.Fatalf("prediction message summary should clear A-share symbols, got %+v", got)
 	}
 }
 
@@ -965,6 +1227,8 @@ func TestDefaultPredictionFilterPromptHasOperationalDecisionRubric(t *testing.T)
 		"match_confidence",
 		">=0.75",
 		"0.45",
+		"related_symbols 必须始终是空数组",
+		"不要输出 A 股代码",
 		"真实交易",
 		"模拟盘动作",
 	} {
@@ -1392,6 +1656,7 @@ type fakeMessagingService struct {
 	loginSession        string
 	session             string
 	completeCredentials TelegramCredentials
+	extractedSymbols    []string
 }
 
 func (s *fakeMessagingService) StartSubscriptionLogin(context.Context, TelegramCredentials, string) (string, string, error) {
@@ -1436,7 +1701,9 @@ func (s *fakeMessagingService) JSON(value any) domainkernel.JSON {
 	raw, _ := json.Marshal(value)
 	return domainkernel.JSON(raw)
 }
-func (s *fakeMessagingService) ExtractRelatedSymbols(string) []string { return nil }
+func (s *fakeMessagingService) ExtractRelatedSymbols(string) []string {
+	return append([]string(nil), s.extractedSymbols...)
+}
 func (s *fakeMessagingService) ApplyFilter(_ context.Context, _ domainmsg.IngestedMessage, _ SecurityService, filter domainmsg.MessageSubscriptionFilter, _ domainai.Provider, _ ProxyConfig) (FilterResult, error) {
 	s.appliedFilterIDs = append(s.appliedFilterIDs, filter.ID)
 	if s.filtersByID != nil {
@@ -1472,6 +1739,27 @@ func (q *fakeMessagingQueue) EnqueueFilter(_ context.Context, task FilterTask) e
 	return nil
 }
 
+type fakePredictionMatcher struct {
+	matches       []domainprediction.Match
+	matchCalls    int
+	listCalls     int
+	lastMessageID *uint
+}
+
+func (m *fakePredictionMatcher) MatchNews(_ context.Context, messageID *uint, _ string) ([]domainprediction.Match, error) {
+	m.matchCalls++
+	if messageID != nil {
+		id := *messageID
+		m.lastMessageID = &id
+	}
+	return append([]domainprediction.Match(nil), m.matches...), nil
+}
+
+func (m *fakePredictionMatcher) ListMatchesForMessage(context.Context, uint) ([]domainprediction.Match, error) {
+	m.listCalls++
+	return append([]domainprediction.Match(nil), m.matches...), nil
+}
+
 type fakeMessagingRepo struct {
 	secrets              map[string]domainsettings.Secret
 	settings             map[string]domainsettings.AppSetting
@@ -1490,6 +1778,8 @@ type fakeMessagingRepo struct {
 	createMeetingCalls   int
 	appendEventCalls     int
 	createReferenceCalls int
+	meetingEvents        []domainmeeting.Event
+	meetingReferences    []domainmeeting.Reference
 }
 
 func newFakeMessagingRepo() *fakeMessagingRepo {
@@ -1843,12 +2133,18 @@ func (r *fakeMessagingRepo) CreateMeeting(_ context.Context, meeting *domainmeet
 	r.meetings[meeting.ID] = *meeting
 	return nil
 }
-func (r *fakeMessagingRepo) AppendMeetingEvent(context.Context, *domainmeeting.Event) error {
+func (r *fakeMessagingRepo) AppendMeetingEvent(_ context.Context, event *domainmeeting.Event) error {
 	r.appendEventCalls++
+	if event != nil {
+		r.meetingEvents = append(r.meetingEvents, *event)
+	}
 	return nil
 }
-func (r *fakeMessagingRepo) CreateMeetingReference(context.Context, *domainmeeting.Reference) error {
+func (r *fakeMessagingRepo) CreateMeetingReference(_ context.Context, ref *domainmeeting.Reference) error {
 	r.createReferenceCalls++
+	if ref != nil {
+		r.meetingReferences = append(r.meetingReferences, *ref)
+	}
 	return nil
 }
 func (r *fakeMessagingRepo) FindMeetingReferenceByExternalRef(context.Context, string, string) (*domainmeeting.Reference, bool, error) {

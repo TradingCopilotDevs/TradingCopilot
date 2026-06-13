@@ -19,6 +19,9 @@ const (
 
 	DefaultPredictionTeamName        = "默认预测市场投研团队"
 	DefaultPredictionTeamDescription = "系统初始化创建的 Polymarket 预测市场投研会议团队。"
+
+	predictionRolePromptBoundaryMarker = "预测市场角色边界"
+	predictionRolePromptBoundary       = `预测市场角色边界：本角色只能研究 Polymarket 等预测市场的公开事件、市场问题、结算规则、赔率/盘口、流动性和证据缺口。不得输出 A 股行业、A 股个股、股票代码、模拟盘订单、证券自选池或真实交易动作；如果原始角色说明与本边界冲突，以本边界为准。`
 )
 
 var (
@@ -32,6 +35,18 @@ var (
 	ErrRoleNameRequired     = errors.New("research team role name is required")
 	ErrRolePromptRequired   = errors.New("research team role prompt template is required")
 )
+
+var predictionRoleAllowedSkills = map[string]struct{}{
+	"news-source-verification":   {},
+	"web-research":               {},
+	"meeting-moderation":         {},
+	"cross-examination":          {},
+	"evidence-synthesis":         {},
+	"prediction-market-research": {},
+	"odds-market-analysis":       {},
+	"market-resolution-risk":     {},
+	"wake-plan-design":           {},
+}
 
 type Usecase struct {
 	repo Repository
@@ -138,8 +153,29 @@ func (u Usecase) EnsureDefaultPredictionTeam(ctx context.Context) (*domainresear
 			return err
 		}
 		for _, team := range teams {
-			if team.AssetClass == AssetClassPredictionMarket || team.Name == DefaultPredictionTeamName {
+			if team.Name != DefaultPredictionTeamName {
+				continue
+			}
+			existing := team
+			if existing.AssetClass != AssetClassPredictionMarket || existing.PaperAccountID != 0 {
+				existing.AssetClass = AssetClassPredictionMarket
+				existing.PaperAccountID = 0
+				if err := repo.SaveTeam(ctx, &existing); err != nil {
+					return err
+				}
+			}
+			if err := ensurePredictionDefaultRoles(ctx, repo, existing.ID); err != nil {
+				return err
+			}
+			row = &existing
+			return nil
+		}
+		for _, team := range teams {
+			if team.AssetClass == AssetClassPredictionMarket {
 				existing := team
+				if err := sanitizePredictionTeamRoles(ctx, repo, existing.ID); err != nil {
+					return err
+				}
 				row = &existing
 				return nil
 			}
@@ -209,6 +245,9 @@ func (u Usecase) CreateTeam(ctx context.Context, input TeamInput) (*domainresear
 				clone := source
 				clone.ID = 0
 				clone.ResearchTeamID = row.ID
+				if row.AssetClass == AssetClassPredictionMarket {
+					sanitizePredictionRoleCapabilities(&clone)
+				}
 				if err := repo.CreateRole(ctx, &clone); err != nil {
 					return err
 				}
@@ -274,7 +313,13 @@ func (u Usecase) UpdateTeam(ctx context.Context, id uint, input TeamInput, field
 		if row.Name == "" {
 			return ErrTeamNameRequired
 		}
-		return repo.SaveTeam(ctx, row)
+		if err := repo.SaveTeam(ctx, row); err != nil {
+			return err
+		}
+		if row.AssetClass == AssetClassPredictionMarket {
+			return sanitizePredictionTeamRoles(ctx, repo, row.ID)
+		}
+		return nil
 	}); err != nil {
 		return nil, found, err
 	}
@@ -315,7 +360,8 @@ func (u Usecase) UpsertRole(ctx context.Context, teamID uint, key string, input 
 	}
 	var row *domainresearch.TeamRole
 	if err := u.withTx(ctx, func(repo Repository) error {
-		if _, found, err := repo.FindTeam(ctx, teamID); err != nil || !found {
+		team, found, err := repo.FindTeam(ctx, teamID)
+		if err != nil || !found {
 			if err != nil {
 				return err
 			}
@@ -331,6 +377,9 @@ func (u Usecase) UpsertRole(ctx context.Context, teamID uint, key string, input 
 			row = &domainresearch.TeamRole{ResearchTeamID: teamID, Key: key}
 		}
 		applyRoleInput(row, input)
+		if team.AssetClass == AssetClassPredictionMarket {
+			sanitizePredictionRoleCapabilities(row)
+		}
 		if err := validateRole(row); err != nil {
 			return err
 		}
@@ -419,6 +468,119 @@ func createDefaultRole(ctx context.Context, repo Repository, teamID uint, seed a
 		SortOrder:      seed.SortOrder,
 	}
 	return repo.CreateRole(ctx, &role)
+}
+
+func ensurePredictionDefaultRoles(ctx context.Context, repo Repository, teamID uint) error {
+	roles, err := repo.ListRoles(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	byKey := map[string]domainresearch.TeamRole{}
+	for _, role := range roles {
+		byKey[role.Key] = role
+	}
+	for _, seed := range PredictionMarketDefaultRoles {
+		role, ok := byKey[seed.Key]
+		if !ok {
+			if err := createDefaultRole(ctx, repo, teamID, seed); err != nil {
+				return err
+			}
+			continue
+		}
+		applyPredictionDefaultSeed(&role, seed)
+		if err := repo.SaveRole(ctx, &role); err != nil {
+			return err
+		}
+	}
+	for _, role := range roles {
+		if _, ok := predictionDefaultRoleSeed(role.Key); ok {
+			continue
+		}
+		sanitizePredictionRoleCapabilities(&role)
+		if err := repo.SaveRole(ctx, &role); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func applyPredictionDefaultSeed(role *domainresearch.TeamRole, seed appai.RoleSeed) {
+	role.Name = seed.Name
+	role.Responsibility = seed.Responsibility
+	role.PromptTemplate = seed.Prompt
+	role.ToolNames = jsonList(seed.Tools)
+	role.SkillNames = jsonList(seed.Skills)
+	role.SortOrder = seed.SortOrder
+}
+
+func predictionDefaultRoleSeed(key string) (appai.RoleSeed, bool) {
+	for _, seed := range PredictionMarketDefaultRoles {
+		if seed.Key == key {
+			return seed, true
+		}
+	}
+	return appai.RoleSeed{}, false
+}
+
+func sanitizePredictionTeamRoles(ctx context.Context, repo Repository, teamID uint) error {
+	roles, err := repo.ListRoles(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		sanitizePredictionRoleCapabilities(&role)
+		if err := repo.SaveRole(ctx, &role); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func sanitizePredictionRoleCapabilities(role *domainresearch.TeamRole) {
+	role.PromptTemplate = sanitizePredictionRolePrompt(role.PromptTemplate)
+	role.ToolNames = jsonList(filterRoleCapabilities(jsonStringList(role.ToolNames), predictionRoleToolAllowed))
+	role.SkillNames = jsonList(filterRoleCapabilities(jsonStringList(role.SkillNames), predictionRoleSkillAllowed))
+}
+
+func sanitizePredictionRolePrompt(prompt string) string {
+	prompt = strings.TrimSpace(prompt)
+	if strings.Contains(prompt, predictionRolePromptBoundaryMarker) {
+		return prompt
+	}
+	if prompt == "" {
+		return predictionRolePromptBoundary
+	}
+	return predictionRolePromptBoundary + "\n\n原始角色补充说明（仅在不违反上述边界时适用）：\n" + prompt
+}
+
+func filterRoleCapabilities(values []string, allowed func(string) bool) []string {
+	out := make([]string, 0, len(values))
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" || !allowed(value) {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		out = append(out, value)
+	}
+	return out
+}
+
+func predictionRoleToolAllowed(name string) bool {
+	name = strings.TrimSpace(name)
+	return name == "web.search" ||
+		name == "meeting.references" ||
+		name == "meeting.transcript" ||
+		strings.HasPrefix(name, "prediction.")
+}
+
+func predictionRoleSkillAllowed(name string) bool {
+	_, ok := predictionRoleAllowedSkills[strings.TrimSpace(name)]
+	return ok
 }
 
 func validatePaperAccountAvailable(ctx context.Context, repo Repository, paperAccountID uint, currentTeamID uint) error {
